@@ -27,7 +27,10 @@ export const CONFIG = {
     obstacles: { crateHp: 2, passScores: { jump: 15, slide: 10 } },
     intro: { coinCount: 12, firstCoinZ: -8, barrierZ: -60, barZ: -110 },
     collection: { coinRadius: .8, powerRadius: .9, magnetPull: 11, arcCount: 7, arcHeight: 1.8, arcSpacing: 2 },
-    enemies: { soldier: { hp: 2, score: 100, switchInterval: 3, turnLimitZ: -30, laneSmoothing: 3.5 }, runner: { hp: 3, score: 140, switchInterval: 1.7, turnLimitZ: -22, laneSmoothing: 5 }, drone: { hp: 2, score: 180, fireInterval: 2.4, fireNearZ: -18, fireFarZ: -65 }, tank: { hp: 9, score: 300 }, shotSpeed: 19, shotPool: 72, warningSeconds: .8 },
+    // Soldati e tank sparano entro [fireFarZ, fireNearZ] con chargeSeconds di preavviso (arma che si
+    // illumina): il soldato a mezza altezza, il tank un proiettile raso terra da saltare.
+    // Il pattugliatore scatta in avanti (dashSpeed m/s in più) quando supera dashZ.
+    enemies: { soldier: { hp: 2, score: 100, switchInterval: 3, turnLimitZ: -30, laneSmoothing: 3.5, fireInterval: 2.8, fireNearZ: -20, fireFarZ: -62 }, runner: { hp: 3, score: 140, switchInterval: 1.7, turnLimitZ: -22, laneSmoothing: 5, dashZ: -26, dashSpeed: 8 }, drone: { hp: 2, score: 180, fireInterval: 2.4, fireNearZ: -18, fireFarZ: -65 }, tank: { hp: 9, score: 300, fireInterval: 3.6, fireNearZ: -22, fireFarZ: -58 }, shotSpeed: 19, shellSpeed: 15, shotPool: 72, warningSeconds: .8, chargeSeconds: .55, deathSeconds: .5 },
     // Le salve del boss sono muri alti wallHeight su due corsie: non si saltano né si scivola sotto.
     // Nella terza arriva una barra bassa (alta lowHeight, da saltare) o una sbarra sospesa (da
     // highBottom a highTop, da passare in scivolata). Sotto il 40% di vita l'intervallo si riduce di enragedRate.
@@ -35,7 +38,8 @@ export const CONFIG = {
     boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, wallHeight: 3.4, wallDepth: .5, enragedRate: .7, lowHeight: .9, highBottom: .95, highTop: 2.4, restAfter: 45, approachZ: -30, attackInterval: 2.2, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
     bonuses: { duration: 11, magnetRadius: 9, comboWindow: 3, maxCombo: 8, coinScore: 10, distanceScore: 1, types: ['triple', 'shield', 'magnet', 'double'] },
     juice: { particlePool: 320, hitStop: .045, shake: .14, killParticles: 16, landingParticles: 7 },
-    audio: { master: .3, music: .12, tempo: 112 },
+    // tracks: brani MP3 (menu/game over e corsa); se mancano si usa la musica procedurale.
+    audio: { master: .65, music: .12, tempo: 112, trackVolume: .28, fade: .8, tracks: { menu: 'assets/audio/intro.mp3', run: 'assets/audio/run.mp3' } },
     // Sprite 2D (assets/sprites, rigenerabili con `make sprites`). Ogni voce si può spegnere
     // singolarmente; se un file manca o il caricamento fallisce si torna ai modelli procedurali.
     // hero usa i frame visti di spalle (hero_back_*); textures e props vestono scenario e ostacoli per tema.

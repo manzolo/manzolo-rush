@@ -787,56 +787,56 @@
     "file": "city_facade_a.webp",
     "png": "city_facade_a.png",
     "small": "128/city_facade_a.webp",
-    "width": 284,
-    "height": 287,
+    "width": 586,
+    "height": 588,
     "anchor": "center",
     "cell": [
-      12,
-      11,
-      306,
-      306
+      21,
+      19,
+      615,
+      615
     ]
   },
   "city_facade_b": {
     "file": "city_facade_b.webp",
     "png": "city_facade_b.png",
     "small": "128/city_facade_b.webp",
-    "width": 277,
-    "height": 284,
+    "width": 589,
+    "height": 588,
     "anchor": "center",
     "cell": [
-      323,
-      11,
-      619,
-      306
+      639,
+      19,
+      1236,
+      615
     ]
   },
   "city_road": {
     "file": "city_road.webp",
     "png": "city_road.png",
     "small": "128/city_road.webp",
-    "width": 288,
-    "height": 287,
+    "width": 585,
+    "height": 587,
     "anchor": "center",
     "cell": [
+      21,
       636,
-      11,
-      932,
-      306
+      615,
+      1233
     ]
   },
   "city_sidewalk": {
     "file": "city_sidewalk.webp",
     "png": "city_sidewalk.png",
     "small": "128/city_sidewalk.webp",
-    "width": 284,
-    "height": 287,
+    "width": 589,
+    "height": 589,
     "anchor": "center",
     "cell": [
-      948,
-      11,
-      1242,
-      306
+      639,
+      636,
+      1236,
+      1233
     ]
   },
   "desert_facade_a": {

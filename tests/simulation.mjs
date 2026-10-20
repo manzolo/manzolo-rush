@@ -298,7 +298,10 @@ check('tre corse da 3 minuti: il corridoio √® percorribile senza invulnerabilit√
                     g.player.command('jump');
                 else if (bar?.wallKind === 'high' && g.player.slide < CONFIG.player.inputBuffer)
                     g.player.command('slide');
-                else if (g.enemies.shots.some(shot => shot.active && !shot.wall && shot.z > -10 && shot.z < 6) && g.player.slide < CONFIG.player.inputBuffer)
+                // Proiettile del tank raso terra nella propria corsia: si salta.
+                else if (g.enemies.shots.some(shot => shot.active && shot.shell && Math.abs(shot.x - g.player.x) < shot.hw + CONFIG.player.halfWidth && shot.z > -9 && shot.z < 1) && g.player.y === 0 && g.player.slide <= 0)
+                    g.player.command('jump');
+                else if (g.enemies.shots.some(shot => shot.active && !shot.wall && !shot.shell && shot.z > -10 && shot.z < 6) && g.player.slide < CONFIG.player.inputBuffer)
                     g.player.command('slide');
                 g.update(CONFIG.step);
                 if (tick % 12 === 0)

@@ -38,9 +38,10 @@ export class Game {
             this.storage = null;
         }
         this.save = readSave(this.storage);
-        this.audio = new Audio(this.save.audio);
+        this.audio = new Audio(this.save.audio, this.save.music);
         this.input = new Input(renderer.domElement, document.querySelector('#fire'), () => this.pause());
         this.state = STATES.MENU;
+        this.audio.music('menu');
         this.time = this.distance = this.score = this.reward = this.coins = this.kills = 0;
         this.combo = this.comboTimer = this.shake = this.hitStop = this.damageFlash = 0;
         this.speed = CONFIG.speed.initial;
@@ -64,6 +65,12 @@ export class Game {
             writeSave(this.storage, this.save);
             this.refreshSave();
         };
+        document.querySelector('#music').onclick = () => {
+            this.save.music = !this.save.music;
+            this.audio.setMusic(this.save.music);
+            writeSave(this.storage, this.save);
+            this.refreshSave();
+        };
         document.querySelector('#play').disabled = false;
         document.querySelector('#play-label').textContent = 'INIZIA LA CORSA';
         document.addEventListener('visibilitychange', () => {
@@ -75,6 +82,7 @@ export class Game {
     setState(state) {
         this.state = state;
         this.input.clear();
+        this.audio.music({ menu: 'menu', over: 'menu', play: 'run', pause: 'pause' }[state]);
         const panel = { menu: 'menu', pause: 'pause', over: 'gameover' }[state];
         for (const id of ['menu', 'pause', 'gameover', 'hud']) {
             document.getElementById(id).classList.toggle('hidden', id === 'hud' ? state !== STATES.PLAY : id !== panel);
@@ -311,7 +319,7 @@ export class Game {
     hitEnemy(enemy, damage) {
         if (this.enemies.damage(enemy, damage)) {
             this.onKill(enemy);
-            this.enemies.remove(enemy);
+            this.enemies.kill(enemy);
         }
     }
     hitCrate(crate, damage) {
@@ -361,11 +369,15 @@ export class Game {
     refreshSave() {
         document.querySelector('#menu-best').textContent = Math.floor(this.save.best).toString().padStart(6, '0');
         document.querySelector('#menu-coins').textContent = this.save.coins;
-        const sound = document.querySelector('#sound');
-        sound.textContent = this.save.audio ? '♫' : '♪';
-        sound.style.opacity = this.save.audio ? 1 : .45;
-        sound.setAttribute('aria-pressed', String(this.save.audio));
-        sound.title = this.save.audio ? 'Audio attivo' : 'Audio disattivato';
+        const toggle = (id, on, onIcon, offIcon, label) => {
+            const button = document.querySelector(id);
+            button.textContent = on ? onIcon : offIcon;
+            button.style.opacity = on ? 1 : .45;
+            button.setAttribute('aria-pressed', String(on));
+            button.title = `${label} ${on ? 'attiva' : 'disattivata'}`;
+        };
+        toggle('#sound', this.save.audio, '🔊', '🔇', 'Effetti:');
+        toggle('#music', this.save.music, '♫', '♪', 'Musica:');
     }
     bank() {
         if (this.banked)

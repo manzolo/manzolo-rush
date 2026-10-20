@@ -69,12 +69,12 @@ test('proiettile spazzato colpisce bersagli attraversati in un singolo tick', ()
     assert.ok(!bulletOverlap({ x: 0, y: 3, z: -13, previousZ: -8 }, enemy));
 });
 test('salvataggi corrotti, storage negato e valori non validi non bloccano il gioco', () => {
-    assert.deepEqual(readSave(null), { best: 0, coins: 0, audio: true });
-    assert.deepEqual(readSave({ getItem: () => '{broken' }), { best: 0, coins: 0, audio: true });
-    assert.deepEqual(readSave({ getItem: () => '{"best":-5,"coins":"oops","audio":false}' }), { best: 0, coins: 0, audio: false });
+    assert.deepEqual(readSave(null), { best: 0, coins: 0, audio: true, music: true });
+    assert.deepEqual(readSave({ getItem: () => '{broken' }), { best: 0, coins: 0, audio: true, music: true });
+    assert.deepEqual(readSave({ getItem: () => '{"best":-5,"coins":"oops","audio":false}' }), { best: 0, coins: 0, audio: false, music: true });
     assert.equal(writeSave({ setItem() { throw new Error('quota'); } }, {}), false);
     let value;
     const storage = { setItem(k, v) { value = v; }, getItem() { return value; } };
-    assert.ok(writeSave(storage, { best: 123, coins: 7, audio: false }));
-    assert.deepEqual(readSave(storage), { best: 123, coins: 7, audio: false });
+    assert.ok(writeSave(storage, { best: 123, coins: 7, audio: false, music: false }));
+    assert.deepEqual(readSave(storage), { best: 123, coins: 7, audio: false, music: false });
 });

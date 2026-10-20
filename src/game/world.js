@@ -13,6 +13,8 @@ const THEME_PROPS = [
     ['prop_desert_cactus', 'prop_desert_tree', 'prop_desert_barrels', 'prop_desert_sign'],
     ['prop_neon_antenna', 'prop_neon_holo', 'prop_neon_pylon', 'prop_neon_canisters'],
 ];
+// Coronamento dei tetti per tema: cornicione e torretta chiari in città, terracotta nel deserto, acciaio nella base.
+const ROOF_COLORS = [[0xf3dcc0, 0xd8c3a6], [0xc9774a, 0xa85f3a], [0x34466a, 0x23314d]];
 const SHARED_PROPS = ['prop_cone', 'prop_block', 'prop_bush', 'prop_rocks'];
 // Altezza in metri di ogni oggetto; la larghezza segue le proporzioni dello sprite.
 const PROP_HEIGHT = { prop_city_lamp: 4.6, prop_city_tree: 4.2, prop_city_busstop: 2.8, prop_city_sign: 4, prop_desert_cactus: 3.4, prop_desert_tree: 3.6, prop_desert_barrels: 1.7, prop_desert_sign: 2.6,
@@ -30,9 +32,12 @@ export class World {
         this.chunks = [];
         this.theme = -1;
         this.phase = 0;
-        this.roadMaterial = new THREE.MeshStandardMaterial({ color: THEMES[0].road, roughness: 1 });
-        this.buildingMaterials = [new THREE.MeshStandardMaterial(), new THREE.MeshStandardMaterial()];
-        this.groundMaterial = new THREE.MeshStandardMaterial();
+        // Lambert invece di Standard: palazzi, strada e terreno coprono gran parte dello schermo
+        // (soprattutto i palazzi alti della città) e l'illuminazione PBR per pixel costava troppo.
+        this.roadMaterial = new THREE.MeshLambertMaterial({ color: THEMES[0].road });
+        this.buildingMaterials = [new THREE.MeshLambertMaterial(), new THREE.MeshLambertMaterial()];
+        this.groundMaterial = new THREE.MeshLambertMaterial();
+        this.roofMaterials = [new THREE.MeshLambertMaterial({ color: ROOF_COLORS[0][0] }), new THREE.MeshLambertMaterial({ color: ROOF_COLORS[0][1] })];
         this.accentMaterial = new THREE.MeshBasicMaterial();
         const s = CONFIG.sprites;
         this.textured = s.enabled && s.textures && THEME_TEXTURES.every(t => Object.values(t).every(n => SPRITES.has(n)));
@@ -41,7 +46,6 @@ export class World {
             this.tiles = THEME_TEXTURES.map(t => ({ facadeA: tile(t.facadeA, 1, 2.5), facadeB: tile(t.facadeB, 1, 2.5), road: tile(t.road, 3, 7), ground: tile(t.ground, 90, 90) }));
             for (const m of [this.roadMaterial, this.groundMaterial, ...this.buildingMaterials]) {
                 m.color.set(0xffffff);
-                m.roughness = .95;
             }
         }
         this.props = [];
@@ -91,6 +95,27 @@ export class World {
                     building.position.set(side * (9 + (j % 2) * 3), h / 2, -9 + j * 8);
                     building.scale.set(4 + (c % 3), h, 5.5);
                     group.add(building);
+                    // Tetto a gradoni: cornicione sporgente, parapetto rientrato e torretta con antenna,
+                    // così la sagoma non finisce "segata" ma si legge come la cima di un palazzo.
+                    const bw = 4 + (c % 3), roof = (y, w, hh, d, mat, dx = 0, dz = 0) => {
+                        const m = new THREE.Mesh(geo, mat);
+                        m.position.set(side * (9 + (j % 2) * 3) + dx, h + y, -9 + j * 8 + dz);
+                        m.scale.set(w, hh, d);
+                        m.userData.role = 'roof';
+                        m.userData.base = h;
+                        m.userData.dy = y;
+                        group.add(m);
+                    };
+                    roof(.12, bw + .35, .24, 5.85, this.roofMaterials[0]);
+                    roof(.45, bw - .5, .42, 5, this.roofMaterials[1]);
+                    roof(.78, bw - .8, .1, 4.7, this.roofMaterials[0]);
+                    const tower = (c + j) % 3;
+                    if (tower !== 2) {
+                        roof(1.25, 1.4, .9, 1.6, this.roofMaterials[1], (tower ? -.6 : .6) * side, tower ? 1.2 : -1.1);
+                        roof(1.74, 1.6, .1, 1.8, this.roofMaterials[0], (tower ? -.6 : .6) * side, tower ? 1.2 : -1.1);
+                    }
+                    if ((c + j) % 2 === 0)
+                        roof(1.6, .08, 2.2, .08, this.accentMaterial, -.9 * side, -1.8);
                     const window = new THREE.Mesh(geo, this.accentMaterial);
                     window.position.set(side * (9 + (j % 2) * 3 - (4 + c % 3) / 2 - .025), h * .7, -9 + j * 8);
                     window.scale.set(.03, .14, 3.5);
@@ -141,7 +166,7 @@ export class World {
                     batch = { material: mesh.material, items: [] };
                     map.set(mesh.material, batch);
                 }
-                batch.items.push({ chunk, local: mesh.position.clone(), scale: mesh.scale.clone(), matrix: mesh.matrixWorld.clone(), building: this.buildingMaterials.includes(mesh.material), role: mesh.userData.role, faceShift: mesh.userData.faceShift || 0 });
+                batch.items.push({ chunk, local: mesh.position.clone(), scale: mesh.scale.clone(), matrix: mesh.matrixWorld.clone(), building: this.buildingMaterials.includes(mesh.material), role: mesh.userData.role, faceShift: mesh.userData.faceShift || 0, base: mesh.userData.base || 0, dy: mesh.userData.dy || 0 });
             });
             scene.remove(chunk);
         }
@@ -185,6 +210,8 @@ export class World {
                 this.buildingMaterials[1].color.set(this.target.secondary);
             }
             this.accentMaterial.color.set(this.target.accent);
+            for (let k = 0; k < 2; k++)
+                this.roofMaterials[k].color.set(ROOF_COLORS[this.theme][k]);
         }
     }
     update(dt, speed) {
@@ -206,6 +233,11 @@ export class World {
                     m[0] = item.scale.x * width;
                     m[5] = item.scale.y * height;
                     m[13] = item.local.y * height;
+                }
+                if (item.role === 'roof') {
+                    const height = this.theme === 1 ? .35 : this.theme === 2 ? 1.15 : 1;
+                    m[0] = item.scale.x * (this.theme === 2 ? .7 : 1);
+                    m[13] = item.base * height + item.dy;
                 }
                 if (item.role === 'window') {
                     m[13] = item.local.y * (this.theme === 1 ? .35 : this.theme === 2 ? 1.15 : 1);
@@ -243,6 +275,8 @@ export class World {
             this.buildingMaterials[1].color.lerp(this.color.set(t.secondary), blend);
         }
         this.accentMaterial.color.lerp(this.color.set(t.accent), blend);
+        for (let k = 0; k < 2; k++)
+            this.roofMaterials[k].color.lerp(this.color.set(ROOF_COLORS[this.theme][k]), blend);
         this.sun.material.color.lerp(this.color.set(t.sun), blend);
     }
     render(alpha, speed) {

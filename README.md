@@ -30,7 +30,7 @@ make down      # ferma e rimuove il container
 
 Oppure senza compose: `make run` (immagine usa e getta su `DOCKER_PORT`). Three.js resta caricato dal CDN anche nel container.
 
-Da smartphone, sulla stessa rete del computer, apri `http://IP-DEL-PC:8000` e consenti il traffico locale sulla porta 8000, se richiesto dal sistema. Sono supportati orientamento verticale e orizzontale. Serve un browser moderno con **WebGL 2**, importmap e Web Audio. L’audio si abilita dopo un’interazione; il pulsante ♫ lo attiva/disattiva e salva la preferenza.
+Da smartphone, sulla stessa rete del computer, apri `http://IP-DEL-PC:8000` e consenti il traffico locale sulla porta 8000, se richiesto dal sistema. Sono supportati orientamento verticale e orizzontale. Serve un browser moderno con **WebGL 2**, importmap e Web Audio. L’audio si abilita dopo un’interazione. Musica: brani MP3 in `assets/audio/` (`intro.mp3` nel menu e a fine corsa, `run.mp3` durante la corsa, con dissolvenza); se mancano si usa la musica procedurale. In alto a destra ♫ accende/spegne la musica e 🔊 gli effetti sonori, separatamente; le preferenze restano salvate. Volumi in `CONFIG.audio` (`master` per gli effetti, `trackVolume` per i brani).
 
 ## Comandi
 
