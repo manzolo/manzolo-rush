@@ -270,9 +270,11 @@ export class Game {
             const damage = bullet.damage ?? CONFIG.weapon.damage;
             this.effects.emit(bullet.x, bullet.y, bullet.z, bullet.kind === 'blaster' ? 0xffdfa1 : bullet.color, bullet.kind === 'blaster' ? 3 : 6);
             this.shake = Math.max(this.shake, bullet.splash ? .12 : .025);
+            if (bullet.kind !== 'blaster' && !bullet.splash)
+                this.effects.burst(bullet.x, bullet.y, bullet.z, bullet.kind === 'plasma' ? 1.6 : bullet.kind === 'laser' ? 1.1 : .8, `impact_${bullet.kind}`);
             if (bullet.splash) {
                 // Razzo: esplosione ad area su tutti i nemici e le casse vicini.
-                this.effects.burst(bullet.x, bullet.y, bullet.z, bullet.splash * .9);
+                this.effects.burst(bullet.x, bullet.y, bullet.z, bullet.splash * .9, 'impact_rocket');
                 this.audio.play('explosion');
                 const r2 = bullet.splash ** 2;
                 for (const enemy of this.enemies.pool)

@@ -153,7 +153,7 @@ def snapped_grid(im: Image.Image, cols: int, rows: int, window: float = .06):
 
 
 def key_out_background(cell: Image.Image, bg: tuple, thresh: int, band: int = 8,
-                       min_hole: int = 60) -> Image.Image:
+                       min_hole: int = 60, despill: bool = False) -> Image.Image:
     """Chroma key "green excess" in tre passi:
 
     1. maschera dura: verde puro e brillante ovunque (anche nelle sacche chiuse,
@@ -239,7 +239,10 @@ def key_out_background(cell: Image.Image, bg: tuple, thresh: int, band: int = 8,
                 ap[x, y] = 0
                 continue
             # smiscelo il colore dallo sfondo: c = (p - (1-a)*bg) / a
-            op[x, y] = tuple(max(0, min(255, round((p[i] - (1 - a) * bg[i]) / a))) for i in range(3))
+            c = [max(0, min(255, round((p[i] - (1 - a) * bg[i]) / a))) for i in range(3)]
+            if despill and c[1] > max(c[0], c[2]):  # solo per sheet senza oggetti verdi
+                c[1] = max(c[0], c[2])
+            op[x, y] = tuple(c)
             ap[x, y] = round(a * 255)
     out.putalpha(alpha)
     return out
@@ -306,6 +309,8 @@ def main():
                     help="eccesso di verde (g - max(r,b)) oltre cui un pixel è sfondo certo (0-255)")
     ap.add_argument("--pad", type=int, default=4)
     ap.add_argument("--band", type=int, default=8, help="larghezza in px della fascia di smiscelamento ai bordi")
+    ap.add_argument("--despill", action="store_true",
+                    help="toglie il verde residuo dai bordi (solo per sheet senza oggetti verdi)")
     ap.add_argument("--min-hole", type=int, default=60, help="area minima (px) di un buco interno per essere tenuto")
     ap.add_argument("--small", type=int, default=128, help="lato della versione ridotta per l'HUD")
     ap.add_argument("--webp-quality", type=int, default=88, help="qualità WebP (0-100)")
@@ -361,7 +366,7 @@ def main():
                 k = args.inset
                 sprite = cell.crop((l + k, t + k, r - k, b - k))
             else:
-                sprite = key_out_background(cell, bg, args.thresh, args.band, args.min_hole)
+                sprite = key_out_background(cell, bg, args.thresh, args.band, args.min_hole, args.despill)
                 sprite = trim(drop_border_slivers(sprite), args.pad)
             alpha_bbox = sprite.getchannel("A").getbbox()
             coverage = sum(sprite.getchannel("A").histogram()[33:]) / (sprite.width * sprite.height)

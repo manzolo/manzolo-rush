@@ -8,11 +8,11 @@ export class Effects {
         // Esplosioni a sprite (uccisioni, casse, danni): si gonfiano e svaniscono in meno di mezzo secondo.
         this.bursts = [];
         if (CONFIG.sprites.enabled && CONFIG.sprites.explosions && SPRITES.has('explosion')) {
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 14; i++) {
                 const mesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: SPRITES.texture('explosion'), transparent: true, depthWrite: false, toneMapped: false }));
                 mesh.visible = false;
                 scene.add(mesh);
-                this.bursts.push({ mesh, life: 0, size: 1, x: 0, y: 0, z: 0 });
+                this.bursts.push({ mesh, life: 0, size: 1, x: 0, y: 0, z: 0, name: 'explosion' });
             }
         }
         this.dummy = new THREE.Object3D();
@@ -54,10 +54,17 @@ export class Effects {
                 break;
         }
     }
-    burst(x, y, z, size = 2.2) {
+    // name: sprite dell'effetto (es. impact_laser); se manca si usa l'esplosione standard.
+    burst(x, y, z, size = 2.2, name = 'explosion') {
         const b = this.bursts.find(b => b.life <= 0);
         if (!b)
             return;
+        if (!SPRITES.has(name))
+            name = 'explosion';
+        if (b.name !== name) {
+            b.name = name;
+            b.mesh.material.map = SPRITES.texture(name);
+        }
         Object.assign(b, { x, y, z, size, life: BURST_LIFE });
         b.mesh.material.rotation = Math.random() * Math.PI * 2;
         b.mesh.visible = true;
@@ -111,7 +118,7 @@ export class Effects {
             if (b.life > 0) {
                 const t = 1 - b.life / BURST_LIFE, s = b.size * (.35 + .65 * Math.sqrt(t));
                 b.mesh.position.set(b.x, b.y + t * .4, b.z);
-                b.mesh.scale.set(s * SPRITES.aspect('explosion'), s, 1);
+                b.mesh.scale.set(s * SPRITES.aspect(b.name), s, 1);
                 b.mesh.material.opacity = 1 - t * t;
             }
         this.shadow.position.x = this.player.root.position.x;

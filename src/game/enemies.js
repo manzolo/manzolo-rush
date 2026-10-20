@@ -63,18 +63,53 @@ export class Enemies {
         this.shotMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         this.shotMesh.frustumCulled = false;
         scene.add(this.shotMesh);
-        // Muri di energia del boss: lastra luminosa larga una corsia più un contorno a filo.
-        const wallGeometry = new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0);
-        this.wallMesh = new THREE.InstancedMesh(wallGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .45, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), this.shots.length);
-        this.wallEdge = new THREE.InstancedMesh(wallGeometry, new THREE.MeshBasicMaterial({ color: 0xffb36b, wireframe: true, transparent: true, opacity: .8, toneMapped: false }), this.shots.length);
-        this.wallColor = new THREE.Color();
-        this.wallMesh.setColorAt(0, this.wallColor);
-        for (const mesh of [this.wallMesh, this.wallEdge]) {
+        // Colpi del boss. Muro pieno = cortina di plasma animata (shader) tra due piloni;
+        // barra bassa/alta = due raggi laser con nucleo bianco tesi tra gli stessi piloni.
+        const inst = (geometry, material, count) => {
+            const mesh = new THREE.InstancedMesh(geometry, material, count);
             mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
             mesh.frustumCulled = false;
             mesh.count = 0;
             scene.add(mesh);
-        }
+            return mesh;
+        };
+        const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false };
+        this.curtainMaterial = new THREE.ShaderMaterial({
+            ...additive,
+            side: THREE.DoubleSide,
+            uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0xff3b2f) } },
+            vertexShader: `varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    vec4 p = vec4(position, 1.0);
+                    #ifdef USE_INSTANCING
+                    p = instanceMatrix * p;
+                    #endif
+                    gl_Position = projectionMatrix * modelViewMatrix * p;
+                }`,
+            fragmentShader: `uniform float uTime; uniform vec3 uColor; varying vec2 vUv;
+                float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+                void main() {
+                    float side = pow(1.0 - min(vUv.x, 1.0 - vUv.x) * 2.0, 7.0);
+                    float cap = pow(1.0 - min(vUv.y, 1.0 - vUv.y) * 2.0, 10.0);
+                    float bands = 0.5 + 0.5 * sin(vUv.y * 34.0 - uTime * 11.0);
+                    float waves = 0.5 + 0.5 * sin(vUv.x * 18.0 + vUv.y * 6.0 + uTime * 5.0);
+                    float sparks = step(0.94, hash(floor(vec2(vUv.x * 14.0, vUv.y * 5.0 - uTime * 3.0))));
+                    float flicker = 0.85 + 0.15 * sin(uTime * 37.0 + vUv.y * 9.0);
+                    float a = (0.3 + 0.55 * bands * bands * waves + side * 1.4 + cap * 1.0 + sparks * 0.5) * flicker;
+                    vec3 col = mix(uColor, vec3(1.0, 0.92, 0.8), clamp(side * 0.7 + cap * 0.6 + sparks * 0.5, 0.0, 1.0));
+                    // Fusione additiva: l'intensità va nel colore, l'alpha resta piena.
+                    gl_FragColor = vec4(col * a, 1.0);
+                }`,
+        });
+        this.curtains = inst(new THREE.PlaneGeometry(1, 1).translate(0, .5, 0), this.curtainMaterial, this.shots.length);
+        const beam = new THREE.CylinderGeometry(.5, .5, 1, 12).rotateZ(Math.PI / 2);
+        this.beamCore = inst(beam, new THREE.MeshBasicMaterial({ color: 0xfff4dc, toneMapped: false }), this.shots.length * 2);
+        this.beamGlow = inst(beam, new THREE.MeshBasicMaterial({ color: 0xff9a2a, opacity: .7, ...additive }), this.shots.length * 2);
+        this.beamHalo = inst(beam, new THREE.MeshBasicMaterial({ color: 0xff6a1a, opacity: .25, ...additive }), this.shots.length * 2);
+        this.posts = inst(new THREE.CylinderGeometry(.11, .16, 1, 8).translate(0, .5, 0), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), this.shots.length * 2);
+        this.postColor = new THREE.Color();
+        this.posts.setColorAt(0, this.postColor);
     }
     spawn(type, lane, z, safeLane) {
         const e = this.pool.find(e => !e.active && e.type === type);
@@ -213,15 +248,42 @@ export class Enemies {
                     for (let i = 0; i < 4; i++)
                         e.limbs[i].rotation.x = Math.sin(phase + (i % 2) * Math.PI) * (i < 2 ? .55 : .35);
             }
-        let n = 0, walls = 0;
+        let n = 0, curtains = 0, beams = 0, posts = 0;
+        const time = performance.now() / 1000, d = this.shotDummy;
+        this.curtainMaterial.uniforms.uTime.value = time;
         for (const s of this.shots)
             if (s.active && s.wall) {
-                this.shotDummy.position.set(s.x, s.bottom, s.previousZ + (s.z - s.previousZ) * alpha);
-                this.shotDummy.scale.set(s.hw * 2, s.top - s.bottom, s.hd * 2);
-                this.shotDummy.updateMatrix();
-                this.wallMesh.setColorAt(walls, this.wallColor.set(s.wallKind === 'full' ? 0xff3b2f : 0xffa21f));
-                this.wallMesh.setMatrixAt(walls, this.shotDummy.matrix);
-                this.wallEdge.setMatrixAt(walls++, this.shotDummy.matrix);
+                const z = s.previousZ + (s.z - s.previousZ) * alpha, w = s.hw * 2, full = s.wallKind === 'full';
+                d.rotation.set(0, 0, 0);
+                if (full) {
+                    d.position.set(s.x, 0, z);
+                    d.scale.set(w, s.top, 1);
+                    d.updateMatrix();
+                    this.curtains.setMatrixAt(curtains++, d.matrix);
+                }
+                else
+                    for (const f of [.28, .78]) {
+                        // Due raggi che pulsano sfasati; lo spessore del bagliore "respira".
+                        const y = s.bottom + (s.top - s.bottom) * f, pulse = 1 + Math.sin(time * 18 + f * 9) * .15;
+                        d.position.set(s.x, y, z);
+                        d.scale.set(w, .1, .1);
+                        d.updateMatrix();
+                        this.beamCore.setMatrixAt(beams, d.matrix);
+                        d.scale.set(w, .32 * pulse, .32 * pulse);
+                        d.updateMatrix();
+                        this.beamGlow.setMatrixAt(beams, d.matrix);
+                        d.scale.set(w * 1.02, .85 * pulse, .85 * pulse);
+                        d.updateMatrix();
+                        this.beamHalo.setMatrixAt(beams++, d.matrix);
+                    }
+                // Piloni emettitori ai due lati della corsia.
+                for (const side of [-1, 1]) {
+                    d.position.set(s.x + side * (s.hw + .05), 0, z);
+                    d.scale.set(1, full ? s.top + .25 : s.top + .15, 1);
+                    d.updateMatrix();
+                    this.posts.setMatrixAt(posts, d.matrix);
+                    this.posts.setColorAt(posts++, this.postColor.set(full ? 0xff5040 : 0xffb347));
+                }
             }
             else if (s.active) {
                 this.shotDummy.position.set(s.x, s.y, s.previousZ + (s.z - s.previousZ) * alpha);
@@ -231,11 +293,11 @@ export class Enemies {
             }
         this.shotMesh.count = n;
         this.shotMesh.instanceMatrix.needsUpdate = true;
-        for (const mesh of [this.wallMesh, this.wallEdge]) {
-            mesh.count = walls;
+        for (const [mesh, count] of [[this.curtains, curtains], [this.beamCore, beams], [this.beamGlow, beams], [this.beamHalo, beams], [this.posts, posts]]) {
+            mesh.count = count;
             mesh.instanceMatrix.needsUpdate = true;
         }
-        if (this.wallMesh.instanceColor)
-            this.wallMesh.instanceColor.needsUpdate = true;
+        if (this.posts.instanceColor)
+            this.posts.instanceColor.needsUpdate = true;
     }
 }

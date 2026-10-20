@@ -18,6 +18,8 @@ export class UI {
             document.body.appendChild(el);
             this.flyPool.push({ el, time: 0 });
         }
+        this.shown = this.heat = this.bump = 0;
+        this.lastGlow = this.lastScale = -1;
         this.popPool = [];
         this.popIndex = 0;
         this.popVector = new THREE.Vector3();
@@ -50,10 +52,42 @@ export class UI {
         this.popVector.set(x, y, z).project(camera);
         p.el.textContent = text;
         p.el.className = combo ? 'score-pop combo' : 'score-pop';
+        // Più punti = scritta più grande; ogni uccisione alimenta il bagliore del punteggio.
+        const points = parseInt(text.replace(/\D/g, ''), 10) || 0;
+        p.size = Math.min(1.9, .85 + points / 600);
+        this.heat = Math.min(10, this.heat + .6 + points / 250);
+        this.bump = Math.min(.5, this.bump + .14 + points / 4000);
         p.el.style.left = `${(this.popVector.x * .5 + .5) * innerWidth}px`;
         p.el.style.top = `${(-this.popVector.y * .5 + .5) * innerHeight}px`;
         p.time = .9;
         p.el.style.display = 'block';
+    }
+    // Punteggio "vivo": il numero rincorre il valore reale, pulsa a ogni guadagno e si accende
+    // con un bagliore che cresce con le uccisioni ravvicinate (verde → oro → arancio) e poi si spegne.
+    updateScore(dt, g) {
+        const target = Math.floor(g.score);
+        if (target < this.shown)
+            this.shown = target;
+        this.shown += (target - this.shown) * (1 - Math.exp(-dt * 9));
+        if (target - this.shown < 1)
+            this.shown = target;
+        this.text('score', Math.floor(this.shown).toString().padStart(6, '0'));
+        this.heat *= Math.exp(-dt * .45);
+        this.bump *= Math.exp(-dt * 7);
+        const el = this.nodes.score;
+        if (!el?.style)
+            return;
+        const h = Math.min(1, this.heat / 6), glow = Math.round(h * 100) / 100, scale = Math.round((1 + this.bump * .45) * 1000) / 1000;
+        if (glow !== this.lastGlow) {
+            this.lastGlow = glow;
+            const color = h < .5 ? `rgba(139,255,209,${.35 + h})` : h < .85 ? `rgba(255,211,109,${.4 + h * .6})` : `rgba(255,140,60,${.5 + h * .5})`;
+            el.style.textShadow = glow > .02 ? `0 2px 0 #0009, 0 0 ${8 + h * 26}px ${color}, 0 0 ${h * 60}px ${color}` : '';
+            el.style.color = h > .85 ? '#ffd9a0' : h > .5 ? '#ffeec2' : '';
+        }
+        if (scale !== this.lastScale) {
+            this.lastScale = scale;
+            el.style.transform = scale > 1.001 ? `scale(${scale})` : '';
+        }
     }
     announce(text) { this.nodes.announcement.textContent = text; this.announcementTimer = 2.1; }
     coinFly() {
@@ -64,6 +98,7 @@ export class UI {
         }
     }
     update(dt, g) {
+        this.updateScore(dt, g);
         this.announcementTimer -= dt;
         if (this.announcementTimer <= 0)
             this.nodes.announcement.textContent = '';
@@ -71,7 +106,7 @@ export class UI {
             if (p.time > 0) {
                 p.time -= dt;
                 const t = 1 - p.time / .9;
-                p.el.style.transform = `translate(-50%,${-60 * t}px) scale(${1 + .25 * Math.min(1, t * 4) - .15 * t})`;
+                p.el.style.transform = `translate(-50%,${-70 * t}px) scale(${(p.size || 1) * (1 + .35 * Math.min(1, t * 5) - .2 * t)})`;
                 p.el.style.opacity = t < .7 ? 1 : 1 - (t - .7) / .3;
                 if (p.time <= 0)
                     p.el.style.display = 'none';
@@ -89,7 +124,6 @@ export class UI {
         if (this.timer > 0)
             return;
         this.timer = .08;
-        this.text('score', Math.floor(g.score).toString().padStart(6, '0'));
         this.text('coins', g.coins);
         this.text('distance', `${Math.floor(g.distance)} m`);
         this.text('lives', '♥ '.repeat(Math.max(0, g.player.lives)) + '♡ '.repeat(Math.max(0, CONFIG.player.lives - g.player.lives)));
@@ -132,6 +166,8 @@ export class UI {
     }
     reset() {
         this.last = {};
+        this.shown = this.heat = this.bump = 0;
+        this.lastGlow = this.lastScale = -1;
         this.lastGun = null;
         this.timer = 0;
         this.announcementTimer = 0;

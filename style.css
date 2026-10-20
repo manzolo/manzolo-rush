@@ -829,13 +829,19 @@ body.playing .hero-stage {
     font-style:italic;
     font-size:22px;
     color:#fff;
-    text-shadow:0 2px 0 #0008,0 0 12px #8bffd1;
+    text-shadow:0 2px 0 #0009,0 0 10px #8bffd1,0 0 24px #8bffd1aa;
     white-space:nowrap;
 }
 .score-pop.combo {
-    color:var(--gold);
-    font-size:27px;
-    text-shadow:0 2px 0 #0008,0 0 14px #ffcf6a;
+    color:#fff1c2;
+    font-size:26px;
+    text-shadow:0 2px 0 #0009,0 0 10px #ffcf6a,0 0 26px #ff9a3caa,0 0 44px #ff7a3066;
+}
+/* Il contatore pulsa dal bordo sinistro, senza spostare l'HUD. */
+.score-panel>strong {
+    transform-origin:left center;
+    transition:color .3s;
+    text-shadow:0 2px 0 #0009;
 }
 #next-life {
     display:block;

@@ -1014,5 +1014,173 @@
     "width": 1254,
     "height": 1254,
     "anchor": "bottom"
+  },
+  "weapon_scatter": {
+    "file": "weapon_scatter.webp",
+    "png": "weapon_scatter.png",
+    "small": "128/weapon_scatter.webp",
+    "width": 313,
+    "height": 264,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      313,
+      365
+    ]
+  },
+  "weapon_plasma": {
+    "file": "weapon_plasma.webp",
+    "png": "weapon_plasma.png",
+    "small": "128/weapon_plasma.webp",
+    "width": 310,
+    "height": 237,
+    "anchor": "center",
+    "cell": [
+      316,
+      0,
+      626,
+      365
+    ]
+  },
+  "weapon_laser": {
+    "file": "weapon_laser.webp",
+    "png": "weapon_laser.png",
+    "small": "128/weapon_laser.webp",
+    "width": 313,
+    "height": 250,
+    "anchor": "center",
+    "cell": [
+      627,
+      0,
+      940,
+      365
+    ]
+  },
+  "weapon_rocket": {
+    "file": "weapon_rocket.webp",
+    "png": "weapon_rocket.png",
+    "small": "128/weapon_rocket.webp",
+    "width": 313,
+    "height": 249,
+    "anchor": "center",
+    "cell": [
+      941,
+      0,
+      1254,
+      365
+    ]
+  },
+  "shot_scatter": {
+    "file": "shot_scatter.webp",
+    "png": "shot_scatter.png",
+    "small": "128/shot_scatter.webp",
+    "width": 308,
+    "height": 252,
+    "anchor": "center",
+    "cell": [
+      0,
+      490,
+      313,
+      761
+    ]
+  },
+  "shot_plasma": {
+    "file": "shot_plasma.webp",
+    "png": "shot_plasma.png",
+    "small": "128/shot_plasma.webp",
+    "width": 310,
+    "height": 216,
+    "anchor": "center",
+    "cell": [
+      316,
+      490,
+      626,
+      761
+    ]
+  },
+  "shot_laser": {
+    "file": "shot_laser.webp",
+    "png": "shot_laser.png",
+    "small": "128/shot_laser.webp",
+    "width": 313,
+    "height": 159,
+    "anchor": "center",
+    "cell": [
+      627,
+      490,
+      940,
+      761
+    ]
+  },
+  "shot_rocket": {
+    "file": "shot_rocket.webp",
+    "png": "shot_rocket.png",
+    "small": "128/shot_rocket.webp",
+    "width": 313,
+    "height": 148,
+    "anchor": "center",
+    "cell": [
+      941,
+      490,
+      1254,
+      761
+    ]
+  },
+  "impact_scatter": {
+    "file": "impact_scatter.webp",
+    "png": "impact_scatter.png",
+    "small": "128/impact_scatter.webp",
+    "width": 293,
+    "height": 439,
+    "anchor": "center",
+    "cell": [
+      0,
+      812,
+      313,
+      1254
+    ]
+  },
+  "impact_plasma": {
+    "file": "impact_plasma.webp",
+    "png": "impact_plasma.png",
+    "small": "128/impact_plasma.webp",
+    "width": 310,
+    "height": 386,
+    "anchor": "center",
+    "cell": [
+      316,
+      812,
+      626,
+      1254
+    ]
+  },
+  "impact_laser": {
+    "file": "impact_laser.webp",
+    "png": "impact_laser.png",
+    "small": "128/impact_laser.webp",
+    "width": 313,
+    "height": 442,
+    "anchor": "center",
+    "cell": [
+      627,
+      812,
+      940,
+      1254
+    ]
+  },
+  "impact_rocket": {
+    "file": "impact_rocket.webp",
+    "png": "impact_rocket.png",
+    "small": "128/impact_rocket.webp",
+    "width": 313,
+    "height": 386,
+    "anchor": "center",
+    "cell": [
+      941,
+      812,
+      1254,
+      1254
+    ]
   }
 }
