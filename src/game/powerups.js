@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { material } from './models.js';
 import { SPRITES } from './sprites.js';
+import { coinLaneReachable } from './collisions.js';
 export const POWER_LABELS = { triple: 'TRIPLE', shield: 'SCUDO', magnet: 'MAGNETE', double: 'PUNTI ×2' };
 export const POWER_SPRITES = { triple: 'powerup_triple', shield: 'powerup_shield', magnet: 'powerup_magnet', double: 'powerup_multiplier' };
 const COLORS = { triple: 0xfa9b86, shield: 0x8bffd1, magnet: 0xbfa6ff, double: 0xffdc80 };
@@ -79,6 +80,7 @@ export class Pickups {
         if (c) {
             c.active = true;
             c.x = x;
+            c.lane = Math.round(x / CONFIG.player.laneWidth);
             c.y = y;
             c.z = z;
         }
@@ -113,13 +115,15 @@ export class Pickups {
             if (c.active) {
                 c.z += game.speed * dt;
                 const dx = player.x - c.x, dy = player.y + .9 - c.y, dz = CONFIG.player.z - c.z;
-                if (game.powerups.magnet > 0 && dx * dx + dy * dy + dz * dz < CONFIG.bonuses.magnetRadius ** 2) {
+                const magnet = game.powerups.magnet > 0;
+                const reachable = coinLaneReachable(player, c, magnet);
+                if (magnet && reachable && dx * dx + dy * dy + dz * dz < CONFIG.bonuses.magnetRadius ** 2) {
                     const f = 1 - Math.exp(-dt * CONFIG.collection.magnetPull);
                     c.x += dx * f;
                     c.y += dy * f;
                     c.z += dz * f;
                 }
-                if (Math.abs(player.x - c.x) < CONFIG.collection.coinRadius && Math.abs(CONFIG.player.z - c.z) < CONFIG.collection.coinRadius && c.y > player.y - .2 && c.y < player.y + player.height + .35) {
+                if (reachable && Math.abs(player.x - c.x) < CONFIG.collection.coinRadius && Math.abs(CONFIG.player.z - c.z) < CONFIG.collection.coinRadius && c.y > player.y - .2 && c.y < player.y + player.height + .35) {
                     c.active = false;
                     game.coins++;
                     game.reward += CONFIG.bonuses.coinScore * game.multiplier;

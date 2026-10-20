@@ -1,8 +1,8 @@
 // Tutto il bilanciamento è qui. Unità: metri, secondi, punti vita.
 export const CONFIG = {
     step: 1 / 60, maxFrame: 0.1, maxPixelRatio: 2,
-    // Risoluzione adattiva: dopo 3 s sotto 45 fps riduce il DPR, mai sotto 1.
-    performance: { sampleSeconds: 3, slowFrame: 1 / 45, minPixelRatio: 1, ratioStep: .25 },
+    // Budget iniziale di pixel e adattamento a 55 fps, anche su schermi grandi/HiDPI.
+    performance: { maxPixels: 2000000, sampleSeconds: 1.5, slowFrame: 1 / 55, minPixelRatio: .7, ratioStep: .15 },
     player: { laneWidth: 3, laneTime: .15, jumpVelocity: 10.8, gravity: 27, slideDuration: .7, inputBuffer: .18, lives: 3, invulnerability: 1.5, halfWidth: .32, height: 1.65, slideHeight: .62, halfDepth: .32, z: 3 },
     speed: { initial: 15, max: 30, acceleration: .065 }, // Raggiunge il tetto in ~231 s.
     world: { chunkLength: 24, chunks: 9, spawnZ: -150, despawnZ: 14, themeSeconds: 45 },
@@ -17,17 +17,17 @@ export const CONFIG = {
     guns: { duration: 14, rowChance: .09, crateDrop: .3, burstFactor: .45, burstHeat: 3,
         types: {
             scatter: { label: 'SPARPAGLIATORE', color: 0xff9a3c, interval: .42, damage: 1, pellets: 5, spread: 9, speed: 80, life: .6, size: .26, length: .4, radius: .2, heat: .05, recoil: .2 },
-            plasma: { label: 'PLASMA', color: 0xb67cff, interval: .4, damage: 3, pellets: 1, spread: 0, speed: 52, life: 2.2, size: .78, length: .78, radius: .5, pierce: 2, heat: .06, recoil: .18 },
+            plasma: { label: 'PLASMA', color: 0xb67cff, interval: .4, damage: 3, pellets: 1, spread: 0, speed: 52, life: 2.2, size: .32, length: 1.7, radius: .5, pierce: 2, heat: .06, recoil: .18 },
             laser: { label: 'LASER', color: 0xff4d5e, interval: .1, damage: 2, pellets: 1, spread: 0, speed: 170, life: .9, size: .13, length: 3.6, radius: .12, pierce: 3, heat: .028, recoil: .05 },
             rocket: { label: 'RAZZI', color: 0xffd23c, interval: .62, damage: 6, pellets: 1, spread: 0, speed: 58, life: 2.4, size: .32, length: 1.1, radius: .3, splash: 3.2, heat: .09, recoil: .25 },
         } },
     // Sblocco graduale dei nemici e pesi relativi (il soldato resta sempre disponibile).
     enemyMix: [{ type: 'runner', unlock: 20, weight: .2 }, { type: 'drone', unlock: 30, weight: .23 }, { type: 'tank', unlock: 42, weight: .19 }],
-    obstacles: { crateHp: 2 },
+    obstacles: { crateHp: 2, passScores: { jump: 15, slide: 10 } },
     intro: { coinCount: 12, firstCoinZ: -8, barrierZ: -60, barZ: -110 },
     collection: { coinRadius: .8, powerRadius: .9, magnetPull: 11, arcCount: 7, arcHeight: 1.8, arcSpacing: 2 },
-    enemies: { soldier: { hp: 2, score: 100 }, runner: { hp: 3, score: 140, switchInterval: 1.7, turnLimitZ: -22, laneSmoothing: 5 }, drone: { hp: 2, score: 180, fireInterval: 2.4, fireNearZ: -18, fireFarZ: -65 }, tank: { hp: 9, score: 300 }, shotSpeed: 19, shotPool: 72, warningSeconds: .8 },
-    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, approachZ: -38, attackInterval: 2.2, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
+    enemies: { soldier: { hp: 2, score: 100, switchInterval: 3, turnLimitZ: -30, laneSmoothing: 3.5 }, runner: { hp: 3, score: 140, switchInterval: 1.7, turnLimitZ: -22, laneSmoothing: 5 }, drone: { hp: 2, score: 180, fireInterval: 2.4, fireNearZ: -18, fireFarZ: -65 }, tank: { hp: 9, score: 300 }, shotSpeed: 19, shotPool: 72, warningSeconds: .8 },
+    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, approachZ: -30, attackInterval: 2.2, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
     bonuses: { duration: 11, magnetRadius: 9, comboWindow: 3, maxCombo: 8, coinScore: 10, distanceScore: 1, types: ['triple', 'shield', 'magnet', 'double'] },
     juice: { particlePool: 320, hitStop: .045, shake: .14, killParticles: 16, landingParticles: 7 },
     audio: { master: .3, music: .12, tempo: 112 },

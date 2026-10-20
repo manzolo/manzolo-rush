@@ -65,6 +65,8 @@ export class Obstacles {
         o.x = lane * CONFIG.player.laneWidth;
         o.z = z;
         o.hp = CONFIG.obstacles.crateHp;
+        o.passScored = false;
+        o.passAction = null;
         o.mesh.visible = true;
         o.mesh.position.set(o.x, 0, z);
         return o;

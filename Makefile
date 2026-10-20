@@ -1,4 +1,4 @@
-# NEON RUSH — comandi di sviluppo, verifica e distribuzione.
+# MANZOLO RUSH — comandi di sviluppo, verifica e distribuzione.
 # `make` o `make help` elenca i target.
 
 SHELL := /bin/bash
@@ -6,7 +6,7 @@ SHELL := /bin/bash
 
 PORT        ?= 8000
 DOCKER_PORT ?= 8080
-IMAGE       ?= neon-rush
+IMAGE       ?= manzolo-rush
 TAG         ?= latest
 COMPOSE     ?= docker compose
 PYTHON      ?= python3
@@ -21,7 +21,7 @@ GRID_ROWS   ?= 5
 ## ------------------------------------------------------------ sviluppo
 
 help: ## Mostra questo aiuto
-	@echo "NEON RUSH — target disponibili:"; echo
+	@echo "MANZOLO RUSH — target disponibili:"; echo
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | \
 	  awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 	@echo; echo "Variabili: PORT=$(PORT) DOCKER_PORT=$(DOCKER_PORT) IMAGE=$(IMAGE):$(TAG)"
@@ -72,7 +72,7 @@ ps: ## Stato del container
 	$(COMPOSE) ps
 
 shell: ## Shell dentro il container
-	$(COMPOSE) exec neon-rush sh
+	$(COMPOSE) exec manzolo-rush sh
 
 run: build ## Esegue l'immagine senza compose (usa e getta)
 	docker run --rm -it -p $(DOCKER_PORT):80 --name $(IMAGE)-run $(IMAGE):$(TAG)

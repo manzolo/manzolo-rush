@@ -14,7 +14,7 @@ import { Enemies } from './enemies.js';
 import { Boss } from './boss.js';
 import { Audio } from './audio.js';
 import { Effects } from './effects.js';
-import { playerOverlap, bulletOverlap } from './collisions.js';
+import { playerOverlap, bulletOverlap, obstaclePassBonus } from './collisions.js';
 export class Game {
     constructor(renderer, scene, camera) {
         this.renderer = renderer;
@@ -216,6 +216,13 @@ export class Game {
                 if (this.state !== STATES.PLAY)
                     return;
             }
+            const bonus = obstaclePassBonus(this.player, obstacle) * this.multiplier;
+            if (bonus > 0) {
+                this.reward += bonus;
+                this.announce(`${obstacle.passAction === 'jump' ? 'SALTO' : 'SCIVOLATA'} +${bonus}`);
+                this.audio.play('coin');
+                this.effects.emit(this.player.x, .4, CONFIG.player.z, 0x8bffd1, 6);
+            }
         }
         this.effects.update(dt, this.speed);
         this.audio.update(dt, true);
@@ -352,6 +359,13 @@ export class Game {
         document.querySelector('#result-label').textContent = best ? 'NUOVO RECORD. ALZA L’ASTICELLA.' : 'UNA CORSA. UN’ALTRA STORIA.';
     }
     render(alpha, dt) {
+        // In pausa conserva esattamente l'ultimo fotogramma, incluse camera e luci.
+        // Ridisegna solo per mantenere valido il canvas anche dopo un resize.
+        if (this.state === STATES.PAUSE) {
+            this.ui.nodes['damage-flash'].style.opacity = 0;
+            this.renderer.render(this.scene, this.camera);
+            return;
+        }
         if (this.state === STATES.PAUSE || this.state === STATES.OVER || this.hitStop > 0)
             alpha = 1;
         this.player.render(alpha);
@@ -360,12 +374,12 @@ export class Game {
             this.player.root.visible = false;
         this.weapons.render(alpha);
         this.enemies.render(alpha);
+        this.boss.render(alpha);
         this.pickups.render(alpha, this.speed);
         this.effects.render(this);
         const menu = this.state === STATES.MENU;
         const offset = (alpha - 1) * (menu ? 3 : this.speed) * CONFIG.step;
-        for (const batch of this.world.batches)
-            batch.mesh.position.z = offset;
+        this.world.render(alpha, menu ? 3 : this.speed);
         for (const obstacle of this.obstacles.pool)
             if (obstacle.active)
                 obstacle.mesh.position.z = obstacle.z + offset;

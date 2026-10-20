@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { CONFIG } from './game/config.js';
 import { Loop } from './game/loop.js';
 import { Game } from './game/game.js';
-import { loadSprites } from './game/sprites.js';
+import { loadSprites, SPRITES } from './game/sprites.js';
+import { prepareGraphics } from './game/preload.js';
 // Gli sprite si caricano prima della scena: il pulsante resta su "CARICAMENTO…" per al più
 // CONFIG.sprites.loadTimeout secondi, poi si parte comunque con i modelli procedurali.
 if (CONFIG.sprites.enabled)
@@ -10,10 +11,12 @@ if (CONFIG.sprites.enabled)
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#game'),
-    antialias: !matchMedia('(pointer:coarse)').matches,
+    // Le texture sono già filtrate; evita il costo MSAA a schermo intero.
+    antialias: false,
     powerPreference: 'high-performance',
 });
-let pixelRatio = Math.min(devicePixelRatio, CONFIG.maxPixelRatio);
+const maxRatio = () => Math.min(devicePixelRatio, CONFIG.maxPixelRatio, Math.sqrt(CONFIG.performance.maxPixels / (innerWidth * innerHeight)));
+let pixelRatio = maxRatio();
 renderer.setPixelRatio(pixelRatio);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -26,10 +29,18 @@ sun.position.set(-20, 40, 15);
 scene.add(sun);
 const game = new Game(renderer, scene, camera);
 game.sunlight = sun;
+const playButton = document.querySelector('#play');
+playButton.disabled = true;
+document.querySelector('#play-label').textContent = 'PREPARAZIONE GRAFICA…';
 function resize() {
+    pixelRatio = Math.min(pixelRatio, maxRatio());
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(innerWidth, innerHeight);
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
+    // setSize/setPixelRatio svuotano il canvas: ridisegna nello stesso frame,
+    // anche in pausa, evitando un lampo dello sfondo al cambio di risoluzione.
+    game.render(1, 0);
 }
 addEventListener('resize', resize);
 resize();
@@ -43,6 +54,13 @@ renderer.domElement.addEventListener('webglcontextlost', event => {
 // Modalità diagnostica esplicita per test e bilanciamento; nessun global in produzione.
 if (new URLSearchParams(location.search).has('debug'))
     window.__game = game;
+await prepareGraphics(renderer, scene, camera, [
+    ...SPRITES.textures.values(),
+    ...(game.world.tiles || []).flatMap(theme => Object.values(theme)),
+]);
+game.render(1, 0);
+playButton.disabled = false;
+document.querySelector('#play-label').textContent = 'INIZIA LA CORSA';
 let sampleTime = 0, sampleFrames = 0;
 new Loop(dt => game.update(dt), (alpha, dt) => {
     game.render(alpha, dt);
@@ -55,9 +73,9 @@ new Loop(dt => game.update(dt), (alpha, dt) => {
     sampleFrames++;
     if (sampleTime >= CONFIG.performance.sampleSeconds) {
         game.frameTime = sampleTime / sampleFrames;
-        if (game.frameTime > CONFIG.performance.slowFrame && pixelRatio > CONFIG.performance.minPixelRatio) {
-            pixelRatio = Math.max(CONFIG.performance.minPixelRatio, pixelRatio - CONFIG.performance.ratioStep);
-            renderer.setPixelRatio(pixelRatio);
+        const minimum = Math.min(CONFIG.performance.minPixelRatio, maxRatio());
+        if (game.frameTime > CONFIG.performance.slowFrame && pixelRatio > minimum) {
+            pixelRatio = Math.max(minimum, pixelRatio - CONFIG.performance.ratioStep);
             resize();
         }
         sampleTime = 0;

@@ -1,4 +1,4 @@
-# NEON RUSH: gioco statico servito da nginx.
+# MANZOLO RUSH: gioco statico servito da nginx.
 FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf

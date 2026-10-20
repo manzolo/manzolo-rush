@@ -2,8 +2,29 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/game/config.js';
 import { makeRow, choosePattern } from '../src/game/spawner.js';
-import { playerOverlap, bulletOverlap, safeTransition } from '../src/game/collisions.js';
+import { playerOverlap, bulletOverlap, safeTransition, coinLaneReachable } from '../src/game/collisions.js';
 import { readSave, writeSave } from '../src/game/storage.js';
+test('monete: solo corsia occupata; magnete esteso al massimo di una corsia', () => {
+    for (const lane of [-1, 0, 1]) {
+        const player = { x: lane * CONFIG.player.laneWidth, lane };
+        for (const coinLane of [-1, 0, 1]) {
+            const coin = { lane: coinLane, x: coinLane * CONFIG.player.laneWidth };
+            assert.equal(coinLaneReachable(player, coin), lane === coinLane);
+            assert.equal(coinLaneReachable(player, coin, true), Math.abs(lane - coinLane) <= 1);
+            // Anche dopo un'attrazione precedente vale la corsia originale.
+            coin.x = player.x;
+            assert.equal(coinLaneReachable(player, coin, true), Math.abs(lane - coinLane) <= 1);
+        }
+    }
+});
+test('monete: un comando di cambio corsia non teletrasporta la raccolta', () => {
+    const player = { x: -3, lane: 1 };
+    assert.ok(coinLaneReachable(player, { lane: -1 }));
+    assert.ok(!coinLaneReachable(player, { lane: 1 }, true));
+    player.x = -.2;
+    assert.ok(coinLaneReachable(player, { lane: 0 }));
+    assert.ok(!coinLaneReachable(player, { lane: 1 }));
+});
 test('ogni pattern lascia libera la corsia dichiarata, anche ai limiti casuali', () => {
     for (const safe of [-1, 0, 1])
         for (const pattern of CONFIG.spawn.patterns)

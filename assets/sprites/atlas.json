@@ -1006,5 +1006,13 @@
       1242,
       1242
     ]
+  },
+  "boss_sentinel_v2": {
+    "file": "boss_sentinel_v2.webp",
+    "png": "boss_sentinel_v2.png",
+    "small": "128/boss_sentinel_v2.webp",
+    "width": 1254,
+    "height": 1254,
+    "anchor": "bottom"
   }
 }

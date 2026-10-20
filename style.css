@@ -395,6 +395,12 @@ footer i {
     background:#081c2bb0;
     backdrop-filter:blur(9px);
 }
+/* Il blur di un canvas WebGL può far lampeggiare il layer su alcune GPU. */
+#pause {
+    backdrop-filter:none;
+    background:#081c2be8;
+    isolation:isolate;
+}
 .dialog {
     width:min(410px,90vw);
     padding:40px 30px;
@@ -805,5 +811,10 @@ body.playing .hero-stage {
     }
     .dialog-art {
         display:none;
+    }
+}
+@media(max-height:600px) and (min-width:600px) {
+    .touch-intro {
+        display:none!important;
     }
 }

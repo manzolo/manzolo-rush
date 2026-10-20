@@ -1,8 +1,8 @@
 services:
-  neon-rush:
+  manzolo-rush:
     build: .
-    image: neon-rush:latest
-    container_name: neon-rush
+    image: manzolo-rush:latest
+    container_name: manzolo-rush
     ports:
       - "8080:80"
     restart: unless-stopped

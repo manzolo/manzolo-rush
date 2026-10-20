@@ -45,7 +45,17 @@ export class World {
             }
         }
         this.props = [];
+        this.propBatches = new Map();
         this.propsEnabled = s.enabled && s.props && THEME_PROPS.flat().concat(SHARED_PROPS).every(n => SPRITES.has(n));
+        if (this.propsEnabled)
+            for (const name of THEME_PROPS.flat().concat(SHARED_PROPS)) {
+                const mesh = new THREE.InstancedMesh(SPRITES.geometry(true), SPRITES.material(name), CONFIG.world.chunks * 4);
+                mesh.count = 0;
+                mesh.frustumCulled = false;
+                mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+                scene.add(mesh);
+                this.propBatches.set(name, mesh);
+            }
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(700, 700), this.groundMaterial);
         ground.rotation.x = -Math.PI / 2;
         ground.position.y = -.09;
@@ -108,9 +118,8 @@ export class World {
                 // Due billboard per lato e per chunk, tra marciapiede e palazzi; la texture dipende dal tema.
                 for (const side of [-1, 1])
                     for (let k = 0; k < 2; k++) {
-                        const mesh = new THREE.Mesh(SPRITES.geometry(true), new THREE.MeshBasicMaterial({ transparent: true, alphaTest: .35, side: THREE.DoubleSide, toneMapped: false }));
+                        const mesh = new THREE.Object3D();
                         mesh.position.x = side * (6.1 + ((c + k) % 2) * .5);
-                        scene.add(mesh);
                         this.props.push({ mesh, chunk: group, localZ: -11 + k * 12 + ((c * 5 + k * 3) % 5) - 2, index: c * 4 + k * 2 + (side > 0 ? 1 : 0) });
                     }
             }
@@ -163,10 +172,7 @@ export class World {
             const list = THEME_PROPS[this.theme];
             const name = p.index % 3 === 2 ? SHARED_PROPS[Math.floor(p.index / 3) % SHARED_PROPS.length] : list[(p.index * 7) % list.length];
             const h = PROP_HEIGHT[name] || 2;
-            if (p.mesh.material.map !== SPRITES.texture(name)) {
-                p.mesh.material.map = SPRITES.texture(name);
-                p.mesh.material.needsUpdate = true;
-            }
+            p.spriteName = name;
             p.mesh.scale.set(h * SPRITES.aspect(name), h, 1);
         }
         if (immediate) {
@@ -217,8 +223,16 @@ export class World {
             }
             batch.mesh.instanceMatrix.needsUpdate = true;
         }
-        for (const p of this.props)
+        for (const mesh of this.propBatches.values())
+            mesh.count = 0;
+        for (const p of this.props) {
             p.mesh.position.z = p.chunk.position.z + p.localZ;
+            p.mesh.updateMatrix();
+            const mesh = this.propBatches.get(p.spriteName);
+            mesh.setMatrixAt(mesh.count++, p.mesh.matrix);
+        }
+        for (const mesh of this.propBatches.values())
+            mesh.instanceMatrix.needsUpdate = true;
         const blend = 1 - Math.exp(-dt * .8), t = this.target;
         this.scene.background.lerp(this.color.set(t.sky), blend);
         this.scene.fog.color.lerp(this.color.set(t.fog), blend);
@@ -230,5 +244,13 @@ export class World {
         }
         this.accentMaterial.color.lerp(this.color.set(t.accent), blend);
         this.sun.material.color.lerp(this.color.set(t.sun), blend);
+    }
+    render(alpha, speed) {
+        const offset = (alpha - 1) * speed * CONFIG.step;
+        for (const batch of this.batches)
+            batch.mesh.position.z = offset;
+        // Stessa interpolazione della strada: i props non avanzano più a scatti a 60 Hz.
+        for (const mesh of this.propBatches.values())
+            mesh.position.z = offset;
     }
 }

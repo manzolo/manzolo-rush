@@ -16,7 +16,7 @@ export const SPRITES = {
     geometry(anchorBottom = true) { return anchorBottom ? PLANE_BOTTOM : PLANE_CENTER; },
     // Materiale non illuminato e non tone-mapped: i colori restano quelli dell'immagine.
     material(name, options = {}) {
-        return new THREE.MeshBasicMaterial({ map: this.texture(name), transparent: true, alphaTest: .35, side: THREE.DoubleSide, toneMapped: false, ...options });
+        return new THREE.MeshBasicMaterial({ map: this.texture(name), transparent: true, alphaTest: .35, side: THREE.DoubleSide, forceSinglePass: true, toneMapped: false, ...options });
     },
 };
 // Piano con lo sprite, alto `height` metri e largo in proporzione; origine ai piedi o al centro.
@@ -38,7 +38,7 @@ export function loadSprites(timeoutMs = 8000) {
             loader.load(base + atlas[name].file, texture => {
                 texture.colorSpace = THREE.SRGBColorSpace;
                 texture.minFilter = THREE.LinearMipmapLinearFilter;
-                texture.anisotropy = 4;
+                texture.anisotropy = /road|ground|sidewalk|plates/.test(name) ? 4 : 1;
                 SPRITES.textures.set(name, texture);
                 resolve();
             }, undefined, reject);

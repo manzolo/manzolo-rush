@@ -1,4 +1,4 @@
-# NEON RUSH
+# MANZOLO RUSH
 
 Un endless runner 3D a tre corsie: corri, salta, scivola e spara attraverso Sunset City, Dust Valley e Neon Outpost. Tutti i modelli, le texture e i suoni sono procedurali. HTML5, CSS e moduli JavaScript ES, **senza build e senza installazione di dipendenze** per giocare.
 
@@ -50,13 +50,14 @@ La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli 
 - **Tre vite**, con 1,5 secondi di invulnerabilità dopo un danno: consentono di recuperare un errore mantenendo il ritmo. Lo scudo assorbe un colpo senza consumare una vita.
 - Salto parabolico, cambio corsia in circa 150 ms e scivolata di 0,7 secondi. Salto e slide hanno un buffer di 180 ms prima dell’atterraggio/fine azione.
 - La raffica riscalda il blaster: al 100% l’arma si blocca fino al 25%. Il fuoco normale è sostenibile.
-- Soldati, pattugliatori che cambiano corsia, droni con sfere schivabili e tank con barra HP. I tipi più impegnativi si sbloccano gradualmente.
+- Soldati e pattugliatori cambiano corsia con movimento progressivo e inclinazione; i droni oscillano in volo, i tank hanno barra HP e assetto animato. Tutte le pose sono interpolate fra gli aggiornamenti della simulazione. I tipi più impegnativi si sbloccano gradualmente.
 - Barriere da saltare, barre da oltrepassare in scivolata, treni da evitare e casse distruttibili che possono rilasciare bonus.
+- Le monete si raccolgono solo nella corsia realmente occupata, anche durante i cambi. Il magnete raggiunge la stessa corsia e quelle immediatamente adiacenti, mai da un estremo all’altro.
 - Bonus di 11 secondi: fuoco triplo sulle corsie, scudo, magnete e punti ×2. Raccogliere nuovamente lo stesso bonus ne rinnova la durata.
-- Punteggio: distanza + monete + uccisioni. Uccisioni entro 3 secondi aumentano la combo fino a ×8; il bonus ×2 si applica ai punti guadagnati durante la sua durata.
-- Un boss ogni 90 secondi di gioco. I settori rossi anticipano le salve; resta sempre una corsia libera e le sfere sono evitabili anche in scivolata. Si può distruggere il boss o sopravvivere al duello, rinunciando al premio di uccisione.
+- Punteggio: distanza + monete + uccisioni; +15 per una barriera saltata e +10 per una barra superata in scivolata, assegnati una sola volta al passaggio completo (anche questi premi valgono il doppio con ×2). Uccisioni entro 3 secondi aumentano la combo fino a ×8; il bonus ×2 si applica ai punti guadagnati durante la sua durata.
+- Un boss ogni 90 secondi di gioco: sentinella a figura intera con reattore pulsante, carica dei cannoni e rinculo. I settori rossi anticipano le salve; resta sempre una corsia libera e le sfere sono evitabili anche in scivolata. Si può distruggere il boss o sopravvivere al duello, rinunciando al premio di uccisione.
 - Velocità iniziale 15 m/s, incremento graduale fino a 30 m/s. Le ambientazioni cambiano ogni 45 secondi, con colori, geometrie, nebbia e illuminazione differenti.
-- Record, monete totali e audio sono salvati nella chiave `neon-rush-save` di localStorage. I punti e le monete si registrano a fine corsa o tornando al menu. Storage indisponibile, pieno o corrotto non impedisce di giocare.
+- Record, monete totali e audio sono salvati nella chiave `manzolo-rush-save` di localStorage (un salvataggio della vecchia chiave `neon-rush-save` viene letto e migrato automaticamente). I punti e le monete si registrano a fine corsa o tornando al menu. Storage indisponibile, pieno o corrotto non impedisce di giocare.
 
 ## Armi raccoglibili
 
@@ -75,7 +76,7 @@ Raffica, surriscaldamento e fuoco triplo valgono per tutte. Nessuna arma perfora
 
 I pattern scritti a mano occupano al massimo due corsie e conservano una corsia di fuga. La via libera si sposta al massimo di una corsia tra righe successive. L’intervallo minimo lascia margine per lo spostamento e il passaggio di un treno. I pattugliatori non attraversano la corsia riservata e smettono di cambiare corsia vicino al giocatore. Durante il boss il percorso viene liberato, evitando combinazioni tra ostacoli e salve.
 
-La logica usa un timestep fisso di 1/60 s e il rendering interpola posizioni. Nove chunk riciclati, pool fissi per entità e proiettili, monete e particelle con `InstancedMesh`, otto batch instanziati per lo scenario, materiali condivisi, ombra a texture canvas senza shadow map. Pixel ratio massimo 2; una media sotto 45 fps per 3 secondi riduce progressivamente la risoluzione, fino a DPR 1. L’interfaccia numerica si aggiorna circa 12 volte al secondo.
+La logica usa un timestep fisso di 1/60 s e il rendering interpola posizioni. Nove chunk riciclati, pool fissi per entità e proiettili, monete e particelle con `InstancedMesh`, otto batch instanziati per lo scenario, materiali condivisi, ombra a texture canvas senza shadow map. Props raggruppati per texture e interpolati insieme alla strada. Pixel ratio massimo 2 con budget iniziale di 2 milioni di pixel; una media sotto 55 fps per 1,5 secondi riduce progressivamente la risoluzione fino a DPR 0,7. I cambi di risoluzione ridisegnano subito il canvas per evitare fotogrammi vuoti. In pausa camera, luci e trasformazioni rimangono congelate; il pannello non applica blur al canvas WebGL. L’interfaccia numerica si aggiorna circa 12 volte al secondo.
 
 L’obiettivo è 60 fps su desktop e fluidità su smartphone medio; **le prestazioni GPU non sono state misurate in questa sandbox**.
 
@@ -103,6 +104,7 @@ Oltre ai modelli procedurali, il gioco usa gli sprite in **`assets/sprites/`** (
 - **nemici**: soldato, pattugliatore, drone e tank come billboard; le hitbox restano quelle dei modelli (`src/game/enemies.js`);
 - **monete e power-up**: `InstancedMesh` con la texture dello sprite (`src/game/powerups.js`);
 - **esplosioni**: `THREE.Sprite` che si gonfia e svanisce su uccisioni, casse e danni (`src/game/effects.js`);
+- **boss**: `boss_sentinel_v2.webp`, generato con OpenAI `image_gen`, con alpha trasparente; originale PNG e prompt conservati in `assets/sprites/boss_sentinel_v2.png` e `assets/raw/boss_sentinel_v2.prompt.md`;
 - **interfaccia**: icone di monete, arma, power-up e boss, avatar accanto alle vite, protagonista animato nel menu e nelle schermate di pausa e game over (`index.html`, `style.css`).
 
 Il caricamento è in `src/game/sprites.js`: `loadSprites()` legge `atlas.json` e le texture prima di costruire la scena (al più `CONFIG.sprites.loadTimeout` secondi). Se un file manca o il caricamento fallisce, il modulo interessato torna al modello procedurale senza errori. In `CONFIG.sprites` si possono disattivare `hero`, `enemies`, `pickups` ed `explosions` singolarmente, oppure tutto con `enabled: false`; `heroAngle` ed `enemyAngle` regolano l’inclinazione dei billboard rispetto alla camera.
@@ -143,7 +145,7 @@ npm run check
 npm test
 ```
 
-`check` esegue `node --check` su tutti i moduli. I sei test di logica coprono pattern e vie libere, tempi di cambio corsia, selezione pesata, hitbox salto/slide, collisioni spazzate dei proiettili e salvataggi corrotti/negati.
+`check` esegue `node --check` su tutti i moduli. I test di logica coprono le regole di corsia delle monete e del magnete, pattern e vie libere, tempi di cambio corsia, selezione pesata, hitbox salto/slide, collisioni spazzate dei proiettili e salvataggi corrotti/negati.
 
 La simulazione d’integrazione usa **Three.js reale 0.169.0**, un DOM minimo e un renderer fittizio. Se possiedi una copia locale della libreria:
 
@@ -151,7 +153,7 @@ La simulazione d’integrazione usa **Three.js reale 0.169.0**, un DOM minimo e 
 THREE_MODULE=/percorso/three/build/three.module.js node tests/simulation.mjs
 ```
 
-Sono passate **15 verifiche d’integrazione**: avvio, movimento, buffer, pausa, overheat e recupero, combattimento, combo, scudo, game over/retry, raccolta, boss, salvataggio singolo, corsa lunga con pool stabili, camera verticale, touch simulato e tre corse da 184 secondi con semi riproducibili e un controller automatico. Queste ultime conservano tutte e tre le vite **senza invulnerabilità artificiale**. La verifica separata di stabilità usa invece invulnerabilità per osservare l’intero ciclo. Sono stati osservati tre ambienti, due boss e nessuna crescita del numero di oggetti della scena.
+Sono passate **19 verifiche d’integrazione**, incluse raccolta per corsia, pausa con scena immobile, premi salto/scivolata e pattugliamento interpolato: avvio, movimento, buffer, pausa, overheat e recupero, combattimento, combo, scudo, game over/retry, raccolta, boss, salvataggio singolo, corsa lunga con pool stabili, camera verticale, touch simulato e tre corse da 184 secondi con semi riproducibili e un controller automatico. Queste ultime conservano tutte e tre le vite **senza invulnerabilità artificiale**. La verifica separata di stabilità usa invece invulnerabilità per osservare l’intero ciclo. Sono stati osservati tre ambienti, due boss e nessuna crescita del numero di oggetti della scena.
 
 Questi test verificano la logica e le trasformazioni, **non** il rendering WebGL, l’ascolto dell’audio, gli eventi touch reali o il frame rate.
 

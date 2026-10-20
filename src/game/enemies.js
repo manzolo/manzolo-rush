@@ -77,12 +77,15 @@ export class Enemies {
         e.previousX = e.x;
         e.maxHp = CONFIG.enemies[type].hp;
         e.hp = e.maxHp;
-        e.age = 0;
+        e.age = e.previousAge = 0;
+        e.phase = (lane + 1) * 1.7 + Math.abs(z) * .09;
+        e.hover = e.previousHover = 0;
         e.flash = 0;
         e.fireTimer = CONFIG.enemies.drone.fireInterval;
-        e.switchTimer = CONFIG.enemies.runner.switchInterval;
+        e.switchTimer = (CONFIG.enemies[type].switchInterval || 3) + (lane + 1) * .15;
         e.mesh.visible = true;
         e.mesh.position.set(e.x, 0, z);
+        e.mesh.rotation.set(0, 0, 0);
         e.bar.scale.x = 1.4;
         return e;
     }
@@ -103,6 +106,8 @@ export class Enemies {
     update(dt, game) {
         for (const e of this.pool)
             if (e.active) {
+                e.previousAge = e.age;
+                e.previousHover = e.hover;
                 e.age += dt;
                 e.previousX = e.x;
                 e.previousZ = e.z;
@@ -110,38 +115,29 @@ export class Enemies {
                 e.flash = Math.max(0, e.flash - dt);
                 for (const p of e.parts)
                     p.mesh.material = e.flash > 0 ? white : p.material;
-                if (e.sprite) {
-                    // Il colpo si segnala con un tinta chiara e un piccolo "pop" di scala.
-                    e.sprite.material.color.setScalar(e.flash > 0 ? 2.2 : 1);
-                    const h = e.type === 'tank' ? 2.2 : e.type === 'drone' ? 1.2 : 1.95, pop = e.flash > 0 ? 1.08 : 1;
-                    e.sprite.scale.set(h * SPRITES.aspect(e.spriteName) * pop, h * pop, 1);
-                    if (e.type === 'soldier' || e.type === 'runner')
-                        e.sprite.position.y = Math.abs(Math.sin(e.age * 9)) * .07;
-                }
-                if (e.type === 'runner') {
+                const movement = CONFIG.enemies[e.type];
+                if (e.type === 'runner' || e.type === 'soldier') {
                     e.switchTimer -= dt;
-                    // Lo spostamento non può attraversare la corsia libera né iniziare a ridosso del giocatore.
-                    if (e.switchTimer <= 0 && e.z < CONFIG.enemies.runner.turnLimitZ) {
-                        e.switchTimer = CONFIG.enemies.runner.switchInterval;
+                    // Pattuglia solo tra corsie adiacenti occupabili, mai attraverso la via di fuga.
+                    if (e.switchTimer <= 0 && e.z < movement.turnLimitZ && e.z > -85) {
+                        e.switchTimer = movement.switchInterval;
                         const next = e.lane === -1 ? 0 : e.lane === 1 ? 0 : (e.safeLane === -1 ? 1 : -1);
                         if (next !== e.safeLane)
                             e.lane = next;
                     }
-                    e.x += (e.lane * CONFIG.player.laneWidth - e.x) * (1 - Math.exp(-dt * CONFIG.enemies.runner.laneSmoothing));
+                    e.x += (e.lane * CONFIG.player.laneWidth - e.x) * (1 - Math.exp(-dt * movement.laneSmoothing));
                 }
                 if (e.type === 'drone') {
+                    e.x = e.lane * CONFIG.player.laneWidth + Math.sin(e.age * 1.8 + e.phase) * .28;
+                    e.hover = Math.sin(e.age * 3 + e.phase) * .12;
+                    e.bottom = 1.15 + e.hover;
+                    e.top = 1.95 + e.hover;
                     e.fireTimer -= dt;
                     if (e.fireTimer <= 0 && e.z < CONFIG.enemies.drone.fireNearZ && e.z > CONFIG.enemies.drone.fireFarZ) {
                         e.fireTimer = CONFIG.enemies.drone.fireInterval;
                         this.shoot(e.lane, e.z, CONFIG.enemies.shotSpeed, CONFIG.enemies.warningSeconds);
                     }
                 }
-                e.mesh.position.set(e.x, 0, e.z);
-                if (e.type === 'drone')
-                    e.mesh.position.y = Math.sin(e.age * 4) * .1;
-                if (e.limbs)
-                    for (let i = 0; i < 4; i++)
-                        e.limbs[i].rotation.x = Math.sin(e.age * 7 + i * Math.PI) * .25;
                 if (e.z > CONFIG.world.despawnZ)
                     this.remove(e);
             }
@@ -175,8 +171,27 @@ export class Enemies {
     render(alpha = 1) {
         for (const e of this.pool)
             if (e.active) {
-                e.mesh.position.x = e.previousX + (e.x - e.previousX) * alpha;
-                e.mesh.position.z = e.previousZ + (e.z - e.previousZ) * alpha;
+                const age = e.previousAge + (e.age - e.previousAge) * alpha;
+                const phase = age * (e.type === 'runner' ? 12 : 8) + e.phase;
+                const stride = Math.sin(phase);
+                const x = e.previousX + (e.x - e.previousX) * alpha;
+                const lean = Math.max(-1, Math.min(1, (e.lane * CONFIG.player.laneWidth - x) / CONFIG.player.laneWidth));
+                e.mesh.position.set(x, e.previousHover + (e.hover - e.previousHover) * alpha, e.previousZ + (e.z - e.previousZ) * alpha);
+                e.mesh.rotation.z = e.type === 'drone' ? Math.cos(age * 1.8 + e.phase) * -.065 : e.type === 'tank' ? stride * .008 : -lean * .16 + stride * .025;
+                if (e.sprite) {
+                    const h = e.type === 'tank' ? 2.2 : e.type === 'drone' ? 1.2 : 1.95;
+                    const walking = e.type === 'soldier' || e.type === 'runner';
+                    const bounce = walking ? (1 - Math.cos(phase * 2)) * .045 : 0;
+                    const squash = walking ? 1 + stride * .018 : 1;
+                    const pop = e.flash > 0 ? 1.06 : 1;
+                    e.sprite.material.color.setScalar(e.flash > 0 ? 2.2 : 1);
+                    e.sprite.position.y = e.type === 'drone' ? 1.55 : bounce;
+                    e.sprite.rotation.y = CONFIG.sprites.enemyAngle + lean * .22;
+                    e.sprite.scale.set(h * SPRITES.aspect(e.spriteName) * pop / squash, h * pop * squash, 1);
+                }
+                if (e.limbs)
+                    for (let i = 0; i < 4; i++)
+                        e.limbs[i].rotation.x = Math.sin(phase + (i % 2) * Math.PI) * (i < 2 ? .55 : .35);
             }
         let n = 0;
         for (const s of this.shots)

@@ -77,8 +77,126 @@ check('scudo assorbe un colpo, tre vite e retry pulito', () => {
     assert.equal(g.boss.active, false);
 });
 check('bonus e monete raccolti', () => { g.start(); g.pickups.reset(); g.pickups.coin(0, .8, 2.8); g.pickups.power(0, 2.8, 'triple'); g.update(CONFIG.step); assert.equal(g.coins, 1); assert.ok(g.powerups.triple > 0); });
+check('raccolta reale: corsia propria e solo adiacenti con magnete', () => {
+    for (const lane of [-1, 0, 1])
+        for (const magnet of [false, true]) {
+            g.start();
+            g.pickups.reset();
+            g.speed = 0;
+            g.player.x = lane * CONFIG.player.laneWidth;
+            g.powerups.magnet = magnet ? 10 : 0;
+            for (const coinLane of [-1, 0, 1])
+                g.pickups.coin(coinLane * CONFIG.player.laneWidth, .85, CONFIG.player.z);
+            for (let i = 0; i < 60; i++)
+                g.pickups.update(CONFIG.step, g);
+            assert.equal(g.coins, magnet ? (lane === 0 ? 3 : 2) : 1);
+            for (const c of g.pickups.coins.filter(c => c.active))
+                assert.equal(c.x, c.lane * CONFIG.player.laneWidth, 'monete fuori portata non attirate');
+        }
+    g.start();
+    g.pickups.reset();
+    g.pickups.coin(0, .85, CONFIG.player.z);
+    g.player.y = 2;
+    g.pickups.update(0, g);
+    assert.equal(g.coins, 0, 'saltare sopra una moneta non la raccoglie');
+});
+check('pausa: camera, scena, tempo e pannello restano fermi fino alla ripresa', () => {
+    g.start();
+    g.player.command('right');
+    ticks(2);
+    g.pause();
+    const before = { camera: camera.position.toArray(), fov: camera.fov, player: g.player.root.position.toArray(), time: g.time };
+    for (let i = 0; i < 90; i++) {
+        g.update(CONFIG.step);
+        g.render((i % 7) / 7, CONFIG.step);
+        g.pause(true); // blur/visibility ripetuti non devono mai riattivare il gioco.
+        assert.equal(g.state, 'pause');
+        assert.ok(!node('#pause').classes.has('hidden'));
+    }
+    assert.deepEqual({ camera: camera.position.toArray(), fov: camera.fov, player: g.player.root.position.toArray(), time: g.time }, before);
+    g.resume();
+    ticks(1);
+    assert.ok(g.time > before.time);
+});
 check('boss: preavviso, corridoio libero, danno e premio', () => { g.start(); g.time = 90; g.update(CONFIG.step); assert.ok(g.boss.active); assert.equal(g.obstacles.pool.filter(o => o.active).length, 0); ticks(195); assert.ok(g.boss.warning > 0); assert.equal(g.boss.warnings.filter(m => m.visible).length, 2); g.boss.damage(g.boss.hp, g); assert.equal(g.boss.active, false); assert.ok(g.reward >= CONFIG.boss.score); });
+check('punti salto/scivolata solo dopo il passaggio, una volta, mai con urto o corsia diversa', () => {
+    for (const [type, action, lane, double, expected] of [
+        ['barrier', 'jump', 0, false, 15], ['bar', 'slide', 0, false, 10],
+        ['barrier', 'jump', 0, true, 30], ['bar', 'slide', 0, true, 20],
+        ['barrier', 'jump', 1, false, 0], ['bar', 'slide', 1, false, 0],
+        ['barrier', null, 0, false, 0], ['bar', null, 0, false, 0],
+    ]) {
+        g.start();
+        g.obstacles.reset();
+        g.pickups.reset();
+        g.spawner.timer = 100;
+        g.powerups.double = double ? 10 : 0;
+        const obstacle = g.obstacles.spawn(type, lane, -3);
+        if (action)
+            g.player.command(action);
+        // Il bonus distanza ×2 è indipendente dal premio per l'ostacolo.
+        ticks(8);
+        assert.equal(Math.round(g.reward - (double ? g.distance : 0)), 0, 'premio anticipato');
+        ticks(37);
+        assert.equal(Math.round(g.reward - (double ? g.distance : 0)), expected, `${type}/${action}/${lane}`);
+        ticks(20);
+        assert.equal(Math.round(g.reward - (double ? g.distance : 0)), expected, 'premio duplicato');
+        if (expected) {
+            assert.equal(g.player.lives, 3);
+            assert.ok(obstacle.passScored);
+        }
+        g.obstacles.remove(obstacle);
+        const reused = g.obstacles.spawn(type, lane, -3);
+        assert.equal(reused.passScored, false);
+        assert.equal(reused.passAction, null);
+    }
+});
+check('nemici mobili: nessun salto laterale, via di fuga libera, render interpolato', () => {
+    g.start();
+    g.enemies.reset();
+    for (const type of ['soldier', 'runner', 'drone', 'tank'])
+        for (const safeLane of [-1, 0, 1]) {
+            const lane = safeLane === -1 ? 0 : -1;
+            const e = g.enemies.spawn(type, lane, -60, safeLane);
+            let moved = false;
+            for (let i = 0; i < 360; i++) {
+                const before = e.x;
+                g.enemies.update(CONFIG.step, { speed: 0 });
+                moved ||= Math.abs(e.x - lane * CONFIG.player.laneWidth) > .1;
+                assert.ok(Math.abs(e.x - before) < .3, 'spostamento improvviso');
+                assert.ok(Math.abs(e.x - safeLane * CONFIG.player.laneWidth) > e.hw + CONFIG.player.halfWidth, 'corsia libera invasa');
+                g.enemies.render(.5);
+                assert.ok(Math.abs(e.mesh.position.x - (e.previousX + e.x) / 2) < 1e-8);
+            }
+            if (type === 'drone' || ((type === 'soldier' || type === 'runner') && safeLane !== 0))
+                assert.ok(moved, `${type} immobile`);
+            e.z = -10;
+            const lastLane = e.lane;
+            for (let i = 0; i < 180; i++)
+                g.enemies.update(CONFIG.step, { speed: 0 });
+            assert.equal(e.lane, lastLane, 'cambio corsia troppo vicino al giocatore');
+            g.enemies.reset();
+        }
+});
 check('salvataggio una volta sola anche passando dal game over al menu', () => { g.start(); g.coins = 11; g.score = 900; const before = g.save.coins; g.bank(); g.bank(); assert.equal(g.save.coins, before + 11); });
+check('plasma: core/scia/archi in pool, stessa potenza e pulizia dopo reset', () => {
+    g.start();
+    const w = g.weapons;
+    w.equip('plasma', g);
+    const count = scene.children.length;
+    for (const x of [-3, 0, 3])
+        w.fire(x, 1, -5, w.spec);
+    w.render(.5);
+    assert.equal(w.plasmaCore.count, 3);
+    assert.equal(w.plasmaTrail.count, 3);
+    assert.equal(w.plasmaArcs.count, 6);
+    assert.equal(w.ballMesh.count, 0);
+    assert.ok(w.pool.filter(b => b.active).every(b => b.damage === 3 && b.radius === .5 && b.pierce === 2));
+    w.reset();
+    w.render(1);
+    assert.equal(w.plasmaCore.count + w.plasmaTrail.count + w.plasmaArcs.count, 0);
+    assert.equal(scene.children.length, count);
+});
 check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () => {
     g.start();
     g.input.auto = true;
