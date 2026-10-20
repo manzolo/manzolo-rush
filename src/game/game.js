@@ -100,6 +100,7 @@ export class Game {
         this.combo = this.comboTimer = this.shake = this.hitStop = this.damageFlash = 0;
         this.speed = CONFIG.speed.initial;
         this.banked = false;
+        this.nextLifeAt = CONFIG.player.extraLifeEvery;
         for (const key in this.powerups)
             this.powerups[key] = 0;
         // Intro leggibile: monete subito, prima barriera dopo circa 4 secondi.
@@ -229,6 +230,7 @@ export class Game {
         this.shake = Math.max(0, this.shake - dt * .9);
         this.damageFlash = Math.max(0, this.damageFlash - dt);
         this.score = this.distance * CONFIG.bonuses.distanceScore + this.reward;
+        this.checkExtraLife();
         this.ui.update(dt, this);
     }
     combat() {
@@ -330,12 +332,28 @@ export class Game {
         this.kills++;
         this.combo = Math.min(CONFIG.bonuses.maxCombo, this.combo + 1);
         this.comboTimer = CONFIG.bonuses.comboWindow;
-        this.reward += CONFIG.enemies[enemy.type].score * Math.max(1, this.combo) * this.multiplier;
+        const points = CONFIG.enemies[enemy.type].score * Math.max(1, this.combo) * this.multiplier;
+        this.reward += points;
+        this.ui.scorePop(`+${points}`, enemy.x, enemy.type === 'drone' ? 2.6 : enemy.type === 'tank' ? 2.9 : 2.4, enemy.z, this.camera, this.combo > 1);
         this.effects.emit(enemy.x, 1, enemy.z, 0xffa46e, CONFIG.juice.killParticles);
         this.effects.burst(enemy.x, enemy.type === 'drone' ? 1.5 : 1, enemy.z, enemy.type === 'tank' ? 3.2 : 2.3);
         this.shake = CONFIG.juice.shake;
         this.hitStop = CONFIG.juice.hitStop;
         this.audio.play('explosion');
+    }
+    // Traguardi di punteggio: ogni CONFIG.player.extraLifeEvery punti un cuore in più (oltre i 3 iniziali).
+    checkExtraLife() {
+        while (this.score >= this.nextLifeAt) {
+            this.nextLifeAt += CONFIG.player.extraLifeEvery;
+            if (this.player.lives < CONFIG.player.maxLives) {
+                this.player.lives++;
+                this.announce('♥ VITA EXTRA!');
+                this.audio.play('power');
+                this.effects.emit(this.player.x, 1.4, CONFIG.player.z, 0xff7263, 18);
+            }
+            else
+                this.announce(`TRAGUARDO ${Math.floor(this.nextLifeAt - CONFIG.player.extraLifeEvery)}`);
+        }
     }
     announce(text) { this.ui.announce(text); }
     refreshSave() {

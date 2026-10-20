@@ -118,7 +118,7 @@ check('pausa: camera, scena, tempo e pannello restano fermi fino alla ripresa', 
     ticks(1);
     assert.ok(g.time > before.time);
 });
-check('boss: preavviso, corridoio libero, danno e premio', () => { g.start(); g.time = 90; g.update(CONFIG.step); assert.ok(g.boss.active); assert.equal(g.obstacles.pool.filter(o => o.active).length, 0); ticks(195); assert.ok(g.boss.warning > 0); assert.equal(g.boss.warnings.filter(m => m.visible).length, 2); g.boss.damage(g.boss.hp, g); assert.equal(g.boss.active, false); assert.ok(g.reward >= CONFIG.boss.score); });
+check('boss: preavviso (2 muri + corsia da saltare/scivolare), danno e premio', () => { g.start(); g.time = 90; g.update(CONFIG.step); assert.ok(g.boss.active); assert.equal(g.obstacles.pool.filter(o => o.active).length, 0); ticks(195); assert.ok(g.boss.warning > 0); assert.equal(g.boss.warnings.filter(m => m.visible).length, 3); assert.equal(g.boss.warnings.filter(m => m.material.color.getHex() === 0xff695c).length, 2); assert.ok(['low', 'high'].includes(g.boss.safeMove)); g.boss.damage(g.boss.hp, g); assert.equal(g.boss.active, false); assert.ok(g.reward >= CONFIG.boss.score); });
 check('punti salto/scivolata solo dopo il passaggio, una volta, mai con urto o corsia diversa', () => {
     for (const [type, action, lane, double, expected] of [
         ['barrier', 'jump', 0, false, 15], ['bar', 'slide', 0, false, 10],
@@ -274,28 +274,40 @@ check('tre corse da 3 minuti: il corridoio è percorribile senza invulnerabilit�
             g.start();
             for (let tick = 0; tick < 60 * 184; tick++) {
                 const blocked = new Set();
-                for (const entity of [...g.obstacles.pool, ...g.enemies.pool]) {
+                // I muri del boss bloccano la corsia come gli ostacoli; durante il preavviso il bot
+                // va nella corsia libera appena i muri della salva precedente lo permettono.
+                for (const entity of [...g.obstacles.pool, ...g.enemies.pool, ...g.enemies.shots.filter(shot => shot.wallKind === 'full')]) {
                     if (!entity.active || entity.z < -28 || entity.z > CONFIG.player.z + entity.hd + .5)
                         continue;
                     for (const lane of [-1, 0, 1])
                         if (Math.abs(lane * CONFIG.player.laneWidth - entity.x) < entity.hw + .5)
                             blocked.add(lane);
                 }
-                const options = [-1, 0, 1].filter(lane => !blocked.has(lane));
+                let options = [-1, 0, 1].filter(lane => !blocked.has(lane));
+                if (g.boss.active && g.boss.warning > 0 && options.includes(g.boss.safeLane))
+                    options = [g.boss.safeLane];
                 assert.ok(options.length, `nessun corridoio al tick ${tick}, seed ${seed}`);
                 options.sort((a, b) => Math.abs(a - g.player.lane) - Math.abs(b - g.player.lane));
                 const lane = options[0];
                 if (lane !== g.player.lane)
                     g.player.command(lane < g.player.lane ? 'left' : 'right');
-                // Le sfere ostili si possono sempre evitare in scivolata.
-                if (g.enemies.shots.some(shot => shot.active && shot.z > -10 && shot.z < 6) && g.player.slide < CONFIG.player.inputBuffer)
+                // Le sfere dei droni si possono sempre evitare in scivolata (i muri del boss no).
+                // Barre arancioni del boss nella propria corsia: si salta la bassa, si scivola sotto l'alta.
+                const bar = g.enemies.shots.find(shot => shot.active && (shot.wallKind === 'low' || shot.wallKind === 'high') && Math.abs(shot.x - g.player.x) < shot.hw + CONFIG.player.halfWidth && shot.z > -9 && shot.z < 1);
+                if (bar?.wallKind === 'low' && g.player.y === 0 && g.player.slide <= 0)
+                    g.player.command('jump');
+                else if (bar?.wallKind === 'high' && g.player.slide < CONFIG.player.inputBuffer)
+                    g.player.command('slide');
+                else if (g.enemies.shots.some(shot => shot.active && !shot.wall && shot.z > -10 && shot.z < 6) && g.player.slide < CONFIG.player.inputBuffer)
                     g.player.command('slide');
                 g.update(CONFIG.step);
                 if (tick % 12 === 0)
                     g.render(.5, .2);
                 assert.equal(g.state, 'play', `game over al tick ${tick}, seed ${seed}`);
             }
-            assert.equal(g.player.lives, CONFIG.player.lives, `danno nella corsa seed ${seed}`);
+            // Senza danni le vite sono le 3 iniziali più quelle dei traguardi di punteggio.
+            const expected = Math.min(CONFIG.player.maxLives, CONFIG.player.lives + Math.floor(g.score / CONFIG.player.extraLifeEvery));
+            assert.equal(g.player.lives, expected, `danno nella corsa seed ${seed}`);
         }
     }
     finally {

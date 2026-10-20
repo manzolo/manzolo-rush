@@ -58,11 +58,23 @@ export class Enemies {
             this.pool.push({ type, mesh, limbs, sprite, spriteName: name, parts, bar, active: false, x: 0, z: 0, hw: type === 'tank' ? .95 : .52, hd: type === 'tank' ? 1 : .42, bottom: type === 'drone' ? 1.15 : 0, top: type === 'drone' ? 1.95 : 1.95, flash: 0, age: 0 });
         }
         for (let i = 0; i < CONFIG.enemies.shotPool; i++)
-            this.shots.push({ active: false, x: 0, y: 0, z: 0, previousZ: 0, hw: .15, hd: .4, bottom: 0, top: 0, speed: 0, delay: 0 });
+            this.shots.push({ active: false, x: 0, y: 0, z: 0, previousZ: 0, hw: .15, hd: .4, bottom: 0, top: 0, speed: 0, delay: 0, wall: false, wallKind: '' });
         this.shotMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(.18, 6, 4), material(0xff665b, true), this.shots.length);
         this.shotMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         this.shotMesh.frustumCulled = false;
         scene.add(this.shotMesh);
+        // Muri di energia del boss: lastra luminosa larga una corsia più un contorno a filo.
+        const wallGeometry = new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0);
+        this.wallMesh = new THREE.InstancedMesh(wallGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .45, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), this.shots.length);
+        this.wallEdge = new THREE.InstancedMesh(wallGeometry, new THREE.MeshBasicMaterial({ color: 0xffb36b, wireframe: true, transparent: true, opacity: .8, toneMapped: false }), this.shots.length);
+        this.wallColor = new THREE.Color();
+        this.wallMesh.setColorAt(0, this.wallColor);
+        for (const mesh of [this.wallMesh, this.wallEdge]) {
+            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            mesh.frustumCulled = false;
+            mesh.count = 0;
+            scene.add(mesh);
+        }
     }
     spawn(type, lane, z, safeLane) {
         const e = this.pool.find(e => !e.active && e.type === type);
@@ -89,7 +101,11 @@ export class Enemies {
         e.bar.scale.x = 1.4;
         return e;
     }
-    shoot(lane, z, speed = CONFIG.enemies.shotSpeed, delay = 0) {
+    // wall: colpo del boss. 'full' = muro pieno (solo cambiando corsia), 'low' = barra bassa da
+    // saltare, 'high' = barra alta da passare in scivolata; false = sfera normale.
+    shoot(lane, z, speed = CONFIG.enemies.shotSpeed, delay = 0, wall = false) {
+        if (wall === true)
+            wall = 'full';
         const b = this.shots.find(s => !s.active);
         if (!b)
             return;
@@ -98,8 +114,12 @@ export class Enemies {
         b.y = .95;
         b.z = z;
         b.previousZ = z;
-        b.bottom = .79;
-        b.top = 1.11;
+        b.wall = Boolean(wall);
+        b.wallKind = wall || '';
+        b.bottom = wall === 'high' ? CONFIG.boss.highBottom : wall ? 0 : .79;
+        b.top = wall === 'low' ? CONFIG.boss.lowHeight : wall === 'high' ? CONFIG.boss.highTop : wall ? CONFIG.boss.wallHeight : 1.11;
+        b.hw = wall ? CONFIG.player.laneWidth * .45 : .15;
+        b.hd = wall ? CONFIG.boss.wallDepth : .4;
         b.speed = speed;
         b.delay = delay;
     }
@@ -193,9 +213,17 @@ export class Enemies {
                     for (let i = 0; i < 4; i++)
                         e.limbs[i].rotation.x = Math.sin(phase + (i % 2) * Math.PI) * (i < 2 ? .55 : .35);
             }
-        let n = 0;
+        let n = 0, walls = 0;
         for (const s of this.shots)
-            if (s.active) {
+            if (s.active && s.wall) {
+                this.shotDummy.position.set(s.x, s.bottom, s.previousZ + (s.z - s.previousZ) * alpha);
+                this.shotDummy.scale.set(s.hw * 2, s.top - s.bottom, s.hd * 2);
+                this.shotDummy.updateMatrix();
+                this.wallMesh.setColorAt(walls, this.wallColor.set(s.wallKind === 'full' ? 0xff3b2f : 0xffa21f));
+                this.wallMesh.setMatrixAt(walls, this.shotDummy.matrix);
+                this.wallEdge.setMatrixAt(walls++, this.shotDummy.matrix);
+            }
+            else if (s.active) {
                 this.shotDummy.position.set(s.x, s.y, s.previousZ + (s.z - s.previousZ) * alpha);
                 this.shotDummy.scale.setScalar(s.delay > 0 ? 1 + Math.sin(s.delay * 25) * .3 : 1);
                 this.shotDummy.updateMatrix();
@@ -203,5 +231,11 @@ export class Enemies {
             }
         this.shotMesh.count = n;
         this.shotMesh.instanceMatrix.needsUpdate = true;
+        for (const mesh of [this.wallMesh, this.wallEdge]) {
+            mesh.count = walls;
+            mesh.instanceMatrix.needsUpdate = true;
+        }
+        if (this.wallMesh.instanceColor)
+            this.wallMesh.instanceColor.needsUpdate = true;
     }
 }

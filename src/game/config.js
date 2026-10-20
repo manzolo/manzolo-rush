@@ -3,7 +3,8 @@ export const CONFIG = {
     step: 1 / 60, maxFrame: 0.1, maxPixelRatio: 2,
     // Budget iniziale di pixel e adattamento a 55 fps, anche su schermi grandi/HiDPI.
     performance: { maxPixels: 2000000, sampleSeconds: 1.5, slowFrame: 1 / 55, minPixelRatio: .7, ratioStep: .15 },
-    player: { laneWidth: 3, laneTime: .15, jumpVelocity: 10.8, gravity: 27, slideDuration: .7, inputBuffer: .18, lives: 3, invulnerability: 1.5, halfWidth: .32, height: 1.65, slideHeight: .62, halfDepth: .32, z: 3 },
+    // Vita extra ogni extraLifeEvery punti, fino a maxLives cuori.
+    player: { extraLifeEvery: 5000, maxLives: 5, laneWidth: 3, laneTime: .15, jumpVelocity: 10.8, gravity: 27, slideDuration: .7, inputBuffer: .18, lives: 3, invulnerability: 1.5, halfWidth: .32, height: 1.65, slideHeight: .62, halfDepth: .32, z: 3 },
     speed: { initial: 15, max: 30, acceleration: .065 }, // Raggiunge il tetto in ~231 s.
     world: { chunkLength: 24, chunks: 9, spawnZ: -150, despawnZ: 14, themeSeconds: 45 },
     spawn: { initialDelay: 3, intervalStart: 2.6, intervalMin: 1.75, intervalDecay: .003, obstaclePool: 52, enemyPool: 32, coinPool: 240, powerPool: 12,
@@ -27,7 +28,11 @@ export const CONFIG = {
     intro: { coinCount: 12, firstCoinZ: -8, barrierZ: -60, barZ: -110 },
     collection: { coinRadius: .8, powerRadius: .9, magnetPull: 11, arcCount: 7, arcHeight: 1.8, arcSpacing: 2 },
     enemies: { soldier: { hp: 2, score: 100, switchInterval: 3, turnLimitZ: -30, laneSmoothing: 3.5 }, runner: { hp: 3, score: 140, switchInterval: 1.7, turnLimitZ: -22, laneSmoothing: 5 }, drone: { hp: 2, score: 180, fireInterval: 2.4, fireNearZ: -18, fireFarZ: -65 }, tank: { hp: 9, score: 300 }, shotSpeed: 19, shotPool: 72, warningSeconds: .8 },
-    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, approachZ: -30, attackInterval: 2.2, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
+    // Le salve del boss sono muri alti wallHeight su due corsie: non si saltano né si scivola sotto.
+    // Nella terza arriva una barra bassa (alta lowHeight, da saltare) o una sbarra sospesa (da
+    // highBottom a highTop, da passare in scivolata). Sotto il 40% di vita l'intervallo si riduce di enragedRate.
+    // Il duello dura finché il boss non viene abbattuto.
+    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, wallHeight: 3.4, wallDepth: .5, enragedRate: .7, lowHeight: .9, highBottom: .95, highTop: 2.4, restAfter: 45, approachZ: -30, attackInterval: 2.2, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
     bonuses: { duration: 11, magnetRadius: 9, comboWindow: 3, maxCombo: 8, coinScore: 10, distanceScore: 1, types: ['triple', 'shield', 'magnet', 'double'] },
     juice: { particlePool: 320, hitStop: .045, shake: .14, killParticles: 16, landingParticles: 7 },
     audio: { master: .3, music: .12, tempo: 112 },

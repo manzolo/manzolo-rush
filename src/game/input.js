@@ -1,3 +1,6 @@
+// Fuoco: J o Ctrl; raffica: K o Shift (la raffica spara anche da sola).
+const FIRE_KEYS = ['KeyJ', 'ControlLeft', 'ControlRight'];
+const BURST_KEYS = ['KeyK', 'ShiftLeft', 'ShiftRight'];
 export class Input {
     constructor(canvas, fire, onPause) {
         this.queue = [];
@@ -11,7 +14,7 @@ export class Input {
         this.padLatch = {};
         const action = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'jump', KeyW: 'jump', Space: 'jump', ArrowDown: 'slide', KeyS: 'slide' };
         window.addEventListener('keydown', e => {
-            if (action[e.code] || ['KeyJ', 'KeyK', 'KeyP', 'Escape'].includes(e.code)) {
+            if (action[e.code] || FIRE_KEYS.includes(e.code) || BURST_KEYS.includes(e.code) || ['KeyP', 'Escape'].includes(e.code)) {
                 e.preventDefault();
                 if (!e.repeat) {
                     if (action[e.code])
@@ -77,6 +80,7 @@ export class Input {
         this.padFire = pad.buttons[7]?.pressed;
         this.padBurst = pad.buttons[5]?.pressed;
     }
-    get firing() { return this.mouse || this.keys.has('KeyJ') || this.keys.has('KeyK') || this.auto || this.touchHeld || this.padFire || this.padBurst; }
-    get burst() { return this.keys.has('KeyK') || (this.touchHeld && this.holdTime > .28) || this.padBurst; }
+    get firing() { return this.mouse || FIRE_KEYS.some(k => this.keys.has(k)) || this.burstKey || this.auto || this.touchHeld || this.padFire || this.padBurst; }
+    get burst() { return this.burstKey || (this.touchHeld && this.holdTime > .28) || this.padBurst; }
+    get burstKey() { return BURST_KEYS.some(k => this.keys.has(k)); }
 }

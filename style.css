@@ -818,3 +818,27 @@ body.playing .hero-stage {
         display:none!important;
     }
 }
+
+/* Punti del nemico abbattuto */
+.score-pop {
+    position:fixed;
+    z-index:34;
+    display:none;
+    pointer-events:none;
+    font-weight:900;
+    font-style:italic;
+    font-size:22px;
+    color:#fff;
+    text-shadow:0 2px 0 #0008,0 0 12px #8bffd1;
+    white-space:nowrap;
+}
+.score-pop.combo {
+    color:var(--gold);
+    font-size:27px;
+    text-shadow:0 2px 0 #0008,0 0 14px #ffcf6a;
+}
+#next-life {
+    display:block;
+    margin-top:6px;
+    font-size:8px;
+}

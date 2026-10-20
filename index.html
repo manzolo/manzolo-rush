@@ -16,15 +16,15 @@
 <h1>RUN<br>MANZOLO<br><span>RUN!</span></h1><p class="intro">Le giornate sono un pugnello.</p>
 <button id="play" class="primary" disabled><span id="play-label">CARICAMENTO…</span><span>↗</span></button>
 <div class="menu-stats"><div><small>IL TUO RECORD</small><strong id="menu-best">000000</strong></div><div><small>MONETE TOTALI</small><strong class="gold" id="menu-coins">0</strong></div></div>
-<div class="menu-controls"><span><kbd>←</kbd><kbd>→</kbd> schiva</span><span><kbd>↑</kbd> salta</span><span><kbd>↓</kbd> scivola</span><span><kbd>J</kbd> spara</span><span><kbd>K</kbd> raffica</span></div>
+<div class="menu-controls"><span><kbd>←</kbd><kbd>→</kbd> schiva</span><span><kbd>↑</kbd> salta</span><span><kbd>↓</kbd> scivola</span><span><kbd>Ctrl</kbd> spara</span><span><kbd>Shift</kbd> raffica</span></div>
 <p class="touch-intro">Scorri per muoverti · Tocca FUOCO per sparare</p>
 </main>
 <div class="hero-stage" aria-hidden="true"><img src="assets/sprites/hero_front_idle.webp" alt="" onerror="this.parentNode.remove()"></div>
 <div id="hud" class="hidden">
 <div class="score-panel"><small>DISTANZA + STILE</small><strong id="score">000000</strong><div><span class="gold"><img class="hud-icon" src="assets/sprites/128/coin.webp" alt="" onerror="this.replaceWith('◈ ')"><b id="coins">0</b></span><span id="distance">0 m</span><span id="combo"></span></div></div>
-<div class="health-panel"><img class="avatar" src="assets/sprites/128/hero_portrait.webp" alt="" onerror="this.remove()"><div><small>INTEGRITÀ</small><div id="lives">♥ ♥ ♥</div></div></div>
+<div class="health-panel"><img class="avatar" src="assets/sprites/128/hero_portrait.webp" alt="" onerror="this.remove()"><div><small>INTEGRITÀ</small><div id="lives">♥ ♥ ♥</div><small id="next-life"></small></div></div>
 <div id="boss-hud" class="hidden"><div><span><img class="hud-icon boss-icon" src="assets/sprites/128/boss_sentinel_v2.webp" alt="" onerror="this.remove()">☠ SENTINELLA</span><b id="boss-percent">100%</b></div><div class="boss-track"><i id="boss-fill"></i></div></div>
-<div class="bottom-left"><div id="powerups"></div><div class="heat-label"><span class="weapon-name"><img id="weapon-icon" class="hud-icon weapon-icon" src="assets/sprites/128/weapon_blaster.webp" alt="" onerror="this.style.display='none'"><span id="weapon-label">BLASTER / PRONTO</span></span><span id="heat-value">0%</span></div><div class="heat-track"><i id="heat-fill"></i></div><small class="desktop-hint">J / CLICK · FUOCO &nbsp; K · RAFFICA</small></div>
+<div class="bottom-left"><div id="powerups"></div><div class="heat-label"><span class="weapon-name"><img id="weapon-icon" class="hud-icon weapon-icon" src="assets/sprites/128/weapon_blaster.webp" alt="" onerror="this.style.display='none'"><span id="weapon-label">BLASTER / PRONTO</span></span><span id="heat-value">0%</span></div><div class="heat-track"><i id="heat-fill"></i></div><small class="desktop-hint">CTRL/J · FUOCO &nbsp; SHIFT/K · RAFFICA</small></div>
 <div id="tutorial"></div><div id="announcement"></div><button id="fire" aria-label="Fuoco: tocca per attivare, tieni premuto per raffica"><span>⌖</span><b>FUOCO</b><small>TIENI PER RAFFICA</small></button>
 </div>
 <div id="pause" class="screen modal hidden"><div class="dialog"><img class="dialog-art" src="assets/sprites/hero_front_thumbs.webp" alt="" onerror="this.remove()"><div class="eyebrow">RIPRENDI FIATO</div><h2>IN PAUSA<span>.</span></h2><p>La città può aspettare un momento.</p><button id="resume" class="primary">CONTINUA <span>↗</span></button><button id="pause-menu" class="secondary">TORNA AL MENU</button></div></div>

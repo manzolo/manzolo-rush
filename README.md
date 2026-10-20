@@ -39,15 +39,16 @@ Da smartphone, sulla stessa rete del computer, apri `http://IP-DEL-PC:8000` e co
 | Corsia | ← / → oppure A / D | Swipe sinistra / destra | Stick sinistro / D-pad |
 | Salto | ↑ / W / Spazio | Swipe in alto | A |
 | Scivolata | ↓ / S | Swipe in basso | B |
-| Colpo / fuoco continuo | J o click sul mondo; tieni per continuare | Tocca FUOCO per attivare/disattivare | RT |
-| Raffica | Tieni K | Tieni FUOCO oltre 280 ms | RB |
+| Colpo / fuoco continuo | Ctrl, J o click sul mondo; tieni per continuare | Tocca FUOCO per attivare/disattivare | RT |
+| Raffica | Tieni Shift o K | Tieni FUOCO oltre 280 ms | RB |
 | Pausa / ripresa | P / Esc, oppure pulsante Ⅱ | Pulsante Ⅱ / CONTINUA | Usa UI |
 
 La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli input. Il fuoco automatico touch va riattivato alla ripresa. Swipe e pulsante possono essere usati con due dita contemporaneamente.
 
 ## Regole e progressione
 
-- **Tre vite**, con 1,5 secondi di invulnerabilità dopo un danno: consentono di recuperare un errore mantenendo il ritmo. Lo scudo assorbe un colpo senza consumare una vita.
+- **Tre vite**, più una vita extra ogni 5.000 punti fino a un massimo di 5 (`CONFIG.player.extraLifeEvery`, `maxLives`); sotto i cuori l’HUD mostra il prossimo traguardo. Ogni nemico abbattuto mostra i punti guadagnati (in oro quando c’è combo). Con Ctrl tenuto premuto meglio usare frecce e Spazio: Ctrl+W chiuderebbe la scheda del browser e non si può bloccare.
+- 1,5 secondi di invulnerabilità dopo un danno: consentono di recuperare un errore mantenendo il ritmo. Lo scudo assorbe un colpo senza consumare una vita.
 - Salto parabolico, cambio corsia in circa 150 ms e scivolata di 0,7 secondi. Salto e slide hanno un buffer di 180 ms prima dell’atterraggio/fine azione.
 - La raffica riscalda il blaster: al 100% l’arma si blocca fino al 25%. Il fuoco normale è sostenibile.
 - Soldati e pattugliatori cambiano corsia con movimento progressivo e inclinazione; i droni oscillano in volo, i tank hanno barra HP e assetto animato. Tutte le pose sono interpolate fra gli aggiornamenti della simulazione. I tipi più impegnativi si sbloccano gradualmente.
@@ -55,7 +56,7 @@ La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli 
 - Le monete si raccolgono solo nella corsia realmente occupata, anche durante i cambi. Il magnete raggiunge la stessa corsia e quelle immediatamente adiacenti, mai da un estremo all’altro.
 - Bonus di 11 secondi: fuoco triplo sulle corsie, scudo, magnete e punti ×2. Raccogliere nuovamente lo stesso bonus ne rinnova la durata.
 - Punteggio: distanza + monete + uccisioni; +15 per una barriera saltata e +10 per una barra superata in scivolata, assegnati una sola volta al passaggio completo (anche questi premi valgono il doppio con ×2). Uccisioni entro 3 secondi aumentano la combo fino a ×8; il bonus ×2 si applica ai punti guadagnati durante la sua durata.
-- Un boss ogni 90 secondi di gioco: sentinella a figura intera con reattore pulsante, carica dei cannoni e rinculo. I settori rossi anticipano le salve; resta sempre una corsia libera e le sfere sono evitabili anche in scivolata. Si può distruggere il boss o sopravvivere al duello, rinunciando al premio di uccisione.
+- Un boss ogni 90 secondi di gioco: sentinella a figura intera con reattore pulsante, carica dei cannoni e rinculo. Ogni salva ha due muri di energia rossi (non si saltano e non si passa in scivolata) e, nella terza corsia, una barra arancione bassa da saltare o una sbarra sospesa sotto cui scivolare: i settori a terra la segnalano in anticipo insieme alla scritta SALTA/ABBASSATI. La corsia di riparo cambia a ogni salva e sotto il 40% di vita il boss spara più spesso. Il duello non ha limite di tempo: il boss resta finché non viene abbattuto. 
 - Velocità iniziale 15 m/s, incremento graduale fino a 30 m/s. Le ambientazioni cambiano ogni 45 secondi, con colori, geometrie, nebbia e illuminazione differenti.
 - Record, monete totali e audio sono salvati nella chiave `manzolo-rush-save` di localStorage (un salvataggio della vecchia chiave `neon-rush-save` viene letto e migrato automaticamente). I punti e le monete si registrano a fine corsa o tornando al menu. Storage indisponibile, pieno o corrotto non impedisce di giocare.
 
