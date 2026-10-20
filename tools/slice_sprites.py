@@ -50,6 +50,12 @@ SHEETS = {
         "prop_neon_antenna", "prop_neon_holo", "prop_neon_pylon", "prop_neon_canisters",
         "prop_cone", "prop_block", "prop_bush", "prop_rocks",
     ],
+    # Personaggio giocabile (sezione 7 di PROMPT_SPRITES.md), da usare con --prefix <id>_
+    "character": [
+        "back_run_1", "back_run_2", "back_run_3", "back_run_4",
+        "back_jump", "back_slide", "back_shoot", "back_lean",
+        "front_idle", "portrait", "front_thumbs", "front_tired",
+    ],
     "weapons": [
         "weapon_scatter", "weapon_plasma", "weapon_laser", "weapon_rocket",
         "shot_scatter", "shot_plasma", "shot_laser", "shot_rocket",
@@ -316,11 +322,13 @@ def main():
     ap.add_argument("--webp-quality", type=int, default=88, help="qualità WebP (0-100)")
     ap.add_argument("--names", default="main",
                     help="preset (" + ", ".join(SHEETS) + ") oppure elenco di nomi separati da virgola")
+    ap.add_argument("--prefix", default="", help="prefisso dei nomi (es. erika_ per un personaggio)")
     ap.add_argument("--no-key", action="store_true",
                     help="niente chroma key: ritaglia le celle piene (texture) con un bordo interno di --inset px")
     ap.add_argument("--inset", type=int, default=6, help="pixel scartati sul bordo di ogni cella con --no-key")
     args = ap.parse_args()
     names = SHEETS[args.names] if args.names in SHEETS else [n.strip() for n in args.names.split(",") if n.strip()]
+    names = [args.prefix + n for n in names]
     preset = args.names if args.names in SHEETS else "custom"
 
     sheet = Image.open(args.sheet).convert("RGBA")
@@ -402,7 +410,7 @@ def main():
         px = (k % ncols) * tile + (tile - s.width) // 2
         py = (k // ncols) * tile + (tile - s.height) // 2
         prev.alpha_composite(s, (px, py))
-    preview = "preview.png" if preset == "main" else f"preview_{preset}.png"
+    preview = "preview.png" if preset == "main" and not args.prefix else f"preview_{args.prefix}{preset}.png"
     prev.save(out_dir / preview)
     print(f"scritti {len(sprites)} sprite in {out_dir}/, atlas.json e {preview}")
 

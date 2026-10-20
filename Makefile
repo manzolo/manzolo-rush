@@ -14,6 +14,8 @@ NODE        ?= node
 SHEET       ?= assets/raw/spritesheet.png
 GRID_COLS   ?= 4
 GRID_ROWS   ?= 5
+NAMES       ?= main
+PREFIX      ?=
 
 .PHONY: help serve open check test verify sprites sprites-preview \
         build up down restart logs shell run stop ps image-size clean distclean
@@ -45,8 +47,8 @@ verify: check test ## check + test
 
 ## ------------------------------------------------------------ asset
 
-sprites: ## Rigenera gli sprite da assets/raw/spritesheet.png (SHEET=..., GRID_COLS/ROWS)
-	$(PYTHON) tools/slice_sprites.py --sheet $(SHEET) --cols $(GRID_COLS) --rows $(GRID_ROWS)
+sprites: ## Ritaglia uno sheet (SHEET=..., GRID_COLS/ROWS, NAMES=preset, PREFIX=erika_)
+	$(PYTHON) tools/slice_sprites.py --sheet $(SHEET) --cols $(GRID_COLS) --rows $(GRID_ROWS) --names $(NAMES) --prefix "$(PREFIX)"
 
 sprites-preview: sprites ## Rigenera gli sprite e apre l'anteprima
 	@xdg-open assets/sprites/preview.png >/dev/null 2>&1 || open assets/sprites/preview.png

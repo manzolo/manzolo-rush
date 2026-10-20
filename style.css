@@ -848,3 +848,86 @@ body.playing .hero-stage {
     margin-top:6px;
     font-size:8px;
 }
+
+/* Scelta del personaggio nel menu */
+.characters {
+    display:flex;
+    gap:8px;
+    margin:-6px 0 22px;
+    flex-wrap:wrap;
+}
+.character {
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    width:62px;
+    padding:6px 4px;
+    background:#142c3daa;
+    border:1px solid #ffffff22;
+    border-radius:8px;
+    font-size:9px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    transition:border-color .2s,transform .2s,background .2s;
+}
+.character img,.character i {
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    object-fit:cover;
+    object-position:top;
+    background:#0d1f2b;
+    display:grid;
+    place-items:center;
+    font-style:normal;
+    font-size:18px;
+    color:var(--muted);
+}
+.character small {
+    position:absolute;
+    top:4px;
+    right:2px;
+    font-size:6px;
+    letter-spacing:.5px;
+    color:var(--gold);
+}
+.character:not(:disabled):hover {
+    transform:translateY(-2px);
+    border-color:#8bffd188;
+}
+.character.selected {
+    border-color:var(--mint);
+    background:#1d4a4ccc;
+    box-shadow:0 0 14px #8bffd144;
+}
+.character:disabled {
+    opacity:.45;
+    cursor:not-allowed;
+}
+.hero-name {
+    color:inherit !important;
+}
+@media(max-width:600px) {
+    .characters {
+        gap:6px;
+        margin:-4px 0 16px;
+    }
+    .character {
+        width:54px;
+    }
+    .character img,.character i {
+        width:36px;
+        height:36px;
+    }
+}
+@media(max-height:600px) and (min-width:600px) {
+    .characters {
+        margin:0 0 10px;
+    }
+    .character img,.character i {
+        width:30px;
+        height:30px;
+    }
+}

@@ -1,17 +1,23 @@
 import { CONFIG } from './config.js';
 import { actor } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
-// Frame visti di spalle (sheet_hero_rear): coerenti con la camera alle spalle del protagonista.
-const RUN_FRAMES = ['hero_back_run_1', 'hero_back_run_2', 'hero_back_run_3', 'hero_back_run_4'];
-const POSES = { jump: 'hero_back_jump', slide: 'hero_back_slide', shoot: 'hero_back_shoot', lean: 'hero_back_lean' };
+import { poseName } from './characters.js';
 export class Player {
     constructor(scene) { Object.assign(this, actor(0xff7263, true)); scene.add(this.root); this.setupSprite(); this.reset(); }
     // Con gli sprite caricati il protagonista è un piano animato (corsa, salto, scivolata, sparo)
     // leggermente ruotato verso la camera; altrimenti resta il modello a blocchi.
-    setupSprite() {
+    // I frame visti di spalle dipendono dal personaggio scelto nel menu (characters.js).
+    setupSprite(character = 'manzolo') {
         const s = CONFIG.sprites;
-        this.frames = RUN_FRAMES.filter(name => SPRITES.has(name));
-        this.sprite = null;
+        this.character = character;
+        this.frames = [1, 2, 3, 4].map(i => poseName(character, `back_run_${i}`)).filter(name => SPRITES.has(name));
+        this.poses = { jump: poseName(character, 'back_jump'), slide: poseName(character, 'back_slide'), shoot: poseName(character, 'back_shoot'), lean: poseName(character, 'back_lean') };
+        if (this.sprite) {
+            this.root.remove(this.sprite);
+            this.sprite.material.dispose();
+            this.sprite = null;
+        }
+        this.body.visible = true;
         if (!s.enabled || !s.hero || !this.frames.length)
             return;
         this.frame = this.frames[0];
@@ -79,13 +85,13 @@ export class Player {
         if (this.sprite) {
             const s = CONFIG.sprites, drift = this.lane * CONFIG.player.laneWidth - this.x;
             if (this.slide > 0)
-                this.setFrame(POSES.slide, s.slideHeight);
+                this.setFrame(this.poses.slide, s.slideHeight);
             else if (this.y > .05)
-                this.setFrame(POSES.jump, s.heroHeight);
-            else if (Math.abs(drift) > s.leanThreshold && SPRITES.has(POSES.lean))
-                this.setFrame(POSES.lean, s.heroHeight, drift < 0); // il frame piega a destra: specchiato verso sinistra
+                this.setFrame(this.poses.jump, s.heroHeight);
+            else if (Math.abs(drift) > s.leanThreshold && SPRITES.has(this.poses.lean))
+                this.setFrame(this.poses.lean, s.heroHeight, drift < 0); // il frame piega a destra: specchiato verso sinistra
             else if (this.recoil > CONFIG.weapon.recoil * .5)
-                this.setFrame(POSES.shoot, s.heroHeight);
+                this.setFrame(this.poses.shoot, s.heroHeight);
             else
                 this.setFrame(this.frames[Math.floor(this.phase / 13 * s.runFps) % this.frames.length], s.heroHeight);
             // Leggero molleggio della corsa, come il modello a blocchi.

@@ -14,6 +14,8 @@ import { Enemies } from './enemies.js';
 import { Boss } from './boss.js';
 import { Audio } from './audio.js';
 import { Effects } from './effects.js';
+import { CHARACTERS, characterById, characterReady, poseName } from './characters.js';
+import { SPRITES } from './sprites.js';
 import { playerOverlap, bulletOverlap, obstaclePassBonus } from './collisions.js';
 export class Game {
     constructor(renderer, scene, camera) {
@@ -48,6 +50,8 @@ export class Game {
         this.cameraX = -5.3;
         this.lightColor = new THREE.Color();
         this.refreshSave();
+        this.buildCharacterPicker();
+        this.setCharacter(characterReady(this.save.character) ? this.save.character : 'manzolo', false);
         this.player.onJump = () => this.audio.play('jump');
         this.player.onLand = () => {
             this.audio.play('land');
@@ -363,6 +367,47 @@ export class Game {
             }
             else
                 this.announce(`TRAGUARDO ${Math.floor(this.nextLifeAt - CONFIG.player.extraLifeEvery)}`);
+        }
+    }
+    // Schede del menu: ritratto + nome; quelle senza sprite restano disattivate ("presto").
+    buildCharacterPicker() {
+        const box = document.getElementById('characters');
+        if (!box?.appendChild || !document.createElement)
+            return;
+        this.characterButtons = {};
+        for (const c of CHARACTERS) {
+            const ready = characterReady(c.id);
+            const button = document.createElement('button');
+            button.className = 'character';
+            button.disabled = !ready;
+            button.setAttribute?.('role', 'radio');
+            button.title = ready ? c.name : `${c.name} · presto`;
+            const url = SPRITES.url(poseName(c.id, 'portrait'), true);
+            button.innerHTML = `${url ? `<img src="${url}" alt="">` : '<i>?</i>'}<span>${c.name}</span>${ready ? '' : '<small>presto</small>'}`;
+            button.onclick = () => this.setCharacter(c.id);
+            box.appendChild(button);
+            this.characterButtons[c.id] = button;
+        }
+    }
+    setCharacter(id, save = true) {
+        const c = characterById(id);
+        this.player.setupSprite(c.id);
+        this.save.character = c.id;
+        if (save)
+            writeSave(this.storage, this.save);
+        const name = document.getElementById('hero-name');
+        if (name)
+            name.textContent = c.name.toUpperCase();
+        for (const img of document.querySelectorAll?.('[data-pose]') || []) {
+            const url = SPRITES.url(poseName(c.id, img.dataset.pose), 'small' in img.dataset);
+            if (url) {
+                img.src = url;
+                img.style.visibility = '';
+            }
+        }
+        for (const [cid, button] of Object.entries(this.characterButtons || {})) {
+            button.classList.toggle('selected', cid === c.id);
+            button.setAttribute?.('aria-checked', String(cid === c.id));
         }
     }
     announce(text) { this.ui.announce(text); }
