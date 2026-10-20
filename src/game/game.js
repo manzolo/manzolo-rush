@@ -1,0 +1,390 @@
+import * as THREE from 'three';
+import { CONFIG, THEMES } from './config.js';
+import { STATES } from './states.js';
+import { Player } from './player.js';
+import { Input } from './input.js';
+import { World } from './world.js';
+import { Obstacles } from './obstacles.js';
+import { Spawner } from './spawner.js';
+import { Pickups } from './powerups.js';
+import { readSave, writeSave } from './storage.js';
+import { UI } from './ui.js';
+import { Weapons } from './weapons.js';
+import { Enemies } from './enemies.js';
+import { Boss } from './boss.js';
+import { Audio } from './audio.js';
+import { Effects } from './effects.js';
+import { playerOverlap, bulletOverlap } from './collisions.js';
+export class Game {
+    constructor(renderer, scene, camera) {
+        this.renderer = renderer;
+        this.scene = scene;
+        this.camera = camera;
+        this.world = new World(scene);
+        this.player = new Player(scene);
+        this.obstacles = new Obstacles(scene);
+        this.spawner = new Spawner(this);
+        this.weapons = new Weapons(scene);
+        this.enemies = new Enemies(scene);
+        this.pickups = new Pickups(scene);
+        this.boss = new Boss(scene);
+        this.ui = new UI();
+        this.powerups = { triple: 0, shield: 0, magnet: 0, double: 0 };
+        this.effects = new Effects(scene, this.player);
+        try {
+            this.storage = localStorage;
+        }
+        catch {
+            this.storage = null;
+        }
+        this.save = readSave(this.storage);
+        this.audio = new Audio(this.save.audio);
+        this.input = new Input(renderer.domElement, document.querySelector('#fire'), () => this.pause());
+        this.state = STATES.MENU;
+        this.time = this.distance = this.score = this.reward = this.coins = this.kills = 0;
+        this.combo = this.comboTimer = this.shake = this.hitStop = this.damageFlash = 0;
+        this.speed = CONFIG.speed.initial;
+        this.cameraX = -5.3;
+        this.lightColor = new THREE.Color();
+        this.refreshSave();
+        this.player.onJump = () => this.audio.play('jump');
+        this.player.onLand = () => {
+            this.audio.play('land');
+            this.effects.emit(this.player.x, .08, CONFIG.player.z, 0xc8b4a1, CONFIG.juice.landingParticles);
+        };
+        document.querySelector('#play').onclick = () => this.start();
+        document.querySelector('#retry').onclick = () => this.start();
+        document.querySelector('#resume').onclick = () => this.resume();
+        document.querySelector('#pause-button').onclick = () => this.pause();
+        for (const id of ['pause-menu', 'result-menu'])
+            document.getElementById(id).onclick = () => this.menu();
+        document.querySelector('#sound').onclick = () => {
+            this.save.audio = !this.save.audio;
+            this.audio.setEnabled(this.save.audio);
+            writeSave(this.storage, this.save);
+            this.refreshSave();
+        };
+        document.querySelector('#play').disabled = false;
+        document.querySelector('#play-label').textContent = 'INIZIA LA CORSA';
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden)
+                this.pause(true);
+        });
+        window.addEventListener('blur', () => this.pause(true));
+    }
+    setState(state) {
+        this.state = state;
+        this.input.clear();
+        const panel = { menu: 'menu', pause: 'pause', over: 'gameover' }[state];
+        for (const id of ['menu', 'pause', 'gameover', 'hud']) {
+            document.getElementById(id).classList.toggle('hidden', id === 'hud' ? state !== STATES.PLAY : id !== panel);
+        }
+        document.querySelector('#pause-button').classList.toggle('hidden', state !== STATES.PLAY);
+        document.body.classList.toggle('playing', state !== STATES.MENU);
+        for (const fly of this.ui.flyPool)
+            fly.el.style.display = 'none';
+    }
+    start() {
+        this.audio.unlock();
+        this.player.reset();
+        this.obstacles.reset();
+        this.spawner.reset();
+        this.weapons.reset();
+        this.enemies.reset();
+        this.pickups.reset();
+        this.boss.reset();
+        this.effects.reset();
+        this.world.setTheme(0, true);
+        this.ui.reset();
+        this.time = this.distance = this.score = this.reward = this.coins = this.kills = 0;
+        this.combo = this.comboTimer = this.shake = this.hitStop = this.damageFlash = 0;
+        this.speed = CONFIG.speed.initial;
+        this.banked = false;
+        for (const key in this.powerups)
+            this.powerups[key] = 0;
+        // Intro leggibile: monete subito, prima barriera dopo circa 4 secondi.
+        for (let i = 0; i < CONFIG.intro.coinCount; i++)
+            this.pickups.coin(0, .85, CONFIG.intro.firstCoinZ - i * CONFIG.spawn.coinSpacing);
+        this.obstacles.spawn('barrier', 0, CONFIG.intro.barrierZ);
+        this.obstacles.spawn('bar', -1, CONFIG.intro.barZ);
+        this.setState(STATES.PLAY);
+        this.ui.update(0, this);
+    }
+    menu() {
+        this.bank();
+        this.setState(STATES.MENU);
+        this.obstacles.reset();
+        this.enemies.reset();
+        this.weapons.reset();
+        this.pickups.reset();
+        this.boss.reset();
+        this.player.reset();
+        this.effects.reset();
+        this.ui.reset();
+        this.world.setTheme(0, true);
+        this.ui.text('zone', '01 / SUNSET CITY');
+    }
+    pause(force = false) {
+        if (this.state === STATES.PLAY)
+            this.setState(STATES.PAUSE);
+        else if (!force && this.state === STATES.PAUSE)
+            this.resume();
+    }
+    resume() {
+        if (this.state !== STATES.PAUSE)
+            return;
+        this.audio.unlock();
+        this.setState(STATES.PLAY);
+    }
+    damage() {
+        if (this.state !== STATES.PLAY || this.player.invulnerable > 0)
+            return;
+        if (this.powerups.shield > 0) {
+            this.powerups.shield = 0;
+            this.player.invulnerable = CONFIG.player.invulnerability;
+            this.effects.emit(this.player.x, 1, CONFIG.player.z, 0x8bffd1, 20);
+            this.audio.play('power');
+            this.announce('SCUDO ASSORBITO');
+            return;
+        }
+        this.player.lives--;
+        this.player.invulnerable = CONFIG.player.invulnerability;
+        this.combo = 0;
+        this.shake = .28;
+        this.damageFlash = .3;
+        this.effects.burst(this.player.x, 1, CONFIG.player.z - .4, 1.7);
+        this.audio.play('hurt');
+        if (this.player.lives <= 0)
+            this.gameOver();
+    }
+    gameOver() {
+        this.score = this.distance * CONFIG.bonuses.distanceScore + this.reward;
+        this.bank();
+        this.audio.play('over');
+        document.querySelector('#final-score').textContent = Math.floor(this.score);
+        document.querySelector('#final-distance').textContent = `${Math.floor(this.distance)} m`;
+        document.querySelector('#final-coins').textContent = this.coins;
+        document.querySelector('#final-kills').textContent = this.kills;
+        this.setState(STATES.OVER);
+    }
+    update(dt) {
+        if (this.state !== STATES.PLAY) {
+            if (this.state === STATES.MENU) {
+                this.world.update(dt, 3);
+                this.player.update(dt);
+            }
+            return;
+        }
+        this.input.update(dt);
+        if (this.hitStop > 0) {
+            this.hitStop -= dt;
+            return;
+        }
+        while (this.input.queue.length)
+            this.player.command(this.input.queue.shift());
+        this.time += dt;
+        this.speed = Math.min(CONFIG.speed.max, CONFIG.speed.initial + this.time * CONFIG.speed.acceleration);
+        this.distance += this.speed * dt;
+        if (this.powerups.double > 0)
+            this.reward += this.speed * dt * CONFIG.bonuses.distanceScore;
+        this.comboTimer -= dt;
+        if (this.comboTimer <= 0)
+            this.combo = 0;
+        for (const key in this.powerups)
+            this.powerups[key] = Math.max(0, this.powerups[key] - dt);
+        this.player.update(dt);
+        this.world.update(dt, this.speed);
+        const theme = Math.floor(this.time / CONFIG.world.themeSeconds) % THEMES.length;
+        if (this.world.theme !== theme) {
+            this.world.setTheme(theme);
+            this.announce(THEMES[theme].name);
+        }
+        this.ui.text('zone', `${String(theme + 1).padStart(2, '0')} / ${THEMES[theme].name}`);
+        this.boss.update(dt, this);
+        this.spawner.update(dt);
+        this.obstacles.update(dt, this.speed);
+        this.enemies.update(dt, this);
+        this.weapons.update(dt, this);
+        this.pickups.update(dt, this);
+        this.combat();
+        if (this.state !== STATES.PLAY)
+            return;
+        for (const obstacle of this.obstacles.pool) {
+            if (obstacle.active && playerOverlap(this.player, obstacle)) {
+                this.damage();
+                this.obstacles.remove(obstacle);
+                if (this.state !== STATES.PLAY)
+                    return;
+            }
+        }
+        this.effects.update(dt, this.speed);
+        this.audio.update(dt, true);
+        this.shake = Math.max(0, this.shake - dt * .9);
+        this.damageFlash = Math.max(0, this.damageFlash - dt);
+        this.score = this.distance * CONFIG.bonuses.distanceScore + this.reward;
+        this.ui.update(dt, this);
+    }
+    combat() {
+        for (const bullet of this.weapons.pool) {
+            if (!bullet.active)
+                continue;
+            // Segmento spazzato, primo impatto: impedisce tunneling e colpi attraverso treni.
+            let target = null, kind = '', nearest = -Infinity;
+            for (const enemy of this.enemies.pool) {
+                if (enemy.active && !bullet.hits.includes(enemy) && bulletOverlap(bullet, enemy) && enemy.z > nearest) {
+                    target = enemy;
+                    kind = 'enemy';
+                    nearest = enemy.z;
+                }
+            }
+            for (const obstacle of this.obstacles.pool) {
+                if (obstacle.active && !bullet.hits.includes(obstacle) && bulletOverlap(bullet, obstacle) && obstacle.z > nearest) {
+                    target = obstacle;
+                    kind = 'obstacle';
+                    nearest = obstacle.z;
+                }
+            }
+            if (this.boss.active && !bullet.hits.includes(this.boss) && bulletOverlap(bullet, this.boss) && this.boss.z > nearest) {
+                target = this.boss;
+                kind = 'boss';
+            }
+            if (!target)
+                continue;
+            // Perforazione: plasma e laser attraversano nemici e casse, mai treni, barriere o boss.
+            const solid = kind === 'boss' || (kind === 'obstacle' && target.type !== 'crate');
+            if (bullet.pierce > 0 && !solid) {
+                bullet.pierce--;
+                bullet.hits.push(target);
+            }
+            else
+                bullet.active = false;
+            const damage = bullet.damage ?? CONFIG.weapon.damage;
+            this.effects.emit(bullet.x, bullet.y, bullet.z, bullet.kind === 'blaster' ? 0xffdfa1 : bullet.color, bullet.kind === 'blaster' ? 3 : 6);
+            this.shake = Math.max(this.shake, bullet.splash ? .12 : .025);
+            if (bullet.splash) {
+                // Razzo: esplosione ad area su tutti i nemici e le casse vicini.
+                this.effects.burst(bullet.x, bullet.y, bullet.z, bullet.splash * .9);
+                this.audio.play('explosion');
+                const r2 = bullet.splash ** 2;
+                for (const enemy of this.enemies.pool)
+                    if (enemy.active && enemy !== target && (enemy.x - bullet.x) ** 2 + (enemy.z - bullet.z) ** 2 < r2)
+                        this.hitEnemy(enemy, damage * .6);
+                for (const obstacle of this.obstacles.pool)
+                    if (obstacle.active && obstacle !== target && obstacle.type === 'crate' && (obstacle.x - bullet.x) ** 2 + (obstacle.z - bullet.z) ** 2 < r2)
+                        this.hitCrate(obstacle, damage);
+            }
+            if (kind === 'boss')
+                this.boss.damage(damage, this);
+            else if (kind === 'enemy')
+                this.hitEnemy(target, damage);
+            else if (target.type === 'crate')
+                this.hitCrate(target, damage);
+        }
+        for (const enemy of this.enemies.pool) {
+            if (enemy.active && playerOverlap(this.player, enemy)) {
+                this.damage();
+                this.enemies.remove(enemy);
+                if (this.state !== STATES.PLAY)
+                    return;
+            }
+        }
+        for (const bullet of this.enemies.shots) {
+            if (bullet.active && bullet.delay <= 0 && playerOverlap(this.player, bullet)) {
+                bullet.active = false;
+                this.damage();
+                if (this.state !== STATES.PLAY)
+                    return;
+            }
+        }
+    }
+    hitEnemy(enemy, damage) {
+        if (this.enemies.damage(enemy, damage)) {
+            this.onKill(enemy);
+            this.enemies.remove(enemy);
+        }
+    }
+    hitCrate(crate, damage) {
+        crate.hp -= damage;
+        if (crate.hp > 0)
+            return;
+        this.obstacles.remove(crate);
+        this.effects.emit(crate.x, .7, crate.z, 0xdba66e, 12);
+        this.effects.burst(crate.x, .8, crate.z, 1.9);
+        this.audio.play('explosion');
+        // Le casse lasciano un'arma o un bonus.
+        const roll = Math.random();
+        if (roll < CONFIG.guns.crateDrop)
+            this.pickups.gun(crate.x, crate.z);
+        else if (roll < CONFIG.guns.crateDrop + CONFIG.spawn.crateDropChance)
+            this.pickups.power(crate.x, crate.z);
+    }
+    get multiplier() { return this.powerups.double > 0 ? 2 : 1; }
+    onKill(enemy) {
+        this.kills++;
+        this.combo = Math.min(CONFIG.bonuses.maxCombo, this.combo + 1);
+        this.comboTimer = CONFIG.bonuses.comboWindow;
+        this.reward += CONFIG.enemies[enemy.type].score * Math.max(1, this.combo) * this.multiplier;
+        this.effects.emit(enemy.x, 1, enemy.z, 0xffa46e, CONFIG.juice.killParticles);
+        this.effects.burst(enemy.x, enemy.type === 'drone' ? 1.5 : 1, enemy.z, enemy.type === 'tank' ? 3.2 : 2.3);
+        this.shake = CONFIG.juice.shake;
+        this.hitStop = CONFIG.juice.hitStop;
+        this.audio.play('explosion');
+    }
+    announce(text) { this.ui.announce(text); }
+    refreshSave() {
+        document.querySelector('#menu-best').textContent = Math.floor(this.save.best).toString().padStart(6, '0');
+        document.querySelector('#menu-coins').textContent = this.save.coins;
+        const sound = document.querySelector('#sound');
+        sound.textContent = this.save.audio ? '♫' : '♪';
+        sound.style.opacity = this.save.audio ? 1 : .45;
+        sound.setAttribute('aria-pressed', String(this.save.audio));
+        sound.title = this.save.audio ? 'Audio attivo' : 'Audio disattivato';
+    }
+    bank() {
+        if (this.banked)
+            return;
+        this.banked = true;
+        const best = Math.floor(this.score) > this.save.best;
+        this.save.best = Math.max(this.save.best, Math.floor(this.score));
+        this.save.coins += this.coins;
+        writeSave(this.storage, this.save);
+        this.refreshSave();
+        document.querySelector('#result-label').textContent = best ? 'NUOVO RECORD. ALZA L’ASTICELLA.' : 'UNA CORSA. UN’ALTRA STORIA.';
+    }
+    render(alpha, dt) {
+        if (this.state === STATES.PAUSE || this.state === STATES.OVER || this.hitStop > 0)
+            alpha = 1;
+        this.player.render(alpha);
+        // Nel menu il protagonista è già in primo piano nell'interfaccia: niente doppione sulla strada.
+        if (this.state === STATES.MENU)
+            this.player.root.visible = false;
+        this.weapons.render(alpha);
+        this.enemies.render(alpha);
+        this.pickups.render(alpha, this.speed);
+        this.effects.render(this);
+        const menu = this.state === STATES.MENU;
+        const offset = (alpha - 1) * (menu ? 3 : this.speed) * CONFIG.step;
+        for (const batch of this.world.batches)
+            batch.mesh.position.z = offset;
+        for (const obstacle of this.obstacles.pool)
+            if (obstacle.active)
+                obstacle.mesh.position.z = obstacle.z + offset;
+        const portrait = this.camera.aspect < .85;
+        const targetX = menu ? (portrait ? -4 : -5.3) : this.player.x * .28;
+        this.cameraX += (targetX - this.cameraX) * (1 - Math.exp(-dt * 3));
+        const shake = this.state === STATES.PLAY ? this.shake : 0;
+        const cameraHeight = menu ? (portrait ? 6 : 5.2) : (portrait ? 7.4 : 5.6);
+        const cameraDepth = menu ? (portrait ? 14 : 11) : (portrait ? 18 : 13);
+        this.camera.position.set(this.cameraX + (Math.random() - .5) * shake, cameraHeight + (Math.random() - .5) * shake, cameraDepth);
+        this.camera.lookAt(menu ? 1.8 : this.player.x * .2, 1, -23);
+        const fov = menu ? 57 : (portrait ? 62 : 58) + (this.speed - CONFIG.speed.initial) * .65;
+        if (Math.abs(this.camera.fov - fov) > .01) {
+            this.camera.fov += (fov - this.camera.fov) * (1 - Math.exp(-dt * 3));
+            this.camera.updateProjectionMatrix();
+        }
+        if (this.sunlight)
+            this.sunlight.color.lerp(this.lightColor.set(THEMES[this.world.theme].sun), 1 - Math.exp(-dt));
+        this.ui.nodes['damage-flash'].style.opacity = this.state === STATES.PLAY ? this.damageFlash * 2 : 0;
+        this.renderer.render(this.scene, this.camera);
+    }
+}

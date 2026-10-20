@@ -1,0 +1,1010 @@
+{
+  "hero_run_1": {
+    "file": "hero_run_1.webp",
+    "png": "hero_run_1.png",
+    "small": "128/hero_run_1.webp",
+    "width": 264,
+    "height": 235,
+    "anchor": "bottom-center",
+    "cell": [
+      27,
+      12,
+      294,
+      247
+    ]
+  },
+  "hero_run_2": {
+    "file": "hero_run_2.webp",
+    "png": "hero_run_2.png",
+    "small": "128/hero_run_2.webp",
+    "width": 260,
+    "height": 235,
+    "anchor": "bottom-center",
+    "cell": [
+      321,
+      12,
+      623,
+      247
+    ]
+  },
+  "hero_run_3": {
+    "file": "hero_run_3.webp",
+    "png": "hero_run_3.png",
+    "small": "128/hero_run_3.webp",
+    "width": 265,
+    "height": 235,
+    "anchor": "bottom-center",
+    "cell": [
+      645,
+      12,
+      930,
+      247
+    ]
+  },
+  "hero_run_4": {
+    "file": "hero_run_4.webp",
+    "png": "hero_run_4.png",
+    "small": "128/hero_run_4.webp",
+    "width": 268,
+    "height": 235,
+    "anchor": "bottom-center",
+    "cell": [
+      952,
+      12,
+      1240,
+      247
+    ]
+  },
+  "hero_jump": {
+    "file": "hero_jump.webp",
+    "png": "hero_jump.png",
+    "small": "128/hero_jump.webp",
+    "width": 255,
+    "height": 224,
+    "anchor": "bottom-center",
+    "cell": [
+      27,
+      256,
+      294,
+      485
+    ]
+  },
+  "hero_slide": {
+    "file": "hero_slide.webp",
+    "png": "hero_slide.png",
+    "small": "128/hero_slide.webp",
+    "width": 297,
+    "height": 161,
+    "anchor": "bottom-center",
+    "cell": [
+      321,
+      256,
+      623,
+      485
+    ]
+  },
+  "hero_shoot": {
+    "file": "hero_shoot.webp",
+    "png": "hero_shoot.png",
+    "small": "128/hero_shoot.webp",
+    "width": 285,
+    "height": 227,
+    "anchor": "bottom-center",
+    "cell": [
+      645,
+      256,
+      930,
+      485
+    ]
+  },
+  "weapon_blaster": {
+    "file": "weapon_blaster.webp",
+    "png": "weapon_blaster.png",
+    "small": "128/weapon_blaster.webp",
+    "width": 259,
+    "height": 166,
+    "anchor": "center",
+    "cell": [
+      952,
+      256,
+      1240,
+      485
+    ]
+  },
+  "enemy_grunt": {
+    "file": "enemy_grunt.webp",
+    "png": "enemy_grunt.png",
+    "small": "128/enemy_grunt.webp",
+    "width": 250,
+    "height": 231,
+    "anchor": "bottom-center",
+    "cell": [
+      27,
+      498,
+      294,
+      729
+    ]
+  },
+  "enemy_dodger": {
+    "file": "enemy_dodger.webp",
+    "png": "enemy_dodger.png",
+    "small": "128/enemy_dodger.webp",
+    "width": 251,
+    "height": 231,
+    "anchor": "bottom-center",
+    "cell": [
+      321,
+      498,
+      623,
+      729
+    ]
+  },
+  "enemy_drone": {
+    "file": "enemy_drone.webp",
+    "png": "enemy_drone.png",
+    "small": "128/enemy_drone.webp",
+    "width": 280,
+    "height": 175,
+    "anchor": "bottom-center",
+    "cell": [
+      645,
+      498,
+      930,
+      729
+    ]
+  },
+  "enemy_tank": {
+    "file": "enemy_tank.webp",
+    "png": "enemy_tank.png",
+    "small": "128/enemy_tank.webp",
+    "width": 284,
+    "height": 231,
+    "anchor": "bottom-center",
+    "cell": [
+      952,
+      498,
+      1240,
+      729
+    ]
+  },
+  "coin": {
+    "file": "coin.webp",
+    "png": "coin.png",
+    "small": "128/coin.webp",
+    "width": 192,
+    "height": 215,
+    "anchor": "center",
+    "cell": [
+      27,
+      745,
+      294,
+      968
+    ]
+  },
+  "powerup_triple": {
+    "file": "powerup_triple.webp",
+    "png": "powerup_triple.png",
+    "small": "128/powerup_triple.webp",
+    "width": 151,
+    "height": 223,
+    "anchor": "center",
+    "cell": [
+      321,
+      745,
+      623,
+      968
+    ]
+  },
+  "powerup_shield": {
+    "file": "powerup_shield.webp",
+    "png": "powerup_shield.png",
+    "small": "128/powerup_shield.webp",
+    "width": 162,
+    "height": 223,
+    "anchor": "center",
+    "cell": [
+      645,
+      745,
+      930,
+      968
+    ]
+  },
+  "powerup_magnet": {
+    "file": "powerup_magnet.webp",
+    "png": "powerup_magnet.png",
+    "small": "128/powerup_magnet.webp",
+    "width": 134,
+    "height": 223,
+    "anchor": "center",
+    "cell": [
+      952,
+      745,
+      1240,
+      968
+    ]
+  },
+  "powerup_multiplier": {
+    "file": "powerup_multiplier.webp",
+    "png": "powerup_multiplier.png",
+    "small": "128/powerup_multiplier.webp",
+    "width": 266,
+    "height": 248,
+    "anchor": "center",
+    "cell": [
+      27,
+      983,
+      294,
+      1241
+    ]
+  },
+  "bullet": {
+    "file": "bullet.webp",
+    "png": "bullet.png",
+    "small": "128/bullet.webp",
+    "width": 302,
+    "height": 141,
+    "anchor": "center",
+    "cell": [
+      321,
+      983,
+      623,
+      1241
+    ]
+  },
+  "explosion": {
+    "file": "explosion.webp",
+    "png": "explosion.png",
+    "small": "128/explosion.webp",
+    "width": 285,
+    "height": 258,
+    "anchor": "center",
+    "cell": [
+      645,
+      983,
+      930,
+      1241
+    ]
+  },
+  "boss_head": {
+    "file": "boss_head.webp",
+    "png": "boss_head.png",
+    "small": "128/boss_head.webp",
+    "width": 288,
+    "height": 258,
+    "anchor": "center",
+    "cell": [
+      952,
+      983,
+      1240,
+      1241
+    ]
+  },
+  "hero_back_run_1": {
+    "file": "hero_back_run_1.webp",
+    "png": "hero_back_run_1.png",
+    "small": "128/hero_back_run_1.webp",
+    "width": 234,
+    "height": 232,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      0,
+      288,
+      249
+    ]
+  },
+  "hero_back_run_2": {
+    "file": "hero_back_run_2.webp",
+    "png": "hero_back_run_2.png",
+    "small": "128/hero_back_run_2.webp",
+    "width": 229,
+    "height": 238,
+    "anchor": "bottom-center",
+    "cell": [
+      316,
+      0,
+      618,
+      249
+    ]
+  },
+  "hero_back_run_3": {
+    "file": "hero_back_run_3.webp",
+    "png": "hero_back_run_3.png",
+    "small": "128/hero_back_run_3.webp",
+    "width": 249,
+    "height": 240,
+    "anchor": "bottom-center",
+    "cell": [
+      646,
+      0,
+      934,
+      249
+    ]
+  },
+  "hero_back_run_4": {
+    "file": "hero_back_run_4.webp",
+    "png": "hero_back_run_4.png",
+    "small": "128/hero_back_run_4.webp",
+    "width": 231,
+    "height": 240,
+    "anchor": "bottom-center",
+    "cell": [
+      946,
+      0,
+      1254,
+      249
+    ]
+  },
+  "hero_back_jump": {
+    "file": "hero_back_jump.webp",
+    "png": "hero_back_jump.png",
+    "small": "128/hero_back_jump.webp",
+    "width": 261,
+    "height": 231,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      263,
+      288,
+      498
+    ]
+  },
+  "hero_back_slide": {
+    "file": "hero_back_slide.webp",
+    "png": "hero_back_slide.png",
+    "small": "128/hero_back_slide.webp",
+    "width": 302,
+    "height": 170,
+    "anchor": "bottom-center",
+    "cell": [
+      316,
+      263,
+      618,
+      498
+    ]
+  },
+  "hero_back_shoot": {
+    "file": "hero_back_shoot.webp",
+    "png": "hero_back_shoot.png",
+    "small": "128/hero_back_shoot.webp",
+    "width": 288,
+    "height": 235,
+    "anchor": "bottom-center",
+    "cell": [
+      646,
+      263,
+      934,
+      498
+    ]
+  },
+  "hero_back_lean": {
+    "file": "hero_back_lean.webp",
+    "png": "hero_back_lean.png",
+    "small": "128/hero_back_lean.webp",
+    "width": 274,
+    "height": 235,
+    "anchor": "bottom-center",
+    "cell": [
+      946,
+      263,
+      1254,
+      498
+    ]
+  },
+  "enemy_front_grunt": {
+    "file": "enemy_front_grunt.webp",
+    "png": "enemy_front_grunt.png",
+    "small": "128/enemy_front_grunt.webp",
+    "width": 241,
+    "height": 215,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      509,
+      288,
+      724
+    ]
+  },
+  "enemy_front_dodger": {
+    "file": "enemy_front_dodger.webp",
+    "png": "enemy_front_dodger.png",
+    "small": "128/enemy_front_dodger.webp",
+    "width": 281,
+    "height": 215,
+    "anchor": "bottom-center",
+    "cell": [
+      316,
+      509,
+      618,
+      724
+    ]
+  },
+  "enemy_front_drone": {
+    "file": "enemy_front_drone.webp",
+    "png": "enemy_front_drone.png",
+    "small": "128/enemy_front_drone.webp",
+    "width": 275,
+    "height": 199,
+    "anchor": "bottom-center",
+    "cell": [
+      646,
+      509,
+      934,
+      724
+    ]
+  },
+  "enemy_front_tank": {
+    "file": "enemy_front_tank.webp",
+    "png": "enemy_front_tank.png",
+    "small": "128/enemy_front_tank.webp",
+    "width": 291,
+    "height": 215,
+    "anchor": "bottom-center",
+    "cell": [
+      946,
+      509,
+      1254,
+      724
+    ]
+  },
+  "hero_front_idle": {
+    "file": "hero_front_idle.webp",
+    "png": "hero_front_idle.png",
+    "small": "128/hero_front_idle.webp",
+    "width": 213,
+    "height": 246,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      732,
+      288,
+      978
+    ]
+  },
+  "hero_front_run": {
+    "file": "hero_front_run.webp",
+    "png": "hero_front_run.png",
+    "small": "128/hero_front_run.webp",
+    "width": 229,
+    "height": 246,
+    "anchor": "bottom-center",
+    "cell": [
+      316,
+      732,
+      618,
+      978
+    ]
+  },
+  "hero_front_victory": {
+    "file": "hero_front_victory.webp",
+    "png": "hero_front_victory.png",
+    "small": "128/hero_front_victory.webp",
+    "width": 219,
+    "height": 246,
+    "anchor": "bottom-center",
+    "cell": [
+      646,
+      732,
+      934,
+      978
+    ]
+  },
+  "hero_portrait": {
+    "file": "hero_portrait.webp",
+    "png": "hero_portrait.png",
+    "small": "128/hero_portrait.webp",
+    "width": 298,
+    "height": 246,
+    "anchor": "bottom-center",
+    "cell": [
+      946,
+      732,
+      1254,
+      978
+    ]
+  },
+  "hero_front_hurt": {
+    "file": "hero_front_hurt.webp",
+    "png": "hero_front_hurt.png",
+    "small": "128/hero_front_hurt.webp",
+    "width": 275,
+    "height": 259,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      985,
+      288,
+      1254
+    ]
+  },
+  "hero_front_tired": {
+    "file": "hero_front_tired.webp",
+    "png": "hero_front_tired.png",
+    "small": "128/hero_front_tired.webp",
+    "width": 240,
+    "height": 259,
+    "anchor": "bottom-center",
+    "cell": [
+      316,
+      985,
+      618,
+      1254
+    ]
+  },
+  "hero_front_thumbs": {
+    "file": "hero_front_thumbs.webp",
+    "png": "hero_front_thumbs.png",
+    "small": "128/hero_front_thumbs.webp",
+    "width": 279,
+    "height": 267,
+    "anchor": "bottom-center",
+    "cell": [
+      646,
+      985,
+      934,
+      1254
+    ]
+  },
+  "boss_head_front": {
+    "file": "boss_head_front.webp",
+    "png": "boss_head_front.png",
+    "small": "128/boss_head_front.webp",
+    "width": 295,
+    "height": 257,
+    "anchor": "center",
+    "cell": [
+      946,
+      985,
+      1254,
+      1254
+    ]
+  },
+  "prop_city_lamp": {
+    "file": "prop_city_lamp.webp",
+    "png": "prop_city_lamp.png",
+    "small": "128/prop_city_lamp.webp",
+    "width": 197,
+    "height": 302,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      0,
+      250,
+      310
+    ]
+  },
+  "prop_city_tree": {
+    "file": "prop_city_tree.webp",
+    "png": "prop_city_tree.png",
+    "small": "128/prop_city_tree.webp",
+    "width": 280,
+    "height": 300,
+    "anchor": "bottom-center",
+    "cell": [
+      322,
+      0,
+      615,
+      310
+    ]
+  },
+  "prop_city_busstop": {
+    "file": "prop_city_busstop.webp",
+    "png": "prop_city_busstop.png",
+    "small": "128/prop_city_busstop.webp",
+    "width": 322,
+    "height": 254,
+    "anchor": "bottom-center",
+    "cell": [
+      627,
+      0,
+      958,
+      310
+    ]
+  },
+  "prop_city_sign": {
+    "file": "prop_city_sign.webp",
+    "png": "prop_city_sign.png",
+    "small": "128/prop_city_sign.webp",
+    "width": 151,
+    "height": 300,
+    "anchor": "bottom-center",
+    "cell": [
+      974,
+      0,
+      1254,
+      310
+    ]
+  },
+  "prop_desert_cactus": {
+    "file": "prop_desert_cactus.webp",
+    "png": "prop_desert_cactus.png",
+    "small": "128/prop_desert_cactus.webp",
+    "width": 197,
+    "height": 287,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      334,
+      250,
+      621
+    ]
+  },
+  "prop_desert_tree": {
+    "file": "prop_desert_tree.webp",
+    "png": "prop_desert_tree.png",
+    "small": "128/prop_desert_tree.webp",
+    "width": 286,
+    "height": 287,
+    "anchor": "bottom-center",
+    "cell": [
+      322,
+      334,
+      615,
+      621
+    ]
+  },
+  "prop_desert_barrels": {
+    "file": "prop_desert_barrels.webp",
+    "png": "prop_desert_barrels.png",
+    "small": "128/prop_desert_barrels.webp",
+    "width": 312,
+    "height": 261,
+    "anchor": "bottom-center",
+    "cell": [
+      627,
+      334,
+      958,
+      621
+    ]
+  },
+  "prop_desert_sign": {
+    "file": "prop_desert_sign.webp",
+    "png": "prop_desert_sign.png",
+    "small": "128/prop_desert_sign.webp",
+    "width": 233,
+    "height": 287,
+    "anchor": "bottom-center",
+    "cell": [
+      974,
+      334,
+      1254,
+      621
+    ]
+  },
+  "prop_neon_antenna": {
+    "file": "prop_neon_antenna.webp",
+    "png": "prop_neon_antenna.png",
+    "small": "128/prop_neon_antenna.webp",
+    "width": 191,
+    "height": 321,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      626,
+      250,
+      955
+    ]
+  },
+  "prop_neon_holo": {
+    "file": "prop_neon_holo.webp",
+    "png": "prop_neon_holo.png",
+    "small": "128/prop_neon_holo.webp",
+    "width": 285,
+    "height": 280,
+    "anchor": "bottom-center",
+    "cell": [
+      322,
+      626,
+      615,
+      955
+    ]
+  },
+  "prop_neon_pylon": {
+    "file": "prop_neon_pylon.webp",
+    "png": "prop_neon_pylon.png",
+    "small": "128/prop_neon_pylon.webp",
+    "width": 182,
+    "height": 320,
+    "anchor": "bottom-center",
+    "cell": [
+      627,
+      626,
+      958,
+      955
+    ]
+  },
+  "prop_neon_canisters": {
+    "file": "prop_neon_canisters.webp",
+    "png": "prop_neon_canisters.png",
+    "small": "128/prop_neon_canisters.webp",
+    "width": 232,
+    "height": 329,
+    "anchor": "bottom-center",
+    "cell": [
+      974,
+      626,
+      1254,
+      955
+    ]
+  },
+  "prop_cone": {
+    "file": "prop_cone.webp",
+    "png": "prop_cone.png",
+    "small": "128/prop_cone.webp",
+    "width": 209,
+    "height": 248,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      979,
+      250,
+      1254
+    ]
+  },
+  "prop_block": {
+    "file": "prop_block.webp",
+    "png": "prop_block.png",
+    "small": "128/prop_block.webp",
+    "width": 293,
+    "height": 213,
+    "anchor": "bottom-center",
+    "cell": [
+      322,
+      979,
+      615,
+      1254
+    ]
+  },
+  "prop_bush": {
+    "file": "prop_bush.webp",
+    "png": "prop_bush.png",
+    "small": "128/prop_bush.webp",
+    "width": 306,
+    "height": 223,
+    "anchor": "bottom-center",
+    "cell": [
+      627,
+      979,
+      958,
+      1254
+    ]
+  },
+  "prop_rocks": {
+    "file": "prop_rocks.webp",
+    "png": "prop_rocks.png",
+    "small": "128/prop_rocks.webp",
+    "width": 275,
+    "height": 223,
+    "anchor": "bottom-center",
+    "cell": [
+      974,
+      979,
+      1254,
+      1254
+    ]
+  },
+  "city_facade_a": {
+    "file": "city_facade_a.webp",
+    "png": "city_facade_a.png",
+    "small": "128/city_facade_a.webp",
+    "width": 284,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      12,
+      11,
+      306,
+      306
+    ]
+  },
+  "city_facade_b": {
+    "file": "city_facade_b.webp",
+    "png": "city_facade_b.png",
+    "small": "128/city_facade_b.webp",
+    "width": 277,
+    "height": 284,
+    "anchor": "center",
+    "cell": [
+      323,
+      11,
+      619,
+      306
+    ]
+  },
+  "city_road": {
+    "file": "city_road.webp",
+    "png": "city_road.png",
+    "small": "128/city_road.webp",
+    "width": 288,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      636,
+      11,
+      932,
+      306
+    ]
+  },
+  "city_sidewalk": {
+    "file": "city_sidewalk.webp",
+    "png": "city_sidewalk.png",
+    "small": "128/city_sidewalk.webp",
+    "width": 284,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      948,
+      11,
+      1242,
+      306
+    ]
+  },
+  "desert_facade_a": {
+    "file": "desert_facade_a.webp",
+    "png": "desert_facade_a.png",
+    "small": "128/desert_facade_a.webp",
+    "width": 285,
+    "height": 286,
+    "anchor": "center",
+    "cell": [
+      12,
+      322,
+      306,
+      617
+    ]
+  },
+  "desert_facade_b": {
+    "file": "desert_facade_b.webp",
+    "png": "desert_facade_b.png",
+    "small": "128/desert_facade_b.webp",
+    "width": 287,
+    "height": 285,
+    "anchor": "center",
+    "cell": [
+      323,
+      322,
+      619,
+      617
+    ]
+  },
+  "desert_road": {
+    "file": "desert_road.webp",
+    "png": "desert_road.png",
+    "small": "128/desert_road.webp",
+    "width": 289,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      636,
+      322,
+      932,
+      617
+    ]
+  },
+  "desert_ground": {
+    "file": "desert_ground.webp",
+    "png": "desert_ground.png",
+    "small": "128/desert_ground.webp",
+    "width": 286,
+    "height": 286,
+    "anchor": "center",
+    "cell": [
+      948,
+      322,
+      1242,
+      617
+    ]
+  },
+  "neon_facade_a": {
+    "file": "neon_facade_a.webp",
+    "png": "neon_facade_a.png",
+    "small": "128/neon_facade_a.webp",
+    "width": 284,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      12,
+      631,
+      306,
+      928
+    ]
+  },
+  "neon_facade_b": {
+    "file": "neon_facade_b.webp",
+    "png": "neon_facade_b.png",
+    "small": "128/neon_facade_b.webp",
+    "width": 287,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      323,
+      631,
+      619,
+      928
+    ]
+  },
+  "neon_road": {
+    "file": "neon_road.webp",
+    "png": "neon_road.png",
+    "small": "128/neon_road.webp",
+    "width": 287,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      636,
+      631,
+      932,
+      928
+    ]
+  },
+  "neon_plates": {
+    "file": "neon_plates.webp",
+    "png": "neon_plates.png",
+    "small": "128/neon_plates.webp",
+    "width": 285,
+    "height": 287,
+    "anchor": "center",
+    "cell": [
+      948,
+      631,
+      1242,
+      928
+    ]
+  },
+  "crate": {
+    "file": "crate.webp",
+    "png": "crate.png",
+    "small": "128/crate.webp",
+    "width": 281,
+    "height": 282,
+    "anchor": "center",
+    "cell": [
+      12,
+      945,
+      306,
+      1242
+    ]
+  },
+  "barrier": {
+    "file": "barrier.webp",
+    "png": "barrier.png",
+    "small": "128/barrier.webp",
+    "width": 288,
+    "height": 278,
+    "anchor": "center",
+    "cell": [
+      323,
+      945,
+      619,
+      1242
+    ]
+  },
+  "train_side": {
+    "file": "train_side.webp",
+    "png": "train_side.png",
+    "small": "128/train_side.webp",
+    "width": 287,
+    "height": 281,
+    "anchor": "center",
+    "cell": [
+      636,
+      945,
+      932,
+      1242
+    ]
+  },
+  "container": {
+    "file": "container.webp",
+    "png": "container.png",
+    "small": "128/container.webp",
+    "width": 281,
+    "height": 274,
+    "anchor": "center",
+    "cell": [
+      948,
+      945,
+      1242,
+      1242
+    ]
+  }
+}

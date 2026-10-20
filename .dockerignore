@@ -1,0 +1,10 @@
+.git
+codex.log
+tests
+tools
+assets/raw
+PROMPT.md
+README.md
+docker-compose.yml
+Dockerfile
+.dockerignore

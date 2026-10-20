@@ -1,0 +1,59 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { CONFIG } from '../src/game/config.js';
+import { makeRow, choosePattern } from '../src/game/spawner.js';
+import { playerOverlap, bulletOverlap, safeTransition } from '../src/game/collisions.js';
+import { readSave, writeSave } from '../src/game/storage.js';
+test('ogni pattern lascia libera la corsia dichiarata, anche ai limiti casuali', () => {
+    for (const safe of [-1, 0, 1])
+        for (const pattern of CONFIG.spawn.patterns)
+            for (const random of [() => 0, () => .499, () => .999999]) {
+                const row = makeRow(safe, pattern.name, random);
+                assert.equal(row.length, 2);
+                assert.ok(row.every(e => e.lane !== safe));
+                assert.equal(new Set(row.map(e => e.lane)).size, 2);
+            }
+});
+test('transizioni di fuga fattibili anche con treni e velocità massima', () => {
+    for (const a of [-1, 0, 1])
+        for (const b of [-1, 0, 1])
+            for (const speed of [CONFIG.speed.initial, CONFIG.speed.max])
+                assert.ok(safeTransition(a, b, CONFIG.spawn.intervalMin, speed));
+});
+test('selezione pesata copre tutti i pattern senza valori indefiniti', () => {
+    const found = new Set();
+    for (let i = 0; i < 1000; i++)
+        found.add(choosePattern(() => i / 1000));
+    assert.deepEqual([...found].sort(), CONFIG.spawn.patterns.map(p => p.name).sort());
+});
+test('hitbox: salto supera la barriera, scivolata passa sotto barra e proiettili', () => {
+    const p = { x: 0, y: 0, height: CONFIG.player.height };
+    const barrier = { x: 0, z: 3, hw: 1.1, hd: .3, bottom: 0, top: .95 };
+    assert.ok(playerOverlap(p, barrier));
+    p.y = 1;
+    assert.ok(!playerOverlap(p, barrier));
+    p.y = 0;
+    p.height = CONFIG.player.slideHeight;
+    assert.ok(!playerOverlap(p, { ...barrier, bottom: 1.35, top: 2.7 }));
+    assert.ok(!playerOverlap(p, { ...barrier, bottom: .79, top: 1.11 }));
+    p.height = CONFIG.player.height;
+    assert.ok(playerOverlap(p, { ...barrier, bottom: .79, top: 1.11 }));
+    p.x = 3;
+    assert.ok(!playerOverlap(p, barrier));
+});
+test('proiettile spazzato colpisce bersagli attraversati in un singolo tick', () => {
+    const enemy = { x: 0, z: -10, hw: .5, hd: .4, bottom: 0, top: 2 };
+    assert.ok(bulletOverlap({ x: 0, y: 1, z: -13, previousZ: -8 }, enemy));
+    assert.ok(!bulletOverlap({ x: 3, y: 1, z: -13, previousZ: -8 }, enemy));
+    assert.ok(!bulletOverlap({ x: 0, y: 3, z: -13, previousZ: -8 }, enemy));
+});
+test('salvataggi corrotti, storage negato e valori non validi non bloccano il gioco', () => {
+    assert.deepEqual(readSave(null), { best: 0, coins: 0, audio: true });
+    assert.deepEqual(readSave({ getItem: () => '{broken' }), { best: 0, coins: 0, audio: true });
+    assert.deepEqual(readSave({ getItem: () => '{"best":-5,"coins":"oops","audio":false}' }), { best: 0, coins: 0, audio: false });
+    assert.equal(writeSave({ setItem() { throw new Error('quota'); } }, {}), false);
+    let value;
+    const storage = { setItem(k, v) { value = v; }, getItem() { return value; } };
+    assert.ok(writeSave(storage, { best: 123, coins: 7, audio: false }));
+    assert.deepEqual(readSave(storage), { best: 123, coins: 7, audio: false });
+});

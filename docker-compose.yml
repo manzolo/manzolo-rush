@@ -1,0 +1,8 @@
+services:
+  neon-rush:
+    build: .
+    image: neon-rush:latest
+    container_name: neon-rush
+    ports:
+      - "8080:80"
+    restart: unless-stopped
