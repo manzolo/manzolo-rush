@@ -1,0 +1,14 @@
+# Deploy su home-server.lan (LXC 120): niente porte esposte, il container sta sulla rete
+# nginx-net del Nginx Proxy Manager interno, che pubblica http://manzolorush.lan.
+services:
+  manzolo-rush:
+    build: .
+    image: manzolo-rush:latest
+    container_name: manzolo-rush
+    restart: unless-stopped
+    networks:
+      - nginx-net
+
+networks:
+  nginx-net:
+    external: true

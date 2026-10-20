@@ -18,7 +18,8 @@ NAMES       ?= main
 PREFIX      ?=
 
 .PHONY: help serve open check test verify sprites sprites-preview \
-        build up down restart logs shell run stop ps image-size clean distclean
+        build up down restart logs shell run stop ps image-size clean distclean \
+        deploy deploy-logs
 
 ## ------------------------------------------------------------ sviluppo
 
@@ -84,6 +85,20 @@ stop: ## Ferma il container avviato con `make run`
 
 image-size: ## Dimensione dell'immagine
 	@docker image ls $(IMAGE):$(TAG) --format '{{.Repository}}:{{.Tag}}  {{.Size}}'
+
+## ------------------------------------------------------------ home-server.lan
+
+DEPLOY_HOST ?= root@home-server.lan
+DEPLOY_DIR  ?= /root/manzolo-rush
+
+deploy: verify ## Pubblica su home-server.lan (http://manzolorush.lan): copia, build e riavvio
+	ssh $(DEPLOY_HOST) 'mkdir -p $(DEPLOY_DIR)'
+	tar -czf - Dockerfile nginx.conf index.html style.css src assets/sprites assets/audio docker-compose.homeserver.yml \
+	  | ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && rm -rf src assets && tar -xzf - && mv docker-compose.homeserver.yml docker-compose.yml && docker compose up -d --build && docker image prune -f >/dev/null'
+	@echo "→ http://manzolorush.lan"
+
+deploy-logs: ## Log del container su home-server.lan
+	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && docker compose logs -f --tail 50'
 
 ## ------------------------------------------------------------ pulizia
 
