@@ -250,6 +250,20 @@ def key_out_background(cell: Image.Image, bg: tuple, thresh: int, band: int = 8,
                 c[1] = max(c[0], c[2])
             op[x, y] = tuple(c)
             ap[x, y] = round(a * 255)
+    if despill:
+        # Passata globale (solo sheet senza oggetti verdi): i pixel ancora "verde schermo",
+        # anche fuori dalla fascia di bordo (tra i ricci, nel fumo), diventano trasparenti
+        # in proporzione al verde e perdono la dominante verde.
+        for y in range(h):
+            for x in range(w):
+                if ap[x, y] == 0:
+                    continue
+                p = px[x, y]
+                e = p[1] - max(p[0], p[2])
+                if e > 18:
+                    ap[x, y] = round(ap[x, y] * max(0.0, 1 - (e - 18) / (bg_g * .5)))
+                    r, g, b = op[x, y]
+                    op[x, y] = (r, min(g, max(r, b)), b)
     out.putalpha(alpha)
     return out
 
