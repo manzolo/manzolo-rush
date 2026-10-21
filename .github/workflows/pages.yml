@@ -1,0 +1,52 @@
+# Pubblica il gioco su GitHub Pages solo quando arriva un tag v<versione> (lo crea `make bump`).
+# Prima verifica: il tag deve coincidere con src/game/version.js, e sintassi, test e check-public devono passare.
+name: Pubblica su Pages
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  pubblica:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Il tag coincide con la versione del gioco
+        run: |
+          VERSIONE=$(sed -n "s/^export const VERSION = '\([0-9.]*\)';$/\1/p" src/game/version.js)
+          echo "tag ${GITHUB_REF_NAME}, gioco v${VERSIONE}"
+          test "${GITHUB_REF_NAME}" = "v${VERSIONE}"
+      - name: Verifiche
+        run: |
+          node tests/check.mjs
+          node --test tests/*.test.mjs
+          ./scripts/check-public.sh --self-test
+          ./scripts/check-public.sh
+      - name: Solo i file del gioco
+        run: |
+          mkdir -p _site/assets
+          cp -r index.html style.css src .nojekyll _site/
+          cp -r assets/sprites assets/audio _site/assets/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

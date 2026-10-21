@@ -46,6 +46,9 @@ test: ## Test di logica (node --test)
 
 verify: check test ## check + test
 
+bump: ## Nuova versione, commit, tag e push: parte la pubblicazione su Pages (PARTE=patch|minor|major)
+	@./scripts/bump.sh $(or $(PARTE),patch)
+
 check-public: ## Prima di pubblicare: niente prompt, fogli grezzi, segreti o host privati in tutta la storia
 	@./scripts/check-public.sh --self-test
 	@./scripts/check-public.sh

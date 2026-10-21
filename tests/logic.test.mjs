@@ -4,6 +4,12 @@ import { CONFIG } from '../src/game/config.js';
 import { makeRow, choosePattern } from '../src/game/spawner.js';
 import { playerOverlap, bulletOverlap, safeTransition, coinLaneReachable } from '../src/game/collisions.js';
 import { readSave, writeSave } from '../src/game/storage.js';
+import { VERSION } from '../src/game/version.js';
+import { readFileSync } from 'node:fs';
+test('versione: x.y.z, uguale in version.js e package.json', () => {
+    assert.match(VERSION, /^\d+\.\d+\.\d+$/);
+    assert.equal(JSON.parse(readFileSync(new URL('../package.json', import.meta.url))).version, VERSION);
+});
 test('monete: solo corsia occupata; magnete esteso al massimo di una corsia', () => {
     for (const lane of [-1, 0, 1]) {
         const player = { x: lane * CONFIG.player.laneWidth, lane };

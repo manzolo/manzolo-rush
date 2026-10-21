@@ -20,7 +20,13 @@ Apri **http://localhost:8000** e premi **INIZIA LA CORSA**. In alternativa `npm 
 
 ### Online
 
-Si gioca da **https://manzolo.github.io/manzolo-rush/** (GitHub Pages, servito direttamente da `main`).
+Si gioca da **https://manzolo.github.io/manzolo-rush/**. La pubblica l'action `.github/workflows/pages.yml`, **solo
+quando arriva un tag** `v<versione>`: verifica che il tag coincida con `src/game/version.js`, lancia sintassi, test e
+`check-public`, e carica solo i file del gioco. Un push su `main` senza tag non pubblica niente.
+
+Nuova versione: `make bump` (oppure `make bump PARTE=minor` / `PARTE=major`). Alza la versione in `src/game/version.js`
+e `package.json`, verifica, fa il commit «Versione x.y.z», crea il tag e lo spinge: l'action riparte da sola. La versione
+si vede nel menu, sotto la scelta del personaggio.
 
 ### Su un server proprio
 

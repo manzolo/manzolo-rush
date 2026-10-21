@@ -4,6 +4,9 @@ import { Loop } from './game/loop.js';
 import { Game } from './game/game.js';
 import { loadSprites, SPRITES } from './game/sprites.js';
 import { prepareGraphics } from './game/preload.js';
+import { VERSION } from './game/version.js';
+// Subito, prima degli sprite: la versione si vede già mentre il menu carica.
+document.querySelector('#version').textContent = `v${VERSION}`;
 // Gli sprite si caricano prima della scena: il pulsante resta su "CARICAMENTO…" per al più
 // CONFIG.sprites.loadTimeout secondi, poi si parte comunque con i modelli procedurali.
 if (CONFIG.sprites.enabled)
