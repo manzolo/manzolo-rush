@@ -46,6 +46,10 @@ test: ## Test di logica (node --test)
 
 verify: check test ## check + test
 
+check-public: ## Prima di pubblicare: niente prompt, fogli grezzi, segreti o host privati in tutta la storia
+	@./scripts/check-public.sh --self-test
+	@./scripts/check-public.sh
+
 ## ------------------------------------------------------------ asset
 
 sprites: ## Ritaglia uno sheet (SHEET=..., GRID_COLS/ROWS, NAMES=preset, PREFIX=erika_)
@@ -86,18 +90,23 @@ stop: ## Ferma il container avviato con `make run`
 image-size: ## Dimensione dell'immagine
 	@docker image ls $(IMAGE):$(TAG) --format '{{.Repository}}:{{.Tag}}  {{.Size}}'
 
-## ------------------------------------------------------------ home-server.lan
+## ------------------------------------------------------------ deploy su un server proprio
 
-DEPLOY_HOST ?= root@home-server.lan
+# Host e indirizzo stanno in deploy.local.mk, fuori da git, per esempio:
+#   DEPLOY_HOST = root@mio-server
+#   DEPLOY_URL  = https://rush.esempio
+-include deploy.local.mk
 DEPLOY_DIR  ?= /root/manzolo-rush
 
-deploy: verify ## Pubblica su home-server.lan (http://manzolorush.lan): copia, build e riavvio
+deploy: verify ## Pubblica su un server con Docker (DEPLOY_HOST in deploy.local.mk): copia, build e riavvio
+	@test -n "$(DEPLOY_HOST)" || { echo "manca DEPLOY_HOST: scrivilo in deploy.local.mk"; exit 2; }
 	ssh $(DEPLOY_HOST) 'mkdir -p $(DEPLOY_DIR)'
 	tar -czf - Dockerfile nginx.conf index.html style.css src assets/sprites assets/audio docker-compose.homeserver.yml \
 	  | ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && rm -rf src assets && tar -xzf - && mv docker-compose.homeserver.yml docker-compose.yml && docker compose up -d --build && docker image prune -f >/dev/null'
-	@echo "→ http://manzolorush.lan"
+	@echo "→ $(DEPLOY_URL)"
 
-deploy-logs: ## Log del container su home-server.lan
+deploy-logs: ## Log del container sul server di deploy
+	@test -n "$(DEPLOY_HOST)" || { echo "manca DEPLOY_HOST: scrivilo in deploy.local.mk"; exit 2; }
 	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR) && docker compose logs -f --tail 50'
 
 ## ------------------------------------------------------------ pulizia

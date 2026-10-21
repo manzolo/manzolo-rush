@@ -1,2 +1,7 @@
 codex.log
 __pycache__/
+PROMPT.md
+PROMPT_SPRITES.md
+prompts/
+assets/raw/
+deploy.local.mk

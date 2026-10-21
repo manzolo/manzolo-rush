@@ -1,8 +1,8 @@
 # MANZOLO RUSH
 
-Un endless runner 3D a tre corsie: corri, salta, scivola e spara attraverso Sunset City, Dust Valley e Neon Outpost. Tutti i modelli, le texture e i suoni sono procedurali. HTML5, CSS e moduli JavaScript ES, **senza build e senza installazione di dipendenze** per giocare.
+Un endless runner 3D a tre corsie: corri, salta, scivola e spara attraverso Sunset City, Dust Valley e Neon Outpost. Il giochino di famiglia di Manzolo: i personaggi sono i membri della famiglia. Modelli 3D, texture ed effetti sonori sono procedurali; sprite e musica stanno in `assets/`. HTML5, CSS e moduli JavaScript ES, **senza build e senza installazione di dipendenze** per giocare.
 
-Three.js **0.169.0**, fissato nell’importmap di `index.html`, è l’unica dipendenza runtime e viene caricato da jsDelivr. Serve una connessione al CDN; la disponibilità offline dipende dalla cache del browser. Non vengono scaricati modelli, immagini, font, musica o altri asset.
+Three.js **0.169.0**, fissato nell’importmap di `index.html`, è l’unica dipendenza runtime e viene caricato da jsDelivr. Serve una connessione al CDN; la disponibilità offline dipende dalla cache del browser. Gli altri file (sprite e musica) sono nel repository.
 
 ## Avvio
 
@@ -18,11 +18,15 @@ Apri **http://localhost:8000** e premi **INIZIA LA CORSA**. In alternativa `npm 
 
 `make` (o `make help`) elenca i target: `serve`, `check`, `test`, `verify`, `sprites`, `build`, `up`, `down`, `logs`, `run`, `clean`. Le variabili `PORT`, `DOCKER_PORT`, `IMAGE` e `TAG` si passano sulla riga di comando (`make serve PORT=9000`).
 
-### In rete di casa: https://manzolorush.lan
+### Online
 
-Il gioco gira su `home-server.lan` (LXC 120 della ZimaBlade), dietro l'Nginx Proxy Manager interno, con un
-CNAME in Pi-hole e un certificato della CA locale di casa (scade il 2027-10-30). Per aggiornarlo: `make deploy` (lancia i test, copia i file in `/root/manzolo-rush`,
-ricostruisce e riavvia il container). Log: `make deploy-logs`. Solo LAN: non va esposto su internet.
+Si gioca da **https://manzolo.github.io/manzolo-rush/** (GitHub Pages, servito direttamente da `main`).
+
+### Su un server proprio
+
+`make deploy` lancia i test, copia i file sul server, ricostruisce e riavvia il container dietro un reverse proxy
+(`docker-compose.homeserver.yml`, rete esterna `nginx-net`). Host e indirizzo si scrivono in `deploy.local.mk`, che
+resta fuori da git (`DEPLOY_HOST = root@mio-server`, `DEPLOY_URL = https://…`). Log: `make deploy-logs`.
 
 ### Docker
 
@@ -111,7 +115,7 @@ Oltre ai modelli procedurali, il gioco usa gli sprite in **`assets/sprites/`** (
 - **nemici**: soldato, pattugliatore, drone e tank come billboard; le hitbox restano quelle dei modelli (`src/game/enemies.js`);
 - **monete e power-up**: `InstancedMesh` con la texture dello sprite (`src/game/powerups.js`);
 - **esplosioni**: `THREE.Sprite` che si gonfia e svanisce su uccisioni, casse e danni (`src/game/effects.js`);
-- **boss**: `boss_sentinel_v2.webp`, generato con OpenAI `image_gen`, con alpha trasparente; originale PNG e prompt conservati in `assets/sprites/boss_sentinel_v2.png` e `assets/raw/boss_sentinel_v2.prompt.md`;
+- **boss**: `boss_sentinel_v2.webp`, generato con OpenAI `image_gen`, con alpha trasparente; originale PNG in `assets/sprites/boss_sentinel_v2.png`;
 - **interfaccia**: icone di monete, arma, power-up e boss, avatar accanto alle vite, protagonista animato nel menu e nelle schermate di pausa e game over (`index.html`, `style.css`).
 
 Il caricamento è in `src/game/sprites.js`: `loadSprites()` legge `atlas.json` e le texture prima di costruire la scena (al più `CONFIG.sprites.loadTimeout` secondi). Se un file manca o il caricamento fallisce, il modulo interessato torna al modello procedurale senza errori. In `CONFIG.sprites` si possono disattivare `hero`, `enemies`, `pickups` ed `explosions` singolarmente, oppure tutto con `enabled: false`; `heroAngle` ed `enemyAngle` regolano l’inclinazione dei billboard rispetto alla camera.
@@ -180,3 +184,15 @@ Questi test verificano la logica e le trasformazioni, **non** il rendering WebGL
 ### Limiti della verifica e bug noti
 
 Nessun bug di logica noto nei casi coperti. Da verificare a mano: una corsa di almeno tre minuti in orizzontale su telefono, pausa al cambio scheda, audio/mute, persistenza dopo reload e frame rate durante una raffica tripla con boss.
+
+## Crediti e diritti
+
+- **Codice**: licenza MIT (`LICENSE`).
+- **Personaggi**: Manzolo, Erika, Mariel, Vittoria e Linda sono persone vere. Gli sprite sono generati con l'intelligenza
+  artificiale a partire dalle loro foto, e sono pubblicati col loro consenso (per i minori, quello dei genitori).
+  **Non sono coperti dalla licenza MIT**: non si riusano fuori da questo gioco.
+- **Altri sprite** (nemici, boss, oggetti, texture): generati con l'intelligenza artificiale (OpenAI `image_gen`).
+- **Musica**: «Corsa alla Vittoria» (`assets/audio/`), creata con [Suno](https://suno.com) con un abbonamento a pagamento.
+- **Three.js** 0.169.0, licenza MIT, caricato da jsDelivr.
+
+Tutto quello che sta in `assets/` è © Andrea Manzi, tutti i diritti riservati.

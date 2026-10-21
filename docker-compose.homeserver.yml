@@ -1,5 +1,5 @@
-# Deploy su home-server.lan (LXC 120): niente porte esposte, il container sta sulla rete
-# nginx-net del Nginx Proxy Manager interno, che pubblica http://manzolorush.lan.
+# Deploy dietro un reverse proxy (make deploy): niente porte esposte, il container sta sulla
+# rete esterna nginx-net, dove il proxy (es. Nginx Proxy Manager) lo pubblica col suo nome.
 services:
   manzolo-rush:
     build: .
