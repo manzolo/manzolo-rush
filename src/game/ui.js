@@ -156,7 +156,7 @@ export class UI {
         }
         const touch = matchMedia('(pointer:coarse)').matches;
         const t = g.time;
-        this.text('tutorial', t < 4 ? (touch ? 'SWIPE ← → · Cambia corsia' : '← → / A D · Cambia corsia') : t < 8 ? (touch ? 'SWIPE ↑ · Salta le barriere' : '↑ / SPAZIO · Salta le barriere') : t < 12 ? (touch ? 'SWIPE ↓ · Scivola sotto le barre' : '↓ / S · Scivola sotto le barre') : t < 16 ? (touch ? 'TOCCA FUOCO · Fuoco automatico' : 'CTRL · Tieni premuto per sparare (anche J o click)') : t < 20 ? (touch ? 'TIENI FUOCO · Raffica, occhio al calore' : 'SHIFT · Raffica! Occhio al calore (anche K)') : '');
+        this.text('tutorial', t < 4 ? (touch ? 'SWIPE ← → · Cambia corsia' : '← → / A D · Cambia corsia') : t < 8 ? (touch ? 'SWIPE ↑ · Salta le barriere' : '↑ / SPAZIO · Salta le barriere') : t < 12 ? (touch ? 'SWIPE ↓ · Scivola sotto le barre' : '↓ / S · Scivola sotto le barre') : t < 16 ? (touch ? 'TIENI IL DITO SULLO SCHERMO · Spara' : 'CTRL · Tieni premuto per sparare (anche J o click)') : t < 20 ? (touch ? 'FUOCO · Tocca: automatico · Tieni: raffica' : 'SHIFT · Raffica! Occhio al calore (anche K)') : '');
         const boss = g.boss;
         this.nodes['boss-hud'].classList.toggle('hidden', !boss?.active);
         if (boss?.active) {

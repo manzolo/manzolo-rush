@@ -592,7 +592,9 @@ footer i {
     #tutorial {
         font-size:10px;
         padding:11px 15px;
-        bottom:29%;
+        /* in alto, sotto il punteggio: in basso copriva il personaggio */
+        top:max(24%, 185px);
+        bottom:auto;
         max-width:94%;
         white-space:normal;
         width:max-content;

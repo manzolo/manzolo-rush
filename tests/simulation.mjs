@@ -33,7 +33,7 @@ const node = id => {
     return nodes.get(id);
 };
 globalThis.document = { querySelector: id => node(id), getElementById: id => node('#' + id), body: new Node(), createElement: () => new Node(), addEventListener() { } };
-globalThis.window = { addEventListener() { } };
+globalThis.window = { listeners: {}, addEventListener(type, fn) { this.listeners[type] = fn; } };
 Object.defineProperty(globalThis, 'navigator', { value: { getGamepads: () => [] }, configurable: true });
 globalThis.localStorage = { data: {}, getItem(key) { return this.data[key] ?? null; }, setItem(key, value) { this.data[key] = value; } };
 globalThis.matchMedia = () => ({ matches: false });
@@ -247,6 +247,36 @@ check('touch simulato: swipe, toggle fuoco e pressione prolungata', () => {
     assert.ok(g.input.burst);
     fire.listeners.pointerup(event);
     assert.ok(!g.input.burst && !g.input.auto);
+});
+check('touch simulato: dito tenuto sullo schermo spara, swipe e tocco breve no', () => {
+    g.start();
+    const canvas = renderer.domElement;
+    const event = { pointerId: 2, pointerType: 'touch', clientX: 200, clientY: 300, preventDefault() { } };
+    const up = () => window.listeners.pointerup(event);
+    canvas.listeners.pointerdown(event);
+    g.input.update(.1);
+    assert.ok(!g.input.firing, 'un tocco breve non spara');
+    up();
+    g.input.update(.3);
+    assert.ok(!g.input.firing, 'dopo il rilascio non resta acceso');
+    canvas.listeners.pointerdown(event);
+    g.input.update(.2);
+    assert.ok(g.input.firing && !g.input.burst, 'tenuto: fuoco normale, non raffica');
+    canvas.listeners.pointermove({ ...event, clientX: 280 });
+    g.update(CONFIG.step);
+    assert.equal(g.player.lane, 1, 'lo swipe col dito tenuto cambia corsia');
+    assert.ok(g.input.firing, 'e il fuoco continua');
+    up();
+    assert.ok(!g.input.firing);
+    canvas.listeners.pointerdown(event);
+    g.input.update(.2);
+    canvas.listeners.pointercancel(event);
+    assert.ok(!g.input.firing, 'pointercancel spegne il fuoco');
+    canvas.listeners.pointerdown(event);
+    g.input.update(.2);
+    g.pause();
+    assert.ok(!g.input.firing, 'la pausa spegne il fuoco');
+    g.resume();
 });
 check('camera verticale mantiene entrambe le corsie laterali visibili', () => {
     g.start();
