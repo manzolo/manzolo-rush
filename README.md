@@ -18,10 +18,10 @@ Apri **http://localhost:8000** e premi **INIZIA LA CORSA**. In alternativa `npm 
 
 `make` (o `make help`) elenca i target: `serve`, `check`, `test`, `verify`, `sprites`, `build`, `up`, `down`, `logs`, `run`, `clean`. Le variabili `PORT`, `DOCKER_PORT`, `IMAGE` e `TAG` si passano sulla riga di comando (`make serve PORT=9000`).
 
-### In rete di casa: http://manzolorush.lan
+### In rete di casa: https://manzolorush.lan
 
 Il gioco gira su `home-server.lan` (LXC 120 della ZimaBlade), dietro l'Nginx Proxy Manager interno, con un
-CNAME in Pi-hole. Per aggiornarlo: `make deploy` (lancia i test, copia i file in `/root/manzolo-rush`,
+CNAME in Pi-hole e un certificato della CA locale di casa (scade il 2027-10-30). Per aggiornarlo: `make deploy` (lancia i test, copia i file in `/root/manzolo-rush`,
 ricostruisce e riavvia il container). Log: `make deploy-logs`. Solo LAN: non va esposto su internet.
 
 ### Docker
