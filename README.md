@@ -187,11 +187,11 @@ Nessun bug di logica noto nei casi coperti. Da verificare a mano: una corsa di a
 
 ## Crediti e diritti
 
-- **Codice**: licenza MIT (`LICENSE`).
-- **Personaggi**: Manzolo, Erika, Mariel, Vittoria e Linda sono persone vere. Gli sprite sono generati con l'intelligenza
-  artificiale a partire dalle loro foto, e sono pubblicati col loro consenso (per i minori, quello dei genitori).
+- **Codice**: scritto con l'aiuto di Codex (OpenAI) e Claude Code (Anthropic), su indicazioni di Andrea; licenza MIT (`LICENSE`).
+- **Personaggi**: Manzolo, Erika, Mariel, Vittoria e Linda sono persone vere. Gli sprite sono generati con ChatGPT
+  (generazione di immagini di OpenAI) a partire dalle loro foto, e sono pubblicati col loro consenso (per i minori, quello dei genitori).
   **Non sono coperti dalla licenza MIT**: non si riusano fuori da questo gioco.
-- **Altri sprite** (nemici, boss, oggetti, texture): generati con l'intelligenza artificiale (OpenAI `image_gen`).
+- **Altri sprite** (nemici, boss, oggetti, texture): generati con ChatGPT (generazione di immagini di OpenAI).
 - **Musica**: «Corsa alla Vittoria» (`assets/audio/`), creata con [Suno](https://suno.com) con un abbonamento a pagamento.
 - **Three.js** 0.169.0, licenza MIT, caricato da jsDelivr.
 
