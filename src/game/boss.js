@@ -134,13 +134,13 @@ export class Boss {
                 for (const m of this.warnings)
                     m.visible = false;
                 for (let lane = -1; lane <= 1; lane++)
-                    game.enemies.shoot(lane, this.z + 3, CONFIG.boss.projectileSpeed, 0, lane === this.safeLane ? this.safeMove : 'full');
+                    game.enemies.shoot(lane, this.z + 3, CONFIG.boss.projectileSpeed * (game.difficulty?.projectileSpeed ?? 1), 0, lane === this.safeLane ? this.safeMove : 'full');
                 game.audio?.play('bossShot');
                 this.recoil = .22;
             }
         }
         else if (this.attackTimer <= 0) {
-            this.attackTimer = CONFIG.boss.attackInterval * (this.enraged ? CONFIG.boss.enragedRate : 1);
+            this.attackTimer = CONFIG.boss.attackInterval * (this.enraged ? CONFIG.boss.enragedRate : 1) * (game.difficulty?.attackInterval ?? 1);
             this.warning = CONFIG.boss.warning;
             this.safeLane = Math.max(-1, Math.min(1, this.safeLane + (Math.random() < .5 ? -1 : 1)));
             this.safeMove = Math.random() < .5 ? 'low' : 'high';

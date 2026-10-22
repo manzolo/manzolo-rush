@@ -197,6 +197,73 @@ check('plasma: core/scia/archi in pool, stessa potenza e pulizia dopo reset', ()
     assert.equal(w.plasmaCore.count + w.plasmaTrail.count + w.plasmaArcs.count, 0);
     assert.equal(scene.children.length, count);
 });
+check('scudo: raccolta, bagliore, impatto, scadenza e reset', () => {
+    g.start();
+    g.pickups.reset();
+    g.pickups.power(0, CONFIG.player.z, 'shield');
+    g.pickups.update(0, g);
+    g.render(1, 0);
+    assert.ok(g.effects.shield.visible);
+    assert.ok(g.effects.shieldWave.visible);
+    assert.equal(g.effects.shieldFlash, 1);
+    g.damage();
+    g.render(1, 0);
+    assert.ok(!g.effects.shield.visible);
+    assert.ok(g.effects.shieldWave.visible);
+    assert.equal(g.player.lives, CONFIG.player.lives);
+    g.effects.update(1, 0);
+    g.render(1, 0);
+    assert.ok(!g.effects.shieldWave.visible);
+    g.powerups.shield = .01;
+    g.update(CONFIG.step);
+    g.render(1, 0);
+    assert.ok(!g.effects.shield.visible);
+    g.effects.shieldPulse();
+    g.menu();
+    g.render(1, 0);
+    assert.ok(!g.effects.shield.visible && !g.effects.shieldWave.visible);
+});
+check('record conserva personaggio e livello anche dopo cambio selezione e pareggio', () => {
+    g.menu();
+    g.setCharacter('erika');
+    g.setDifficulty('hard');
+    g.start();
+    g.score = g.save.best + 1000;
+    g.bank();
+    const record = g.save.best;
+    assert.equal(g.save.bestCharacter, 'erika');
+    assert.equal(g.save.bestDifficulty, 'hard');
+    g.menu();
+    g.setCharacter('linda');
+    g.setDifficulty('easy');
+    g.start();
+    g.score = record;
+    g.bank();
+    assert.equal(g.save.bestCharacter, 'erika');
+    assert.equal(g.save.bestDifficulty, 'hard');
+    g.menu();
+    g.setCharacter('manzolo');
+    g.setDifficulty('medium');
+});
+check('difficoltà applicata a velocità e spawn, bloccata durante la corsa', () => {
+    for (const [id, speed, interval] of [['easy', .8, 1.2], ['medium', 1, 1], ['hard', 1.15, .9]]) {
+        g.menu();
+        g.setDifficulty(id);
+        g.start();
+        assert.equal(g.speed, CONFIG.speed.initial * speed);
+        g.spawner.timer = 0;
+        g.update(CONFIG.step);
+        assert.ok(Math.abs(g.spawner.timer - (CONFIG.spawn.intervalStart - g.time * CONFIG.spawn.intervalDecay) * interval) < .001);
+        assert.ok(g.speed > CONFIG.speed.initial * speed);
+        g.setDifficulty('invalid');
+        assert.equal(g.difficulty.id, id);
+        g.pause();
+        g.resume();
+        assert.equal(g.difficulty.id, id);
+    }
+    g.menu();
+    g.setDifficulty('medium');
+});
 check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () => {
     g.start();
     g.input.auto = true;
@@ -295,12 +362,15 @@ check('camera verticale mantiene entrambe le corsie laterali visibili', () => {
     camera.aspect = 1.6;
     camera.updateProjectionMatrix();
 });
-check('tre corse da 3 minuti: il corridoio è percorribile senza invulnerabilità artificiale', () => {
+check('nove corse da 3 minuti: tre difficoltà percorribili senza invulnerabilità artificiale', () => {
     const originalRandom = Math.random;
     try {
+        for (const level of ['easy', 'medium', 'hard'])
         for (const seed of [17, 259, 4096]) {
             let randomState = seed;
             Math.random = () => { randomState = (Math.imul(1664525, randomState) + 1013904223) >>> 0; return randomState / 4294967296; };
+            g.menu();
+            g.setDifficulty(level);
             g.start();
             for (let tick = 0; tick < 60 * 184; tick++) {
                 const blocked = new Set();

@@ -1,8 +1,11 @@
 import { CONFIG } from './config.js';
+import { volumeLevel } from './storage.js';
 export class Audio {
     // enabled = effetti sonori (spari, esplosioni…); musicOn = brani o musica procedurale.
-    constructor(enabled = true, musicOn = true) {
+    constructor(enabled = true, musicOn = true, soundVolume = 1, musicVolume = 1) {
         this.enabled = enabled; this.musicOn = musicOn; this.context = null; this.beat = 0; this.note = 0; this.active = false;
+        this.soundVolume = volumeLevel(soundVolume);
+        this.musicVolume = volumeLevel(musicVolume);
         // Brani MP3: <audio> in loop con dissolvenza; il browser li fa partire solo dopo
         // il primo tocco o tasto, quindi il menu "aggancia" la musica alla prima interazione.
         this.tracks = {};
@@ -38,7 +41,7 @@ export class Audio {
         this.lastState = state;
     }
     fadeStep(dt) {
-        const target = this.musicOn ? CONFIG.audio.trackVolume : 0, rate = dt / CONFIG.audio.fade;
+        const target = this.musicOn ? CONFIG.audio.trackVolume * this.musicVolume : 0, rate = dt / CONFIG.audio.fade;
         for (const [name, el] of Object.entries(this.tracks)) {
             const goal = name === this.track ? target : 0;
             el.volume = Math.max(0, Math.min(1, el.volume + Math.sign(goal - el.volume) * Math.min(rate, Math.abs(goal - el.volume))));
@@ -54,8 +57,11 @@ export class Audio {
             try {
                 this.context = new Constructor();
                 this.master = this.context.createGain();
-                this.master.gain.value = this.enabled ? CONFIG.audio.master : 0;
+                this.master.gain.value = this.enabled ? CONFIG.audio.master * this.soundVolume : 0;
                 this.master.connect(this.context.destination);
+                this.musicGain = this.context.createGain();
+                this.musicGain.gain.value = this.musicOn ? CONFIG.audio.master * this.musicVolume : 0;
+                this.musicGain.connect(this.context.destination);
                 this.noise = this.context.createBuffer(1, this.context.sampleRate * .5, this.context.sampleRate);
                 const data = this.noise.getChannelData(0);
                 for (let i = 0; i < data.length; i++)
@@ -72,15 +78,25 @@ export class Audio {
         this.enabled = enabled;
         this.unlock();
         if (this.master)
-            this.master.gain.setTargetAtTime(enabled ? CONFIG.audio.master : 0, this.context.currentTime, .03);
+            this.master.gain.setTargetAtTime(enabled ? CONFIG.audio.master * this.soundVolume : 0, this.context.currentTime, .03);
     }
     setMusic(on) {
         this.musicOn = on;
         this.unlock();
+        if (this.musicGain)
+            this.musicGain.gain.setTargetAtTime(on ? CONFIG.audio.master * this.musicVolume : 0, this.context.currentTime, .03);
         this.music(this.wanted);
     }
-    tone(frequency, duration, type = 'sine', volume = .15, endFrequency = frequency, delay = 0) {
-        if (!this.context || !this.enabled || this.context.state !== 'running')
+    setVolume(channel, value) {
+        const music = channel === 'music';
+        this[music ? 'musicVolume' : 'soundVolume'] = volumeLevel(value);
+        if (music)
+            this.setMusic(this.musicOn);
+        else
+            this.setEnabled(this.enabled);
+    }
+    tone(frequency, duration, type = 'sine', volume = .15, endFrequency = frequency, delay = 0, music = false) {
+        if (!this.context || !(music ? this.musicOn : this.enabled) || this.context.state !== 'running')
             return;
         const t = this.context.currentTime + delay, osc = this.context.createOscillator(), gain = this.context.createGain();
         osc.type = type;
@@ -90,7 +106,7 @@ export class Audio {
         gain.gain.exponentialRampToValueAtTime(Math.max(.002, volume), t + .008);
         gain.gain.exponentialRampToValueAtTime(.001, t + duration);
         osc.connect(gain);
-        gain.connect(this.master);
+        gain.connect(music ? this.musicGain : this.master);
         osc.start(t);
         osc.stop(t + duration + .02);
         osc.onended = () => { osc.disconnect(); gain.disconnect(); };
@@ -168,16 +184,16 @@ export class Audio {
     update(dt, active) {
         this.active = active;
         // Con i brani MP3 la musica procedurale resta spenta.
-        if (!active || !this.enabled || !this.musicOn || !this.context || this.hasTracks)
+        if (!active || !this.musicOn || !this.context || this.hasTracks)
             return;
         this.beat -= dt;
         if (this.beat > 0)
             return;
         this.beat += 60 / CONFIG.audio.tempo / 2;
         const notes = [220, 330, 440, 330, 196, 294, 392, 294, 174.61, 261.63, 349.23, 261.63, 196, 294, 392, 523.25];
-        this.tone(notes[this.note % notes.length], .18, 'triangle', CONFIG.audio.music);
+        this.tone(notes[this.note % notes.length], .18, 'triangle', CONFIG.audio.music, notes[this.note % notes.length], 0, true);
         if (this.note % 4 === 0)
-            this.tone(notes[this.note % notes.length] / 4, .35, 'sine', CONFIG.audio.music * 1.5);
+            this.tone(notes[this.note % notes.length] / 4, .35, 'sine', CONFIG.audio.music * 1.5, notes[this.note % notes.length] / 4, 0, true);
         this.note++;
     }
 }

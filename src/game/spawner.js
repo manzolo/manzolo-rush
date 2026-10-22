@@ -29,7 +29,7 @@ export class Spawner {
         if (this.timer > 0)
             return;
         const interval = Math.max(CONFIG.spawn.intervalMin, CONFIG.spawn.intervalStart - g.time * CONFIG.spawn.intervalDecay);
-        this.timer = interval;
+        this.timer = interval * (g.difficulty?.spawnInterval ?? 1);
         // Una sola corsia di differenza tra vie di fuga successive. Ogni riga è
         // separata da almeno 1,75 s: molto più di cambio corsia + lunghezza treno.
         this.safeLane = Math.max(-1, Math.min(1, this.safeLane + (Math.floor(Math.random() * 3) - 1)));

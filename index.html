@@ -10,14 +10,14 @@
 <body>
 <canvas id="game" aria-label="Percorso tridimensionale di Manzolo Rush"></canvas><div class="vignette"></div><div id="damage-flash"></div>
 <header class="brand"><span class="brand-mark">ϟ</span> MANZOLO<span>RUSH</span><small>ENDLESS RUN & GUN</small></header>
-<div class="top-actions"><button id="music" class="icon-button" aria-label="Attiva o disattiva la musica" title="Musica">♫</button><button id="sound" class="icon-button" aria-label="Attiva o disattiva gli effetti sonori" title="Effetti">🔊</button><button id="pause-button" class="icon-button hidden" aria-label="Pausa">Ⅱ</button></div>
+<div class="top-actions"><button id="music" class="icon-button" aria-label="Attiva o disattiva la musica" title="Musica">♫</button><button id="sound" class="icon-button" aria-label="Attiva o disattiva gli effetti sonori" title="Effetti">🔊</button><details id="audio-settings" class="audio-settings"><summary class="icon-button" aria-label="Regola volume" title="Regola volume"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3v18M12 3v18M20 3v18"/><path d="M1 8h6M9 16h6M17 10h6" stroke-width="4"/></svg></summary><div class="audio-panel"><strong>VOLUME</strong><label for="music-volume">Musica <output id="music-volume-value" for="music-volume">100%</output></label><input id="music-volume" type="range" min="0" max="100" step="1" value="100"><label for="sound-volume">Effetti <output id="sound-volume-value" for="sound-volume">100%</output></label><input id="sound-volume" type="range" min="0" max="100" step="1" value="100"></div></details><button id="pause-button" class="icon-button hidden" aria-label="Pausa">Ⅱ</button></div>
 <main id="menu" class="screen menu">
 <div class="eyebrow"><span class="live-dot"></span> UN’UNICA DIREZIONE. AVANTI.</div>
 <h1>RUN<br><span id="hero-name" class="hero-name">MANZOLO</span><br><span>RUN!</span></h1><p class="intro">Le giornate sono un pugnello.</p>
 <div id="characters" class="characters" role="radiogroup" aria-label="Scegli il personaggio"></div>
-<small id="version" class="version"></small>
+<fieldset class="difficulty-picker"><legend>DIFFICOLTÀ</legend><div><label><input type="radio" name="difficulty" value="easy"><span>Facile</span></label><label><input type="radio" name="difficulty" value="medium" checked><span>Medio</span></label><label><input type="radio" name="difficulty" value="hard"><span>Difficile</span></label></div><p id="difficulty-hint">La corsa originale. Riflessi e ritmo.</p></fieldset>
 <button id="play" class="primary" disabled><span id="play-label">CARICAMENTO…</span><span>↗</span></button>
-<div class="menu-stats"><div><small>IL TUO RECORD</small><strong id="menu-best">000000</strong></div><div><small>MONETE TOTALI</small><strong class="gold" id="menu-coins">0</strong></div></div>
+<div class="menu-stats"><div><small>IL TUO RECORD</small><strong id="menu-best">000000</strong><small id="menu-best-character" class="record-character"></small></div><div><small>MONETE TOTALI</small><strong class="gold" id="menu-coins">0</strong></div></div>
 <div class="menu-controls"><span><kbd>←</kbd><kbd>→</kbd> schiva</span><span><kbd>↑</kbd> salta</span><span><kbd>↓</kbd> scivola</span><span><kbd>Ctrl</kbd> spara</span><span><kbd>Shift</kbd> raffica</span></div>
 <p class="touch-intro">Scorri per muoverti · Tieni il dito sullo schermo per sparare</p>
 </main>
@@ -31,7 +31,7 @@
 </div>
 <div id="pause" class="screen modal hidden"><div class="dialog"><img class="dialog-art" data-pose="front_thumbs" src="assets/sprites/hero_front_thumbs.webp" alt="" onerror="this.style.visibility='hidden'"><div class="eyebrow">RIPRENDI FIATO</div><h2>IN PAUSA<span>.</span></h2><p>La città può aspettare un momento.</p><button id="resume" class="primary">CONTINUA <span>↗</span></button><button id="pause-menu" class="secondary">TORNA AL MENU</button></div></div>
 <div id="gameover" class="screen modal hidden"><div class="dialog"><img class="dialog-art" data-pose="front_tired" src="assets/sprites/hero_front_tired.webp" alt="" onerror="this.style.visibility='hidden'"><div class="eyebrow" id="result-label">UNA CORSA. UN’ALTRA STORIA.</div><h2>RUN OVER<span>.</span></h2><div class="result-score" id="final-score">0</div><div class="result-grid"><div><small>DISTANZA</small><b id="final-distance">0 m</b></div><div><small>MONETE</small><b id="final-coins">0</b></div><div><small>NEMICI</small><b id="final-kills">0</b></div></div><button id="retry" class="primary">ANCORA UNA CORSA <span>↗</span></button><button id="result-menu" class="secondary">TORNA AL MENU</button></div></div>
-<footer><span id="zone">01 / SUNSET CITY</span><span>STAY FAST. STAY ALIVE. <i>●</i></span></footer>
+<footer><span id="zone">01 / SUNSET CITY</span><div class="footer-meta"><span>STAY FAST. STAY ALIVE. <i>●</i></span><small id="version" class="version"></small></div></footer>
 <div id="error" class="hidden" role="alert"></div>
 <script type="module">
 import('./src/main.js').catch(error => {

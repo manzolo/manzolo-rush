@@ -140,6 +140,10 @@ export class Pickups {
                 if (Math.abs(player.x - p.x) < CONFIG.collection.powerRadius && Math.abs(CONFIG.player.z - p.z) < CONFIG.collection.powerRadius && Math.abs(player.y + .8 - p.y) < 1.1) {
                     p.active = false;
                     game.powerups[p.type] = CONFIG.bonuses.duration;
+                    if (p.type === 'shield')
+                        game.effects?.shieldPulse();
+                    else
+                        game.effects?.emit(p.x, p.y, p.z, COLORS[p.type], 14);
                     game.audio?.play('power');
                     game.announce?.(POWER_LABELS[p.type] + ' ATTIVO');
                 }

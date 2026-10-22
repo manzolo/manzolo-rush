@@ -17,6 +17,7 @@ import { Effects } from './effects.js';
 import { CHARACTERS, characterById, characterReady, poseName } from './characters.js';
 import { SPRITES } from './sprites.js';
 import { playerOverlap, bulletOverlap, obstaclePassBonus } from './collisions.js';
+import { difficultyById } from './difficulty.js';
 export class Game {
     constructor(renderer, scene, camera) {
         this.renderer = renderer;
@@ -40,7 +41,8 @@ export class Game {
             this.storage = null;
         }
         this.save = readSave(this.storage);
-        this.audio = new Audio(this.save.audio, this.save.music);
+        this.difficulty = difficultyById(this.save.difficulty);
+        this.audio = new Audio(this.save.audio, this.save.music, this.save.soundVolume, this.save.musicVolume);
         this.input = new Input(renderer.domElement, document.querySelector('#fire'), () => this.pause());
         this.state = STATES.MENU;
         this.audio.music('menu');
@@ -52,6 +54,9 @@ export class Game {
         this.refreshSave();
         this.buildCharacterPicker();
         this.setCharacter(characterReady(this.save.character) ? this.save.character : 'manzolo', false);
+        this.setDifficulty(this.save.difficulty, false);
+        for (const radio of document.querySelectorAll?.('input[name="difficulty"]') || [])
+            radio.onchange = () => this.setDifficulty(radio.value);
         this.player.onJump = () => this.audio.play('jump');
         this.player.onLand = () => {
             this.audio.play('land');
@@ -65,16 +70,52 @@ export class Game {
             document.getElementById(id).onclick = () => this.menu();
         document.querySelector('#sound').onclick = () => {
             this.save.audio = !this.save.audio;
+            if (this.save.audio && this.save.soundVolume === 0) {
+                this.save.soundVolume = 1;
+                this.audio.setVolume('sound', 1);
+            }
             this.audio.setEnabled(this.save.audio);
             writeSave(this.storage, this.save);
             this.refreshSave();
         };
         document.querySelector('#music').onclick = () => {
             this.save.music = !this.save.music;
+            if (this.save.music && this.save.musicVolume === 0) {
+                this.save.musicVolume = 1;
+                this.audio.setVolume('music', 1);
+            }
             this.audio.setMusic(this.save.music);
             writeSave(this.storage, this.save);
             this.refreshSave();
         };
+        for (const channel of ['music', 'sound']) {
+            document.getElementById(`${channel}-volume`).oninput = event => {
+                const volume = Number(event.target.value) / 100;
+                this.save[`${channel}Volume`] = volume;
+                // Alzare un cursore riattiva il canale, anche dopo il mute.
+                const key = channel === 'music' ? 'music' : 'audio';
+                this.save[key] = volume > 0;
+                if (channel === 'music')
+                    this.audio.setMusic(this.save[key]);
+                else
+                    this.audio.setEnabled(this.save[key]);
+                this.audio.setVolume(channel, volume);
+                writeSave(this.storage, this.save);
+                this.refreshSave();
+            };
+        }
+        const audioSettings = document.getElementById('audio-settings');
+        document.addEventListener('pointerdown', event => {
+            if (audioSettings.open && !audioSettings.contains(event.target))
+                audioSettings.open = false;
+        });
+        audioSettings.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                event.stopPropagation();
+                audioSettings.open = false;
+                audioSettings.querySelector('summary').focus();
+            }
+        });
         document.querySelector('#play').disabled = false;
         document.querySelector('#play-label').textContent = 'INIZIA LA CORSA';
         document.addEventListener('visibilitychange', () => {
@@ -86,6 +127,8 @@ export class Game {
     setState(state) {
         this.state = state;
         this.input.clear();
+        if (state === STATES.PLAY)
+            document.activeElement?.blur?.();
         this.audio.music({ menu: 'menu', over: 'menu', play: 'run', pause: 'pause' }[state]);
         const panel = { menu: 'menu', pause: 'pause', over: 'gameover' }[state];
         for (const id of ['menu', 'pause', 'gameover', 'hud']) {
@@ -98,6 +141,8 @@ export class Game {
     }
     start() {
         this.audio.unlock();
+        this.runCharacter = this.player.character;
+        this.difficulty = difficultyById(this.save.difficulty);
         this.player.reset();
         this.obstacles.reset();
         this.spawner.reset();
@@ -110,7 +155,7 @@ export class Game {
         this.ui.reset();
         this.time = this.distance = this.score = this.reward = this.coins = this.kills = 0;
         this.combo = this.comboTimer = this.shake = this.hitStop = this.damageFlash = 0;
-        this.speed = CONFIG.speed.initial;
+        this.speed = CONFIG.speed.initial * this.difficulty.speed;
         this.banked = false;
         this.nextLifeAt = CONFIG.player.extraLifeEvery;
         for (const key in this.powerups)
@@ -156,6 +201,7 @@ export class Game {
             this.powerups.shield = 0;
             this.player.invulnerable = CONFIG.player.invulnerability;
             this.effects.emit(this.player.x, 1, CONFIG.player.z, 0x8bffd1, 20);
+            this.effects.shieldPulse(true);
             this.audio.play('power');
             this.announce('SCUDO ASSORBITO');
             return;
@@ -196,7 +242,7 @@ export class Game {
         while (this.input.queue.length)
             this.player.command(this.input.queue.shift());
         this.time += dt;
-        this.speed = Math.min(CONFIG.speed.max, CONFIG.speed.initial + this.time * CONFIG.speed.acceleration);
+        this.speed = Math.min(CONFIG.speed.max, CONFIG.speed.initial + this.time * CONFIG.speed.acceleration) * this.difficulty.speed;
         this.distance += this.speed * dt;
         if (this.powerups.double > 0)
             this.reward += this.speed * dt * CONFIG.bonuses.distanceScore;
@@ -212,7 +258,7 @@ export class Game {
             this.world.setTheme(theme);
             this.announce(THEMES[theme].name);
         }
-        this.ui.text('zone', `${String(theme + 1).padStart(2, '0')} / ${THEMES[theme].name}`);
+        this.ui.text('zone', `${String(theme + 1).padStart(2, '0')} / ${THEMES[theme].name} · ${this.difficulty.name.toUpperCase()}`);
         this.boss.update(dt, this);
         this.spawner.update(dt);
         this.obstacles.update(dt, this.speed);
@@ -410,9 +456,23 @@ export class Game {
             button.setAttribute?.('aria-checked', String(cid === c.id));
         }
     }
+    setDifficulty(id, save = true) {
+        if (this.state !== STATES.MENU)
+            return;
+        this.difficulty = difficultyById(id);
+        this.save.difficulty = this.difficulty.id;
+        for (const radio of document.querySelectorAll?.('input[name="difficulty"]') || [])
+            radio.checked = radio.value === this.difficulty.id;
+        document.getElementById('difficulty-hint').textContent = this.difficulty.hint;
+        if (save)
+            writeSave(this.storage, this.save);
+    }
     announce(text) { this.ui.announce(text); }
     refreshSave() {
         document.querySelector('#menu-best').textContent = Math.floor(this.save.best).toString().padStart(6, '0');
+        const holder = CHARACTERS.find(c => c.id === this.save.bestCharacter);
+        const level = this.save.bestDifficulty ? ` · ${difficultyById(this.save.bestDifficulty).name.toUpperCase()}` : '';
+        document.querySelector('#menu-best-character').textContent = this.save.best > 0 ? (holder ? `${holder.name.toUpperCase()}${level}` : 'PERSONAGGIO NON REGISTRATO') : 'LA PROSSIMA CORSA È TUA';
         document.querySelector('#menu-coins').textContent = this.save.coins;
         const toggle = (id, on, onIcon, offIcon, label) => {
             const button = document.querySelector(id);
@@ -423,6 +483,12 @@ export class Game {
         };
         toggle('#sound', this.save.audio, '🔊', '🔇', 'Effetti:');
         toggle('#music', this.save.music, '♫', '♪', 'Musica:');
+        for (const channel of ['music', 'sound']) {
+            const volume = Math.round(this.save[`${channel}Volume`] * 100);
+            const on = channel === 'music' ? this.save.music : this.save.audio;
+            document.getElementById(`${channel}-volume`).value = volume;
+            document.getElementById(`${channel}-volume-value`).textContent = on ? `${volume}%` : 'Muto';
+        }
     }
     bank() {
         if (this.banked)
@@ -430,10 +496,14 @@ export class Game {
         this.banked = true;
         const best = Math.floor(this.score) > this.save.best;
         this.save.best = Math.max(this.save.best, Math.floor(this.score));
+        if (best) {
+            this.save.bestCharacter = this.runCharacter || this.player.character;
+            this.save.bestDifficulty = this.difficulty.id;
+        }
         this.save.coins += this.coins;
         writeSave(this.storage, this.save);
         this.refreshSave();
-        document.querySelector('#result-label').textContent = best ? 'NUOVO RECORD. ALZA L’ASTICELLA.' : 'UNA CORSA. UN’ALTRA STORIA.';
+        document.querySelector('#result-label').textContent = best ? `NUOVO RECORD CON ${characterById(this.save.bestCharacter).name.toUpperCase()}!` : 'UNA CORSA. UN’ALTRA STORIA.';
     }
     render(alpha, dt) {
         // In pausa conserva esattamente l'ultimo fotogramma, incluse camera e luci.

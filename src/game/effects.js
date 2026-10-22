@@ -34,9 +34,45 @@ export class Effects {
         this.shadow.rotation.x = -Math.PI / 2;
         this.shadow.position.y = .025;
         scene.add(this.shadow);
-        this.shield = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 1), new THREE.MeshBasicMaterial({ color: 0x8bffd1, wireframe: true, transparent: true, opacity: .3 }));
+        const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false };
+        this.shield = new THREE.Group();
+        this.shield.visible = false;
+        this.shieldWire = new THREE.Mesh(new THREE.IcosahedronGeometry(1.15, 1), new THREE.MeshBasicMaterial({ color: 0x8bffd1, wireframe: true, opacity: .25, ...additive }));
+        // Luce concentrata sul bordo: il personaggio resta leggibile dentro la bolla.
+        this.shieldShell = new THREE.Mesh(new THREE.SphereGeometry(1.16, 24, 16), new THREE.ShaderMaterial({
+            ...additive,
+            uniforms: { strength: { value: .7 } },
+            vertexShader: `varying vec3 vNormal; varying vec3 vView;
+                void main() { vec4 p = modelViewMatrix * vec4(position, 1.0);
+                    vNormal = normalize(normalMatrix * normal); vView = -p.xyz;
+                    gl_Position = projectionMatrix * p; }`,
+            fragmentShader: `uniform float strength; varying vec3 vNormal; varying vec3 vView;
+                void main() { float rim = pow(1.0 - max(0.0, dot(normalize(vNormal), normalize(vView))), 2.5);
+                    gl_FragColor = vec4(0.35, 1.0, 0.78, (0.025 + rim * 0.8) * strength); }`,
+        }));
+        const glowCanvas = document.createElement('canvas');
+        glowCanvas.width = glowCanvas.height = 64;
+        const glowContext = glowCanvas.getContext('2d'), glow = glowContext.createRadialGradient(32, 32, 0, 32, 32, 32);
+        glow.addColorStop(0, 'rgba(139,255,209,0.35)');
+        glow.addColorStop(.45, 'rgba(85,255,199,0.22)');
+        glow.addColorStop(1, 'rgba(85,255,199,0)');
+        glowContext.fillStyle = glow;
+        glowContext.fillRect(0, 0, 64, 64);
+        this.shieldGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(glowCanvas), ...additive }));
+        this.shieldGlow.scale.set(3.5, 3.8, 1);
+        this.shield.add(this.shieldWire, this.shieldShell, this.shieldGlow);
         scene.add(this.shield);
+        this.shieldWave = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), this.shieldShell.material.clone());
+        this.shieldWave.visible = false;
+        scene.add(this.shieldWave);
+        this.shieldFlash = this.shieldSpark = 0;
         this.player = player;
+    }
+    shieldPulse(impact = false) {
+        this.shieldFlash = 1;
+        this.shieldImpact = impact;
+        this.shieldWave.position.set(this.player.x, this.player.y + .95, CONFIG.player.z);
+        this.emit(this.player.x, this.player.y + 1, CONFIG.player.z, 0xbaffea, impact ? 24 : 18);
     }
     emit(x, y, z, color, count = 8) {
         for (const p of this.pool) {
@@ -77,8 +113,17 @@ export class Effects {
             b.mesh.visible = false;
         }
         this.shield.visible = false;
+        this.shieldWave.visible = false;
+        this.shieldFlash = this.shieldSpark = 0;
     }
     update(dt, speed) {
+        this.shieldFlash = Math.max(0, this.shieldFlash - dt * 1.8);
+        this.shieldSpark -= dt;
+        if (this.shield.visible && this.shieldSpark <= 0) {
+            this.shieldSpark = .12;
+            const angle = Math.random() * Math.PI * 2;
+            this.emit(this.player.x + Math.cos(angle) * .85, this.player.y + .4 + Math.random() * 1.3, CONFIG.player.z + Math.sin(angle) * .65, 0x8bffd1, 1);
+        }
         for (const b of this.bursts)
             if (b.life > 0) {
                 b.life -= dt;
@@ -125,8 +170,19 @@ export class Effects {
         this.shadow.position.z = CONFIG.player.z;
         this.shadow.scale.setScalar(1 - this.player.y * .15);
         this.shadow.material.opacity = 1 - this.player.y * .2;
-        this.shield.visible = game.powerups.shield > 0;
-        this.shield.position.set(this.player.root.position.x, this.player.root.position.y + .9, CONFIG.player.z);
-        this.shield.rotation.y = game.time;
+        const remaining = game.powerups.shield;
+        const inRun = game.state !== 'menu';
+        this.shield.visible = inRun && remaining > 0;
+        const pulse = 1 + Math.sin(game.time * 5) * .045;
+        const fading = remaining < 2 ? .4 + .6 * (.5 + .5 * Math.sin(game.time * 14)) : 1;
+        this.shield.position.set(this.player.root.position.x, this.player.root.position.y + (this.player.slide > 0 ? .55 : .95), CONFIG.player.z);
+        this.shield.scale.set(pulse, pulse * (this.player.slide > 0 ? .65 : 1.08), pulse);
+        this.shieldWire.rotation.set(game.time * .2, game.time * .7, 0);
+        this.shieldWire.material.opacity = (.2 + this.shieldFlash * .5) * fading;
+        this.shieldShell.material.uniforms.strength.value = (.75 + this.shieldFlash) * fading;
+        this.shieldGlow.material.opacity = (.7 + Math.sin(game.time * 5) * .15 + this.shieldFlash * .5) * fading;
+        this.shieldWave.visible = inRun && this.shieldFlash > 0;
+        this.shieldWave.scale.setScalar(1 + (1 - this.shieldFlash) * (this.shieldImpact ? 2.3 : 1.4));
+        this.shieldWave.material.uniforms.strength.value = this.shieldFlash * .65;
     }
 }

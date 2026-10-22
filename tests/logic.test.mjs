@@ -4,6 +4,7 @@ import { CONFIG } from '../src/game/config.js';
 import { makeRow, choosePattern } from '../src/game/spawner.js';
 import { playerOverlap, bulletOverlap, safeTransition, coinLaneReachable } from '../src/game/collisions.js';
 import { readSave, writeSave } from '../src/game/storage.js';
+import { DIFFICULTIES } from '../src/game/difficulty.js';
 import { VERSION } from '../src/game/version.js';
 import { readFileSync } from 'node:fs';
 test('versione: x.y.z, uguale in version.js e package.json', () => {
@@ -75,12 +76,43 @@ test('proiettile spazzato colpisce bersagli attraversati in un singolo tick', ()
     assert.ok(!bulletOverlap({ x: 0, y: 3, z: -13, previousZ: -8 }, enemy));
 });
 test('salvataggi corrotti, storage negato e valori non validi non bloccano il gioco', () => {
-    assert.deepEqual(readSave(null), { best: 0, coins: 0, audio: true, music: true, character: 'manzolo' });
-    assert.deepEqual(readSave({ getItem: () => '{broken' }), { best: 0, coins: 0, audio: true, music: true, character: 'manzolo' });
-    assert.deepEqual(readSave({ getItem: () => '{"best":-5,"coins":"oops","audio":false}' }), { best: 0, coins: 0, audio: false, music: true, character: 'manzolo' });
+    assert.deepEqual(readSave(null), { best: 0, bestCharacter: null, bestDifficulty: null, coins: 0, audio: true, music: true, soundVolume: 1, musicVolume: 1, character: 'manzolo', difficulty: 'medium' });
+    assert.deepEqual(readSave({ getItem: () => '{broken' }), { best: 0, bestCharacter: null, bestDifficulty: null, coins: 0, audio: true, music: true, soundVolume: 1, musicVolume: 1, character: 'manzolo', difficulty: 'medium' });
+    assert.deepEqual(readSave({ getItem: () => '{"best":-5,"coins":"oops","audio":false}' }), { ...readSave(null), audio: false });
     assert.equal(writeSave({ setItem() { throw new Error('quota'); } }, {}), false);
     let value;
     const storage = { setItem(k, v) { value = v; }, getItem() { return value; } };
     assert.ok(writeSave(storage, { best: 123, coins: 7, audio: false, music: false, character: 'erika' }));
-    assert.deepEqual(readSave(storage), { best: 123, coins: 7, audio: false, music: false, character: 'erika' });
+    assert.deepEqual(readSave(storage), { ...readSave(null), best: 123, coins: 7, audio: false, music: false, character: 'erika' });
+});
+
+test('salvataggi: migrazione non attribuisce il vecchio record al personaggio selezionato', () => {
+    const old = readSave({ getItem: key => key === 'neon-rush-save' ? JSON.stringify({ best: 850, character: 'erika' }) : null });
+    assert.equal(old.best, 850);
+    assert.equal(old.character, 'erika');
+    assert.equal(old.bestCharacter, null);
+    assert.equal(old.bestDifficulty, null);
+    assert.equal(old.difficulty, 'medium');
+});
+test('volumi, record e difficoltà: persistenza e normalizzazione', () => {
+    let value;
+    const storage = { getItem: () => value, setItem: (key, data) => { value = data; } };
+    const save = { ...readSave(null), best: 1200, bestCharacter: 'linda', bestDifficulty: 'hard', difficulty: 'easy', soundVolume: 0, musicVolume: .42 };
+    writeSave(storage, save);
+    assert.deepEqual(readSave(storage), save);
+    value = JSON.stringify({ soundVolume: -2, musicVolume: 5, difficulty: 'invalid', bestDifficulty: 'invalid' });
+    assert.equal(readSave(storage).soundVolume, 0);
+    assert.equal(readSave(storage).musicVolume, 1);
+    assert.equal(readSave(storage).difficulty, 'medium');
+    assert.equal(readSave(storage).bestDifficulty, null);
+    value = JSON.stringify({ soundVolume: 'loud', musicVolume: null });
+    assert.equal(readSave(storage).soundVolume, 1);
+    assert.equal(readSave(storage).musicVolume, 1);
+});
+test('ogni difficoltà mantiene fattibili i cambi tra corsie di fuga', () => {
+    for (const level of DIFFICULTIES)
+        for (const from of [-1, 0, 1])
+            for (const to of [-1, 0, 1])
+                for (const speed of [CONFIG.speed.initial, CONFIG.speed.max])
+                    assert.ok(safeTransition(from, to, CONFIG.spawn.intervalMin * level.spawnInterval, speed * level.speed), level.name);
 });

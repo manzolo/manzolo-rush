@@ -64,7 +64,7 @@ La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli 
 ## Regole e progressione
 
 - **Tre vite**, più una vita extra ogni 5.000 punti fino a un massimo di 5 (`CONFIG.player.extraLifeEvery`, `maxLives`); sotto i cuori l’HUD mostra il prossimo traguardo. Ogni nemico abbattuto mostra i punti guadagnati (in oro quando c’è combo). Con Ctrl tenuto premuto meglio usare frecce e Spazio: Ctrl+W chiuderebbe la scheda del browser e non si può bloccare.
-- 1,5 secondi di invulnerabilità dopo un danno: consentono di recuperare un errore mantenendo il ritmo. Lo scudo assorbe un colpo senza consumare una vita.
+- 1,5 secondi di invulnerabilità dopo un danno: consentono di recuperare un errore mantenendo il ritmo. Lo scudo assorbe un colpo senza consumare una vita: ha un alone luminoso pulsante, scintille, un’onda all’attivazione e all’impatto e una pulsazione più rapida negli ultimi due secondi.
 - Salto parabolico, cambio corsia in circa 150 ms e scivolata di 0,7 secondi. Salto e slide hanno un buffer di 180 ms prima dell’atterraggio/fine azione.
 - La raffica riscalda il blaster: al 100% l’arma si blocca fino al 25%. Il fuoco normale è sostenibile.
 - Soldati e pattugliatori cambiano corsia con movimento progressivo e inclinazione; i droni oscillano in volo, i tank hanno barra HP e assetto animato. Tutte le pose sono interpolate fra gli aggiornamenti della simulazione. I tipi più impegnativi si sbloccano gradualmente.
@@ -73,8 +73,10 @@ La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli 
 - Bonus di 11 secondi: fuoco triplo sulle corsie, scudo, magnete e punti ×2. Raccogliere nuovamente lo stesso bonus ne rinnova la durata.
 - Punteggio: distanza + monete + uccisioni; +15 per una barriera saltata e +10 per una barra superata in scivolata, assegnati una sola volta al passaggio completo (anche questi premi valgono il doppio con ×2). Uccisioni entro 3 secondi aumentano la combo fino a ×8; il bonus ×2 si applica ai punti guadagnati durante la sua durata.
 - Un boss ogni 90 secondi di gioco: sentinella a figura intera con reattore pulsante, carica dei cannoni e rinculo. Ogni salva ha due muri di energia rossi (non si saltano e non si passa in scivolata) e, nella terza corsia, una barra arancione bassa da saltare o una sbarra sospesa sotto cui scivolare: i settori a terra la segnalano in anticipo insieme alla scritta SALTA/ABBASSATI. La corsia di riparo cambia a ogni salva e sotto il 40% di vita il boss spara più spesso. Il duello non ha limite di tempo: il boss resta finché non viene abbattuto. 
-- Velocità iniziale 15 m/s, incremento graduale fino a 30 m/s. Le ambientazioni cambiano ogni 45 secondi, con colori, geometrie, nebbia e illuminazione differenti.
-- Record, monete totali e audio sono salvati nella chiave `manzolo-rush-save` di localStorage (un salvataggio della vecchia chiave `neon-rush-save` viene letto e migrato automaticamente). I punti e le monete si registrano a fine corsa o tornando al menu. Storage indisponibile, pieno o corrotto non impedisce di giocare.
+- Difficoltà selezionabile nel menu e salvata: **Facile** (12–24 m/s, ostacoli e attacchi più distanziati), **Medio** (15–30 m/s, bilanciamento originale), **Difficile** (17,25–34,5 m/s, ostacoli e attacchi più frequenti). La scelta resta fissa durante la corsa; i moltiplicatori sono in `src/game/difficulty.js`. Le ambientazioni cambiano ogni 45 secondi, con colori, geometrie, nebbia e illuminazione differenti.
+- Il pannello volume in alto a destra regola separatamente musica ed effetti (0–100%); i pulsanti rapidi permettono di silenziarli. Le impostazioni restano salvate. La versione compare in basso a destra.
+- Il record mostra il personaggio e la difficoltà della corsa che lo ha stabilito. Cambiare selezione o pareggiare il punteggio non cambia l’autore. I vecchi record restano validi e indicano «Personaggio non registrato» finché non vengono superati.
+- Record, personaggio, difficoltà, monete totali e audio sono salvati nella chiave `manzolo-rush-save` di localStorage (un salvataggio della vecchia chiave `neon-rush-save` viene letto e migrato automaticamente). I punti e le monete si registrano a fine corsa o tornando al menu. Storage indisponibile, pieno o corrotto non impedisce di giocare.
 
 ## Armi raccoglibili
 
@@ -162,7 +164,7 @@ npm run check
 npm test
 ```
 
-`check` esegue `node --check` su tutti i moduli. I test di logica coprono le regole di corsia delle monete e del magnete, pattern e vie libere, tempi di cambio corsia, selezione pesata, hitbox salto/slide, collisioni spazzate dei proiettili e salvataggi corrotti/negati.
+`check` esegue `node --check` su tutti i moduli. I test di logica coprono le regole di corsia delle monete e del magnete, pattern e vie libere, tempi di cambio corsia, selezione pesata, hitbox salto/slide, collisioni spazzate dei proiettili e salvataggi corrotti/negati. Verificano anche migrazione dei vecchi record, persistenza di volumi e livelli, indipendenza tra musica ed effetti e fattibilità dei cambi corsia nelle tre difficoltà.
 
 La simulazione d’integrazione usa **Three.js reale 0.169.0**, un DOM minimo e un renderer fittizio. Se possiedi una copia locale della libreria:
 
@@ -170,7 +172,7 @@ La simulazione d’integrazione usa **Three.js reale 0.169.0**, un DOM minimo e 
 THREE_MODULE=/percorso/three/build/three.module.js node tests/simulation.mjs
 ```
 
-Sono passate **19 verifiche d’integrazione**, incluse raccolta per corsia, pausa con scena immobile, premi salto/scivolata e pattugliamento interpolato: avvio, movimento, buffer, pausa, overheat e recupero, combattimento, combo, scudo, game over/retry, raccolta, boss, salvataggio singolo, corsa lunga con pool stabili, camera verticale, touch simulato e tre corse da 184 secondi con semi riproducibili e un controller automatico. Queste ultime conservano tutte e tre le vite **senza invulnerabilità artificiale**. La verifica separata di stabilità usa invece invulnerabilità per osservare l’intero ciclo. Sono stati osservati tre ambienti, due boss e nessuna crescita del numero di oggetti della scena.
+Sono passate **24 verifiche d’integrazione**, incluse raccolta per corsia, pausa con scena immobile, premi salto/scivolata e pattugliamento interpolato: avvio, movimento, buffer, pausa, overheat e recupero, combattimento, combo, scudo, game over/retry, raccolta, boss, salvataggio singolo, corsa lunga con pool stabili, camera verticale, touch simulato e nove corse da 184 secondi (tre semi per ciascuna difficoltà) con un controller automatico. Sono coperti anche bagliore e reset dello scudo, attribuzione del record e applicazione dei livelli. Queste ultime conservano tutte e tre le vite **senza invulnerabilità artificiale**. La verifica separata di stabilità usa invece invulnerabilità per osservare l’intero ciclo. Sono stati osservati tre ambienti, due boss e nessuna crescita del numero di oggetti della scena.
 
 Questi test verificano la logica e le trasformazioni, **non** il rendering WebGL, l’ascolto dell’audio, gli eventi touch reali o il frame rate.
 

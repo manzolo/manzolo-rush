@@ -228,7 +228,7 @@ export class Enemies {
                     e.fireTimer -= dt;
                     e.charge = e.fireTimer < CONFIG.enemies.chargeSeconds ? 1 - Math.max(0, e.fireTimer) / CONFIG.enemies.chargeSeconds : 0;
                     if (e.fireTimer <= 0) {
-                        e.fireTimer = movement.fireInterval;
+                        e.fireTimer = movement.fireInterval * (game.difficulty?.attackInterval ?? 1);
                         e.charge = 0;
                         e.recoil = .22;
                         const lane = Math.max(-1, Math.min(1, Math.round(e.x / CONFIG.player.laneWidth)));
@@ -251,9 +251,9 @@ export class Enemies {
                     e.top = 1.95 + e.hover;
                     e.fireTimer -= dt;
                     if (e.fireTimer <= 0 && e.z < CONFIG.enemies.drone.fireNearZ && e.z > CONFIG.enemies.drone.fireFarZ) {
-                        e.fireTimer = CONFIG.enemies.drone.fireInterval;
+                        e.fireTimer = CONFIG.enemies.drone.fireInterval * (game.difficulty?.attackInterval ?? 1);
                         e.recoil = .2;
-                        this.shoot(e.lane, e.z, CONFIG.enemies.shotSpeed, CONFIG.enemies.warningSeconds);
+                        this.shoot(e.lane, e.z, CONFIG.enemies.shotSpeed * (game.difficulty?.projectileSpeed ?? 1), CONFIG.enemies.warningSeconds);
                     }
                 }
                 if (e.z > CONFIG.world.despawnZ)

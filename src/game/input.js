@@ -17,6 +17,8 @@ export class Input {
         this.padLatch = {};
         const action = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'jump', KeyW: 'jump', Space: 'jump', ArrowDown: 'slide', KeyS: 'slide' };
         window.addEventListener('keydown', e => {
+            if (e.target?.closest?.('input, select, textarea, summary') || (e.target?.closest?.('button') && ['Space', 'Enter'].includes(e.code)))
+                return;
             if (action[e.code] || FIRE_KEYS.includes(e.code) || BURST_KEYS.includes(e.code) || ['KeyP', 'Escape'].includes(e.code)) {
                 e.preventDefault();
                 if (!e.repeat) {
