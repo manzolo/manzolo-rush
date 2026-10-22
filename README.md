@@ -27,7 +27,8 @@ quando arriva un tag** `v<versione>`: verifica che il tag coincida con `src/game
 Il sito lo prepara `scripts/build-site.sh` (in locale: `make site`, risultato in `_site/`). Codice e stile finiscono in
 una cartella con la versione (`0.2.1/src/…`, `0.2.1/style.css`) e le immagini prendono `?v=<versione>`, come sprite e
 musica caricati dal codice (`versioned()` in `src/game/version.js`): a ogni versione cambiano gli URL e il browser non
-riusa file vecchi dalla cache (Pages la tiene 10 minuti). Per chi ha ancora in cache la pagina precedente viene
+riusa file vecchi dalla cache (Pages la tiene 10 minuti). Degli sprite si pubblicano solo `atlas.json` e i WebP che
+elenca: PNG e anteprime restano nel repository per lavorarci (sito di circa 23 MB invece di oltre 100). Per chi ha ancora in cache la pagina precedente viene
 pubblicata anche la versione prima, ricavata dal tag che precede quello corrente.
 
 Nuova versione: `make bump` (oppure `make bump PARTE=minor` / `PARTE=major`). Alza la versione in `src/game/version.js`
@@ -88,6 +89,7 @@ La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli 
 - Un boss ogni 90 secondi di gioco, alto 13–14 m, con pose per attesa, carica, colpo, soffio, danno e furia. Ogni salva ha due muri (fulmini o pioggia per la nuvola, spuntoni di lava, spuntoni di ghiaccio) che non si saltano e non si passano in scivolata e, nella terza corsia, un colpo basso da saltare (raffica di vento, onda di fuoco, cristalli) o uno alto sotto cui scivolare (fulmine, lancia di fuoco, schegge): durante il preavviso le corsie dei muri si colorano di rosso e quella di riparo di verde (salta) o azzurro (scivola). L'altezza si legge dal colpo stesso: quello basso striscia raso terra, alto quanto l'ostacolo, su una scia luminosa; quello alto vola in orizzontale all'altezza della testa, con lo spazio vuoto sotto. La corsia di riparo cambia a ogni salva e sotto il 40% di vita il boss spara più spesso (una salva ogni 1,85 s, poi ancora più ravvicinate). Il duello non ha limite di tempo: il boss resta finché non viene abbattuto. 
 - Difficoltà selezionabile nel menu (verde, ambra, rosso) e salvata: **Facile** (15–30 m/s, un solo ostacolo per fila, tempo lento, nemici meno resistenti e duelli brevi), **Medio** (18,75–37,5 m/s, due ostacoli per fila e salve mirate), **Difficile** (22,5–45 m/s, tempo veloce, nemici più resistenti disponibili prima, salve dei duelli su due corsie). La scelta resta fissa durante la corsa; i moltiplicatori sono in `src/game/difficulty.js`. Le sei ambientazioni cambiano ogni 45 secondi: **Sunset City → Foresta delle Rovine → Dust Valley → Valle Vulcanica → Neon Outpost → Vette Innevate**, poi il giro ricomincia. Ogni ambiente ha texture, decorazioni, geometrie, nebbia e illuminazione proprie (`src/game/scenery.js`).
 - Tenendo premuto sinistra o destra il personaggio continua a cambiare corsia, una ogni 0,45 s (`STEER_REPEAT` in `src/game/input.js`); il primo spostamento è immediato.
+- **Musica**: nel menu «Corsa alla Vittoria»; in corsa un brano per livello (1 «Corsa alla Vittoria 2», 2 «Inferno di Acciaio», 3 «Arpeggi Cristallini», poi il giro ricomincia); durante i boss «Tensione in Crescita», che parte già dalla parte intensa (`CONFIG.audio.trackStart`). I passaggi sono in dissolvenza; i duelli non cambiano brano. MP3 a 96 kbps in `assets/audio/`, scaricati solo quando servono; senza file si torna alla musica procedurale.
 - Il pannello volume in alto a destra regola separatamente musica ed effetti (0–100%); i pulsanti rapidi permettono di silenziarli. Le impostazioni restano salvate. La versione compare in basso a destra.
 - Il record mostra il personaggio e la difficoltà della corsa che lo ha stabilito. Cambiare selezione o pareggiare il punteggio non cambia l’autore. I vecchi record restano validi e indicano «Personaggio non registrato» finché non vengono superati.
 - Record, personaggio, difficoltà, monete totali e audio sono salvati nella chiave `manzolo-rush-save` di localStorage (un salvataggio della vecchia chiave `neon-rush-save` viene letto e migrato automaticamente). I punti e le monete si registrano a fine corsa o tornando al menu. Storage indisponibile, pieno o corrotto non impedisce di giocare.
@@ -221,7 +223,7 @@ Nessun bug di logica noto nei casi coperti. Da verificare a mano: una corsa di a
   (generazione di immagini di OpenAI) a partire dalle loro foto, e sono pubblicati col loro consenso (per i minori, quello dei genitori).
   **Non sono coperti dalla licenza MIT**: non si riusano fuori da questo gioco.
 - **Altri sprite** (nemici, boss, oggetti, texture): generati con ChatGPT (generazione di immagini di OpenAI).
-- **Musica**: «Corsa alla Vittoria» (`assets/audio/`), creata con [Suno](https://suno.com) con un abbonamento a pagamento.
+- **Musica**: «Corsa alla Vittoria» (1 e 2), «Inferno di Acciaio», «Arpeggi Cristallini» e «Tensione in Crescita» (`assets/audio/`), create con [Suno](https://suno.com) con un abbonamento a pagamento.
 - **Three.js** 0.169.0, licenza MIT, caricato da jsDelivr.
 
 Tutto quello che sta in `assets/` è © Andrea Manzi, tutti i diritti riservati.

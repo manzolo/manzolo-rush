@@ -142,7 +142,7 @@ export class Game {
         this.input.clear();
         if (state === STATES.PLAY)
             document.activeElement?.blur?.();
-        this.audio.music({ menu: 'menu', over: 'menu', play: 'run', pause: 'pause' }[state]);
+        this.audio.music({ menu: 'menu', over: 'menu', play: this.tune(), pause: 'pause' }[state]);
         const panel = { menu: 'menu', pause: 'pause', over: 'gameover' }[state];
         for (const id of ['menu', 'pause', 'gameover', 'hud']) {
             document.getElementById(id).classList.toggle('hidden', id === 'hud' ? state !== STATES.PLAY : id !== panel);
@@ -301,6 +301,10 @@ export class Game {
         this.ui.text('zone', `LV ${this.level + 1} · ${THEMES[theme].name} · ${this.difficulty.name.toUpperCase()}`);
         if (!this.encounter.active)
             this.boss.update(dt, this);
+        // Arrivo e sconfitta del boss, cambio di livello: la musica sfuma nel brano giusto.
+        const tune = this.tune();
+        if (this.audio.wanted !== tune && this.state === STATES.PLAY)
+            this.audio.music(tune);
         this.encounter.update(dt, this);
         this.spawner.update(dt);
         this.obstacles.update(dt, this.speed);
@@ -527,6 +531,8 @@ export class Game {
         this.timeLeft = CONFIG.timer.max;
         this.announce(`LIVELLO ${this.level + 1} · ${level.name}`);
     }
+    // Brano di gioco: il tema del boss durante lo scontro, altrimenti quello del livello.
+    tune() { return this.boss.active ? 'boss' : levelAt(this.level ?? 0).music ?? 'level1'; }
     // Moneta raccolta: un po' di tempo in più, fino al massimo.
     addTime(seconds) { this.timeLeft = Math.min(CONFIG.timer.max, this.timeLeft + seconds); }
     announce(text) { this.ui.announce(text); }

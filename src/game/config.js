@@ -45,8 +45,11 @@ export const CONFIG = {
     timer: { start: 25, max: 30, coin: .5, warn: 6 },
     bonuses: { duration: 11, magnetRadius: 9, comboWindow: 3, maxCombo: 8, coinScore: 10, distanceScore: 1, types: ['triple', 'shield', 'magnet', 'double'] },
     juice: { particlePool: 320, hitStop: .045, shake: .14, killParticles: 16, landingParticles: 7 },
-    // tracks: brani MP3 (menu/game over e corsa); se mancano si usa la musica procedurale.
-    audio: { master: .65, music: .12, tempo: 112, trackVolume: .28, fade: .8, tracks: { menu: 'assets/audio/intro.mp3', run: 'assets/audio/run.mp3' } },
+    // tracks: brani MP3 (96 kbps): menu e game over, uno per livello, uno per i boss; se mancano si usa
+    // la musica procedurale. trackStart: da dove parte un brano (il tema del boss salta l'intro lenta).
+    audio: { master: .65, music: .12, tempo: 112, trackVolume: .28, fade: .8,
+        tracks: { menu: 'assets/audio/intro.mp3', level1: 'assets/audio/level1.mp3', level2: 'assets/audio/level2.mp3', level3: 'assets/audio/level3.mp3', boss: 'assets/audio/boss.mp3' },
+        trackStart: { boss: 24 } },
     // Sprite 2D (assets/sprites, rigenerabili con `make sprites`). Ogni voce si può spegnere
     // singolarmente; se un file manca o il caricamento fallisce si torna ai modelli procedurali.
     // hero usa i frame visti di spalle (hero_back_*); textures e props vestono scenario e ostacoli per tema.

@@ -16,7 +16,8 @@ export class Audio {
             for (const [name, src] of Object.entries(CONFIG.audio.tracks || {})) {
                 const el = new window.Audio(versioned(src));
                 el.loop = true;
-                el.preload = name === 'menu' ? 'auto' : 'metadata';
+                // Subito menu e primo livello; il boss solo l'intestazione; gli altri livelli quando servono.
+                el.preload = name === 'menu' || name === 'level1' ? 'auto' : name === 'boss' ? 'metadata' : 'none';
                 el.volume = 0;
                 el.addEventListener('error', () => { delete this.tracks[name]; });
                 this.tracks[name] = el;
@@ -28,14 +29,21 @@ export class Audio {
             setInterval(() => this.fadeStep(.05), 50);
     }
     get hasTracks() { return Object.keys(this.tracks).length > 0; }
-    // state: 'menu' | 'run' | 'pause' | null. In pausa il brano della corsa si ferma e riprende da lì.
+    // state: nome del brano ('menu', 'level1'…, 'boss'), 'pause' o null. In pausa il brano si ferma e
+    // riprende da lì; passando a un altro brano di gioco questo riparte dall'inizio (o da trackStart).
     music(state) {
         this.wanted = state;
         const name = state === 'pause' ? null : state;
         if (name && this.tracks[name] && this.musicOn) {
             const el = this.tracks[name];
-            if (name === 'run' && this.track !== 'run' && this.lastState !== 'pause')
-                el.currentTime = 0;
+            if (name !== 'menu' && this.track !== name && this.lastState !== 'pause') {
+                const start = CONFIG.audio.trackStart?.[name] ?? 0;
+                // Prima di conoscere la durata il browser ignora la posizione: la si applica appena può.
+                if (el.readyState >= 1 || !el.addEventListener)
+                    el.currentTime = start;
+                else
+                    el.addEventListener('loadedmetadata', () => { el.currentTime = start; }, { once: true });
+            }
             el.play().catch(() => { });
         }
         this.track = name;

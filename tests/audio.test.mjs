@@ -93,3 +93,20 @@ test('tempo agli sgoccioli: tic, doppio bip urgente e sirena finale', () => {
     audio.play('timeup');
     assert.ok(count() >= 2);
 });
+
+test('brani: il boss parte dopo l\'intro, la pausa riprende dal punto, un nuovo livello riparte da capo', () => {
+    const audio = new Audio();
+    const track = () => ({ volume: 0, paused: true, currentTime: 50, pause() { this.paused = true; }, play() { this.paused = false; return Promise.resolve(); } });
+    audio.tracks = { level1: track(), level2: track(), boss: track() };
+    audio.music('level1');
+    assert.equal(audio.tracks.level1.currentTime, 0);
+    audio.music('boss');
+    assert.equal(audio.tracks.boss.currentTime, CONFIG.audio.trackStart.boss);
+    audio.tracks.boss.currentTime = 70;
+    audio.music('pause');
+    audio.music('boss');
+    assert.equal(audio.tracks.boss.currentTime, 70);
+    audio.music('level2');
+    assert.equal(audio.tracks.level2.currentTime, 0);
+    assert.equal(audio.track, 'level2');
+});

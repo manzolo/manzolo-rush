@@ -34,8 +34,9 @@ export const bossReady = id => Boolean(BOSSES[id]) && bossFrames(BOSSES[id]).eve
 // I livelli crescono senza limite, ripetendo il ciclo tempesta → magma → ghiaccio.
 // tint = colori dello scenario del livello (mescolati al tema di turno con peso `amount`).
 export const LEVELS = [
-    { name: 'TEMPESTA', boss: 'storm', tint: null },
-    { name: 'TERRE ARSE', boss: 'magma', tint: { amount: .45, sky: 0xd9825e, fog: 0xc98466, road: 0x4a3a36, ground: 0x9a6a50, building: 0xc88a6a, roof: 0x8a4a3a, accent: 0xffc27a, sun: 0xffb070 } },
-    { name: 'GELO ETERNO', boss: 'ice', tint: { amount: .5, sky: 0x9fbcd8, fog: 0xbcd0e2, road: 0x56677a, ground: 0xc4d6e4, building: 0x9fb4cc, roof: 0xe8f2fa, accent: 0x9fe8ff, sun: 0xe6f4ff } },
+    // music: brano della corsa nel livello (Corsa alla Vittoria 2, Inferno di Acciaio, Arpeggi Cristallini).
+    { name: 'TEMPESTA', boss: 'storm', music: 'level1', tint: null },
+    { name: 'TERRE ARSE', boss: 'magma', music: 'level2', tint: { amount: .45, sky: 0xd9825e, fog: 0xc98466, road: 0x4a3a36, ground: 0x9a6a50, building: 0xc88a6a, roof: 0x8a4a3a, accent: 0xffc27a, sun: 0xffb070 } },
+    { name: 'GELO ETERNO', boss: 'ice', music: 'level3', tint: { amount: .5, sky: 0x9fbcd8, fog: 0xbcd0e2, road: 0x56677a, ground: 0xc4d6e4, building: 0x9fb4cc, roof: 0xe8f2fa, accent: 0x9fe8ff, sun: 0xe6f4ff } },
 ];
 export const levelAt = level => LEVELS[level % LEVELS.length];

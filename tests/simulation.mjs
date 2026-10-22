@@ -708,6 +708,28 @@ check('boss: corsia di riparo verde (salta) o azzurra (scivola), colpo basso a t
         g.menu();
     }
 });
+check('musica: brano del livello, tema del boss durante lo scontro, poi il livello successivo', () => {
+    g.start();
+    assert.equal(g.audio.wanted, 'level1');
+    g.boss.start(g);
+    g.update(CONFIG.step);
+    assert.equal(g.audio.wanted, 'boss');
+    g.pause();
+    assert.equal(g.audio.wanted, 'pause');
+    g.resume();
+    assert.equal(g.audio.wanted, 'boss');
+    g.boss.damage(g.boss.hp, g);
+    g.update(CONFIG.step);
+    assert.equal(g.audio.wanted, 'level2');
+    g.levelUp();
+    g.update(CONFIG.step);
+    assert.equal(g.audio.wanted, 'level3');
+    g.levelUp();
+    g.update(CONFIG.step);
+    assert.equal(g.audio.wanted, 'level1');
+    g.menu();
+    assert.equal(g.audio.wanted, 'menu');
+});
 check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () => {
     g.start();
     g.input.auto = true;

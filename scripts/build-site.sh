@@ -3,6 +3,7 @@
 #   scripts/build-site.sh [cartella]
 # Codice e stile finiscono in <cartella>/<versione>/ e index.html punta lì: a ogni versione gli URL
 # cambiano, quindi il browser non riusa moduli o CSS vecchi dalla cache (Pages li tiene 10 minuti).
+# Degli sprite si pubblicano solo i WebP elencati in atlas.json (niente PNG né anteprime).
 # Le immagini citate da HTML e CSS prendono ?v=<versione>; sprite e musica caricati dal codice lo
 # aggiungono da sé (versioned() in src/game/version.js).
 # Per chi ha ancora in cache l'index.html precedente si pubblica anche la cartella della versione
@@ -18,7 +19,19 @@ rm -rf "$OUT"
 mkdir -p "$OUT/assets"
 cp index.html "$OUT/"
 [[ -f .nojekyll ]] && cp .nojekyll "$OUT/"
-cp -r assets/sprites assets/audio "$OUT/assets/"
+cp -r assets/audio "$OUT/assets/"
+# Sprite: solo atlas.json e i WebP che elenca (grandi e miniature); PNG e anteprime restano nel repository.
+mkdir -p "$OUT/assets/sprites"
+cp assets/sprites/atlas.json "$OUT/assets/sprites/"
+python3 - "$OUT/assets/sprites" <<'PY'
+import json, shutil, sys
+from pathlib import Path
+out = Path(sys.argv[1])
+for entry in json.load(open('assets/sprites/atlas.json')).values():
+    for name in (entry['file'], entry['small']):
+        (out / name).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(Path('assets/sprites') / name, out / name)
+PY
 
 # Copia src/ e style.css di un albero (cartella o commit) in <OUT>/<versione>/, con i percorsi del CSS
 # riportati alla radice del sito.
@@ -48,7 +61,7 @@ PRECEDENTE_TAG=$(git describe --tags --abbrev=0 --match 'v*' HEAD^ 2>/dev/null |
 if [[ -n $PRECEDENTE_TAG ]]; then
     PRECEDENTE=$(git show "$PRECEDENTE_TAG:src/game/version.js" | version_of)
     if [[ -n $PRECEDENTE && $PRECEDENTE != "$VERSIONE" ]]; then
-        if git show "$PRECEDENTE_TAG:index.html" | grep -q "import('./src/main.js')"; then
+        if ! git cat-file -e "$PRECEDENTE_TAG:scripts/build-site.sh" 2>/dev/null; then
             # Pubblicata prima delle cartelle per versione: la sua pagina cerca src/ e style.css alla radice.
             git archive "$PRECEDENTE_TAG" src style.css | tar -x -C "$OUT"
         else
