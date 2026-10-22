@@ -35,7 +35,7 @@ export const CONFIG = {
     // Nella terza arriva una barra bassa (alta lowHeight, da saltare) o una sbarra sospesa (da
     // highBottom a highTop, da passare in scivolata). Sotto il 40% di vita l'intervallo si riduce di enragedRate.
     // Il duello dura finché il boss non viene abbattuto.
-    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, wallHeight: 3.4, wallDepth: .5, enragedRate: .7, lowHeight: .9, highBottom: .95, highTop: 2.4, restAfter: 45, approachZ: -30, attackInterval: 2.2, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
+    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, wallHeight: 3.4, wallDepth: .5, enragedRate: .7, lowHeight: .9, highBottom: .95, highTop: 2.4, restAfter: 45, approachZ: -30, attackInterval: 1.85, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
     bonuses: { duration: 11, magnetRadius: 9, comboWindow: 3, maxCombo: 8, coinScore: 10, distanceScore: 1, types: ['triple', 'shield', 'magnet', 'double'] },
     juice: { particlePool: 320, hitStop: .045, shake: .14, killParticles: 16, landingParticles: 7 },
     // tracks: brani MP3 (menu/game over e corsa); se mancano si usa la musica procedurale.
@@ -43,8 +43,9 @@ export const CONFIG = {
     // Sprite 2D (assets/sprites, rigenerabili con `make sprites`). Ogni voce si può spegnere
     // singolarmente; se un file manca o il caricamento fallisce si torna ai modelli procedurali.
     // hero usa i frame visti di spalle (hero_back_*); textures e props vestono scenario e ostacoli per tema.
+    // vectorCity: nella città le facciate sono disegnate su canvas (facades.js) invece delle immagini.
     sprites: { enabled: true, path: 'assets/sprites/', hero: true, enemies: true, pickups: true, explosions: true, textures: true, props: true,
-        heroHeight: 1.95, slideHeight: 1.15, heroAngle: 0, enemyAngle: 0, runFps: 11, leanThreshold: .9, loadTimeout: 8 },
+        vectorCity: true, heroHeight: 1.95, slideHeight: 1.15, heroAngle: 0, enemyAngle: 0, runFps: 11, leanThreshold: .9, loadTimeout: 8 },
 };
 export const THEMES = [
     { name: 'SUNSET CITY', sky: 0xd39c98, fog: 0xd3a6a0, road: 0x344654, ground: 0x846e73, primary: 0x628e9a, secondary: 0xd58375, accent: 0x8bffd1, sun: 0xffd7a2 },

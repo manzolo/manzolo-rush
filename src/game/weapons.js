@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
+import { fxRandom } from './effects.js';
 // Blaster di base + armi raccoglibili a tempo (CONFIG.guns). Ogni colpo porta con sé danno,
 // dimensione, perforazione ed esplosione: il combattimento in game.js legge questi campi.
 const BLASTER = { label: 'BLASTER', color: 0x9bffe1, damage: CONFIG.weapon.damage, pellets: 1, spread: 0, speed: CONFIG.weapon.bulletSpeed, life: CONFIG.weapon.bulletLifetime, size: .095, length: 1.6, radius: .12, heat: CONFIG.weapon.heatPerShot, recoil: CONFIG.weapon.recoil };
@@ -27,11 +28,49 @@ export class Weapons {
             mesh.frustumCulled = false;
             scene.add(mesh);
         }
+        // Alone additivo attorno a ogni colpo: ellissoide che sfuma verso i bordi, colorato come l'arma.
+        const halo = new THREE.ShaderMaterial({
+            transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+            vertexShader: `varying float vFacing; varying vec3 vColor;
+                void main() {
+                    vec4 p = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+                    vFacing = abs(dot(normalize(normalMatrix * mat3(instanceMatrix) * normal), normalize(-p.xyz)));
+                    vColor = vec3(1.0);
+                    #ifdef USE_INSTANCING_COLOR
+                    vColor = instanceColor;
+                    #endif
+                    gl_Position = projectionMatrix * p; }`,
+            fragmentShader: `varying float vFacing; varying vec3 vColor;
+                void main() { gl_FragColor = vec4(vColor * (0.6 + vFacing), pow(vFacing, 1.6) * 0.75); }`,
+        });
+        this.glowBox = new THREE.InstancedMesh(new THREE.SphereGeometry(.5, 14, 10), halo, this.pool.length);
+        this.glowBall = new THREE.InstancedMesh(new THREE.SphereGeometry(.5, 14, 10), halo, this.pool.length);
+        for (const mesh of [this.glowBox, this.glowBall]) {
+            mesh.count = 0;
+            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            mesh.frustumCulled = false;
+            mesh.setColorAt(0, new THREE.Color());
+            scene.add(mesh);
+        }
         this.mesh = this.boxMesh; // compatibilità con i test
         this.dummy = new THREE.Object3D();
         this.color = new THREE.Color();
-        this.flash = new THREE.Mesh(new THREE.OctahedronGeometry(.23), new THREE.MeshBasicMaterial({ color: 0xd9ffab, toneMapped: false }));
+        // Vampa: nucleo, fiammata conica in avanti e alone, scalati sul calibro dell'arma.
+        this.flash = new THREE.Group();
+        this.flashCore = new THREE.Mesh(new THREE.OctahedronGeometry(.23), new THREE.MeshBasicMaterial({ color: 0xd9ffab, toneMapped: false }));
+        this.flashCone = new THREE.Mesh(new THREE.ConeGeometry(.3, 1, 7).rotateX(-Math.PI / 2).translate(0, 0, -.5), energy(0xffffff, .85));
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 64;
+        const ctx = canvas.getContext('2d'), g = ctx.createRadialGradient(32, 32, 1, 32, 32, 31);
+        g.addColorStop(0, 'rgba(255,255,255,1)');
+        g.addColorStop(.3, 'rgba(255,255,255,.45)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 64, 64);
+        this.flashGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+        this.flash.add(this.flashGlow, this.flashCone, this.flashCore);
         scene.add(this.flash);
+        this.flashMax = .07;
         this.reset();
     }
     // keepGun: il boss pulisce l'arena ma non toglie l'arma raccolta.
@@ -88,14 +127,26 @@ export class Weapons {
                 this.overheated = true;
                 game.announce?.('SURRISCALDAMENTO');
             }
-            this.flashTime = .045;
-            this.flash.material.color.set(gun ? spec.color : 0xd9ffab);
-            this.flash.scale.setScalar(gun ? 1 + spec.size * 2 : 1);
+            const color = gun ? spec.color : 0xd9ffab, calibre = gun ? 1 + spec.size * 2.5 : 1;
+            this.flashMax = this.flashTime = this.kind === 'rocket' ? .12 : this.kind === 'scatter' ? .09 : .07;
+            this.flashCore.material.color.set(color);
+            this.flashCone.material.color.set(color);
+            this.flashGlow.material.color.set(color);
+            this.flashCone.scale.set(calibre * (this.kind === 'scatter' ? 2.2 : 1), calibre * (this.kind === 'scatter' ? 2.2 : 1), calibre * (.7 + fxRandom() * .6) * (this.kind === 'laser' ? .6 : 1.4));
+            this.flashGlow.scale.setScalar(1.9 * calibre);
+            this.flash.rotation.set(0, 0, fxRandom() * Math.PI);
             this.flash.position.set(p.x + .48, y, CONFIG.player.z - .95);
+            game.effects?.spark(p.x + .48, y, CONFIG.player.z - 1.1, color, this.kind === 'scatter' ? 7 : this.kind === 'rocket' ? 6 : 3, gun ? 1 : .6, -6);
             p.recoil = spec.recoil;
-            game.audio?.play('shoot');
+            game.audio?.play('shoot', this.kind);
         }
         this.flash.visible = this.flashTime > 0;
+        if (this.flash.visible) {
+            const t = this.flashTime / this.flashMax;
+            this.flashCone.material.opacity = .85 * t;
+            this.flashGlow.material.opacity = t;
+            this.flashCore.scale.setScalar(.6 + t * .6);
+        }
         this.flash.rotation.z += dt * 20;
         for (const b of this.pool)
             if (b.active) {
@@ -106,6 +157,9 @@ export class Weapons {
                 b.life -= dt;
                 if (b.life <= 0)
                     b.active = false;
+                else if (b.kind === 'rocket')
+                    // Scarico del razzo: fiamma e scintille lasciate indietro.
+                    game.effects?.spark(b.x, b.y, b.z + b.length * .6, fxRandom() < .6 ? 0xffb43c : 0xff5a1e, 1, .5, 4);
             }
     }
     fire(x, y, z, spec = BLASTER, vx = 0) {
@@ -116,7 +170,7 @@ export class Weapons {
         b.hits.length = 0;
     }
     render(alpha = 1) {
-        let boxes = 0, balls = 0, plasma = 0;
+        let boxes = 0, balls = 0, plasma = 0, glowBoxes = 0, glowBalls = 0;
         for (const b of this.pool)
             if (b.active) {
                 const x = b.previousX + (b.x - b.previousX) * alpha;
@@ -151,9 +205,18 @@ export class Weapons {
                 this.dummy.updateMatrix();
                 const n = round ? balls++ : boxes++;
                 mesh.setMatrixAt(n, this.dummy.matrix);
-                mesh.setColorAt(n, this.color.set(b.color ?? BLASTER.color));
+                this.color.set(b.color ?? BLASTER.color);
+                mesh.setColorAt(n, this.color);
+                // Alone più largo e una scia che si allunga dietro al colpo.
+                const glow = round ? this.glowBall : this.glowBox, g = round ? glowBalls++ : glowBoxes++;
+                const width = b.size * (b.kind === 'laser' ? 3.2 : 3.6);
+                this.dummy.position.z = z + (round ? 0 : b.length * .45);
+                this.dummy.scale.set(width, width, round ? width : b.length * 1.9);
+                this.dummy.updateMatrix();
+                glow.setMatrixAt(g, this.dummy.matrix);
+                glow.setColorAt(g, this.color);
             }
-        for (const [mesh, n] of [[this.boxMesh, boxes], [this.ballMesh, balls], [this.plasmaCore, plasma], [this.plasmaTrail, plasma], [this.plasmaArcs, plasma * 2]]) {
+        for (const [mesh, n] of [[this.boxMesh, boxes], [this.ballMesh, balls], [this.plasmaCore, plasma], [this.plasmaTrail, plasma], [this.plasmaArcs, plasma * 2], [this.glowBox, glowBoxes], [this.glowBall, glowBalls]]) {
             mesh.count = n;
             mesh.instanceMatrix.needsUpdate = true;
             if (mesh.instanceColor)

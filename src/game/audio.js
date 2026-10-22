@@ -112,34 +112,77 @@ export class Audio {
         osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     }
     burstNoise(duration = .18, volume = .45) {
+        this.noiseHit(duration, volume);
+    }
+    // Rumore filtrato: lo spettro del colpo (botto, sibilo, scatto metallico) viene dal filtro.
+    noiseHit(duration, volume, { filter = 'lowpass', from = 2200, to = 80, q = 1, delay = 0, attack = 0 } = {}) {
         if (!this.context || !this.enabled)
             return;
-        const t = this.context.currentTime, source = this.context.createBufferSource(), filter = this.context.createBiquadFilter(), gain = this.context.createGain();
+        const t = this.context.currentTime + delay, source = this.context.createBufferSource(), node = this.context.createBiquadFilter(), gain = this.context.createGain();
         source.buffer = this.noise;
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(2200, t);
-        filter.frequency.exponentialRampToValueAtTime(80, t + duration);
-        gain.gain.setValueAtTime(volume, t);
+        source.playbackRate.value = .9 + Math.min(1, duration) * .2;
+        node.type = filter;
+        node.Q.value = q;
+        node.frequency.setValueAtTime(from, t);
+        node.frequency.exponentialRampToValueAtTime(Math.max(20, to), t + duration);
+        gain.gain.setValueAtTime(attack ? .001 : volume, t);
+        if (attack)
+            gain.gain.exponentialRampToValueAtTime(volume, t + attack);
         gain.gain.exponentialRampToValueAtTime(.001, t + duration);
-        source.connect(filter);
-        filter.connect(gain);
+        source.connect(node);
+        node.connect(gain);
         gain.connect(this.master);
-        source.start(t);
-        source.stop(t + duration);
-        source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+        source.start(t, Math.random() * .2);
+        source.stop(t + duration + .02);
+        source.onended = () => { source.disconnect(); node.disconnect(); gain.disconnect(); };
     }
-    play(name) {
+    // Ogni arma ha la sua firma: corpo (rumore filtrato), coda grave e un dettaglio meccanico.
+    shot(kind) {
+        const pitch = .94 + Math.random() * .12;
+        switch (kind) {
+            case 'scatter':
+                // Fucile a pompa: botto pieno e basso, coda lunga, poi lo scatto della pompa.
+                this.noiseHit(.32, .55, { from: 3200, to: 120 });
+                this.tone(110 * pitch, .22, 'sine', .3, 38);
+                this.noiseHit(.04, .2, { filter: 'highpass', from: 2400, to: 2400, delay: .2 });
+                this.noiseHit(.05, .18, { filter: 'bandpass', from: 1500, to: 1100, q: 4, delay: .27 });
+                break;
+            case 'plasma':
+                // Scarica di plasma: risucchio in salita e colpo sordo che vibra.
+                this.tone(140 * pitch, .32, 'sawtooth', .14, 55);
+                this.tone(70 * pitch, .3, 'sine', .25, 32);
+                this.tone(900 * pitch, .16, 'sine', .07, 2600);
+                this.noiseHit(.24, .2, { filter: 'bandpass', from: 600, to: 3000, q: 2.5 });
+                break;
+            case 'laser':
+                // Raggio: zap acuto e breve con una frizione elettrica.
+                this.tone(2600 * pitch, .07, 'sawtooth', .06, 900);
+                this.tone(1300 * pitch, .08, 'square', .045, 420);
+                this.noiseHit(.05, .08, { filter: 'highpass', from: 5000, to: 3000 });
+                break;
+            case 'rocket':
+                // Lancio: colpo d'espulsione, poi il soffio del propellente che si allontana.
+                this.noiseHit(.08, .4, { from: 1800, to: 200 });
+                this.tone(75 * pitch, .2, 'sine', .3, 34);
+                this.noiseHit(.6, .3, { filter: 'bandpass', from: 450, to: 2600, q: 1.4, attack: .06 });
+                break;
+            default:
+                // Blaster: colpo energetico secco, con un corpo grave che dà peso.
+                this.tone(1500 * pitch, .07, 'square', .07, 260);
+                this.tone(170 * pitch, .07, 'triangle', .16, 55);
+                this.noiseHit(.045, .22, { filter: 'bandpass', from: 2600, to: 900, q: 1.2 });
+        }
+    }
+    play(name, variant) {
         if (!this.enabled || !this.context)
             return;
         switch (name) {
             case 'shoot':
-                // Colpo secco: "pew" in discesa + scoppio breve di rumore; limitato a ~30 al secondo.
+                // Suono specifico dell'arma (variant); limitato a ~30 colpi al secondo.
                 if (this.context.currentTime - (this.lastShot || 0) < .033)
                     return;
                 this.lastShot = this.context.currentTime;
-                this.tone(720, .09, 'square', .14, 140);
-                this.tone(180, .06, 'triangle', .16, 60);
-                this.burstNoise(.05, .22);
+                this.shot(variant);
                 break;
             case 'jump':
                 this.tone(180, .16, 'sine', .13, 500);

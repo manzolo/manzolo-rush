@@ -246,7 +246,7 @@ check('record conserva personaggio e livello anche dopo cambio selezione e pareg
     g.setDifficulty('medium');
 });
 check('difficoltà applicata a velocità e spawn, bloccata durante la corsa', () => {
-    for (const [id, speed, interval] of [['easy', .8, 1.2], ['medium', 1, 1], ['hard', 1.15, .9]]) {
+    for (const [id, speed, interval] of [['easy', .7, 1.45], ['medium', 1, 1], ['hard', 1.25, .8]]) {
         g.menu();
         g.setDifficulty(id);
         g.start();
@@ -264,6 +264,245 @@ check('difficoltà applicata a velocità e spawn, bloccata durante la corsa', ()
     g.menu();
     g.setDifficulty('medium');
 });
+check('livelli: Facile ha una corsia occupata, Medio e Difficile due', () => {
+    for (const id of ['easy', 'medium', 'hard']) {
+        g.menu(); g.setDifficulty(id); g.start();
+        g.obstacles.reset(); g.enemies.reset(); g.pickups.reset();
+        g.spawner.timer = 0;
+        g.spawner.update(0);
+        const entities = [...g.obstacles.pool, ...g.enemies.pool].filter(e => e.active);
+        assert.equal(entities.length, id === 'easy' ? 1 : 2);
+    }
+    g.menu(); g.setDifficulty('medium');
+});
+check('contatto: tutti i nemici avviano il duello senza danno e fermano corsa e spawn', () => {
+    const count = scene.children.length;
+    for (const type of ['soldier', 'runner', 'drone', 'tank']) {
+        g.start();
+        const e = g.enemies.spawn(type, 0, CONFIG.player.z, 1);
+        g.powerups.shield = 5;
+        g.combat();
+        assert.ok(g.encounter.active);
+        assert.equal(g.encounter.enemy, e);
+        assert.equal(g.player.lives, CONFIG.player.lives);
+        assert.equal(g.powerups.shield, 5);
+        assert.ok(!g.boss.active);
+        const distance = g.distance, time = g.time;
+        ticks(60);
+        assert.equal(g.distance, distance);
+        assert.equal(g.time, time);
+        assert.equal(g.speed, 0);
+        assert.ok(!g.obstacles.pool.some(e => e.active));
+        assert.ok(!g.enemies.pool.some(e => e.active));
+        assert.ok(e.mesh.visible);
+        assert.equal(node('#boss-label').textContent, g.encounter.label);
+        g.pause();
+        const age = g.encounter.age;
+        ticks(20);
+        assert.equal(g.encounter.age, age);
+        g.resume();
+        g.menu();
+        assert.ok(!g.encounter.active && !e.mesh.visible && !g.player.dueling);
+    }
+    assert.equal(scene.children.length, count);
+});
+check('duello: salve anticipate, difficoltà e danno reale dei proiettili', () => {
+    const health = [];
+    for (const id of ['easy', 'medium', 'hard']) {
+        g.menu(); g.setDifficulty(id); g.start();
+        g.enemies.spawn('soldier', 0, CONFIG.player.z, 1);
+        g.combat();
+        health.push(g.encounter.maxHp);
+        g.encounter.attackTimer = 0;
+        g.encounter.update(CONFIG.step, g);
+        assert.equal(g.encounter.warnings.filter(m => m.visible).length, id === 'hard' ? 2 : 1);
+        assert.equal(g.enemies.shots.filter(s => s.active).length, 0);
+        const warning = g.encounter.warning;
+        g.encounter.update(warning + .01, g);
+        assert.equal(g.enemies.shots.filter(s => s.active).length, id === 'hard' ? 2 : 1);
+        const shot = g.enemies.shots.find(s => s.active);
+        shot.x = 0; shot.z = CONFIG.player.z;
+        g.player.invulnerable = 0;
+        g.combat();
+        assert.equal(g.player.lives, CONFIG.player.lives - 1);
+    }
+    assert.ok(health[0] < health[1] && health[1] < health[2]);
+    g.menu(); g.setDifficulty('medium');
+});
+check('duello vinto con il blaster: premio singolo, proiettili rimossi e ripartenza', () => {
+    g.start();
+    g.enemies.spawn('soldier', 0, CONFIG.player.z, 1);
+    g.combat();
+    g.input.auto = true;
+    // In questo test si misura la vittoria, non l'abilità di schivata: si insegue solo il rivale.
+    g.player.invulnerable = 30;
+    for (let i = 0; i < 900 && g.encounter.active; i++) {
+        if (g.encounter.lane !== g.player.lane) g.player.command(g.encounter.lane < g.player.lane ? 'left' : 'right');
+        g.update(CONFIG.step);
+    }
+    assert.ok(!g.encounter.active);
+    assert.equal(g.kills, 1);
+    assert.equal(g.reward, CONFIG.enemies.soldier.score * 4);
+    assert.ok(!g.enemies.shots.some(s => s.active));
+    assert.ok(!g.player.dueling);
+    const distance = g.distance;
+    g.update(CONFIG.step);
+    assert.ok(g.speed > 0 && g.distance > distance);
+    g.encounter.damage(99, g);
+    assert.equal(g.kills, 1);
+});
+check('duello: game over e retry rimuovono rivale e segnali', () => {
+    g.start();
+    const e = g.enemies.spawn('tank', 0, CONFIG.player.z, 1);
+    g.combat();
+    g.encounter.attackTimer = 0;
+    g.encounter.update(CONFIG.step, g);
+    g.player.lives = 1; g.player.invulnerable = 0;
+    g.damage();
+    assert.equal(g.state, 'over');
+    assert.ok(!g.encounter.active && !e.mesh.visible);
+    assert.ok(g.encounter.warnings.every(m => !m.visible));
+    g.start();
+    assert.ok(!g.encounter.active && !g.player.dueling);
+    assert.equal(g.player.lives, CONFIG.player.lives);
+});
+check('12 duelli: ogni rivale si può sconfiggere schivando, nelle tre difficoltà', () => {
+    for (const level of ['easy', 'medium', 'hard'])
+        for (const type of ['soldier', 'runner', 'drone', 'tank']) {
+            g.menu(); g.setDifficulty(level); g.start();
+            g.enemies.spawn(type, 0, CONFIG.player.z, 1);
+            g.combat();
+            g.input.auto = true;
+            const lanes = new Set();
+            for (let tick = 0; tick < 60 * 60 && g.encounter.active; tick++) {
+                // Controller: evita i muri pieni cambiando corsia, salta le barre basse,
+                // scivola sotto quelle alte e torna nella corsia del rivale per colpirlo.
+                const e = g.encounter, p = g.player;
+                lanes.add(e.lane);
+                const blocked = new Set(e.warning > 0 && e.wall === 'full' ? e.lanes : []);
+                for (const shot of g.enemies.shots) {
+                    if (!shot.active || shot.z < -16 || shot.z > CONFIG.player.z + 1)
+                        continue;
+                    const eta = (CONFIG.player.z - shot.z) / shot.speed;
+                    if (shot.wallKind === 'full')
+                        blocked.add(Math.round(shot.x / CONFIG.player.laneWidth));
+                    else if (shot.wallKind === 'low' && eta < .3 && p.y === 0)
+                        p.command('jump');
+                    else if (shot.wallKind === 'high' && eta < .3 && p.slide <= 0)
+                        p.command('slide');
+                }
+                const options = [e.lane, p.lane, -1, 0, 1].filter(lane => !blocked.has(lane));
+                const target = options[0] ?? p.lane;
+                if (target !== p.lane)
+                    p.command(target < p.lane ? 'left' : 'right');
+                g.update(CONFIG.step);
+                if (tick % 12 === 0) g.render(1, .2);
+                assert.equal(g.state, 'play', `${type}/${level}: game over`);
+            }
+            assert.ok(lanes.size > 1, `${type}/${level}: il rivale non si muove`);
+            assert.ok(!g.encounter.active, `${type}/${level}: duello troppo lungo`);
+            assert.equal(g.kills, 1);
+            assert.equal(g.player.lives, CONFIG.player.lives, `${type}/${level}: danno evitabile`);
+        }
+    g.menu(); g.setDifficulty('medium');
+});
+check('duello: il rivale cambia corsia, raffiche alte e basse casuali e muri mirati', () => {
+    const shotsOf = () => g.enemies.shots.filter(s => s.active);
+    const seen = new Set(), positions = new Set();
+    g.menu(); g.start();
+    g.enemies.spawn('soldier', 0, CONFIG.player.z, 1);
+    g.combat();
+    let previous = g.encounter.lane;
+    for (let salvo = 0; salvo < 40; salvo++) {
+        g.encounter.attackTimer = 0;
+        g.encounter.update(CONFIG.step, g);
+        assert.notEqual(g.encounter.lane, previous);
+        previous = g.encounter.lane;
+        positions.add(previous);
+        g.encounter.update(g.encounter.warning + .01, g);
+        const kind = [...new Set(shotsOf().map(s => s.wallKind))];
+        assert.equal(kind.length, 1);
+        if (salvo === 0) assert.equal(kind[0], 'full');
+        seen.add(kind[0]);
+        const lanes = new Set(shotsOf().map(s => Math.round(s.x / CONFIG.player.laneWidth)));
+        assert.equal(lanes.size, kind[0] === 'full' ? 1 : 3);
+        for (const s of shotsOf()) s.active = false;
+    }
+    assert.deepEqual([...seen].sort(), ['full', 'high', 'low']);
+    assert.equal(positions.size, 3);
+    // Un muro pieno colpisce anche chi salta: serve cambiare corsia.
+    const wall = g.enemies.shoot(0, CONFIG.player.z, 1, 0, 'full');
+    g.player.y = 2; g.player.invulnerable = 0;
+    g.combat();
+    assert.equal(g.player.lives, CONFIG.player.lives - 1);
+    assert.ok(!wall.active);
+    g.menu();
+});
+check('atmosfera infernale: boss e duelli, pausa immobile e ritorno al tema', () => {
+    for (const duel of [false, true]) {
+        g.start();
+        const sky = scene.background.clone();
+        if (duel) {
+            g.enemies.spawn('soldier', 0, CONFIG.player.z, 1);
+            g.combat();
+        } else g.boss.start(g);
+        ticks(150);
+        assert.ok(g.world.inferno.strength > .98);
+        assert.ok(g.world.inferno.group.visible);
+        assert.ok(scene.fog.far < 100);
+        assert.ok(scene.background.r < sky.r);
+        g.pause();
+        const phase = g.world.inferno.time, color = scene.background.clone();
+        ticks(30);
+        assert.equal(g.world.inferno.time, phase);
+        assert.ok(scene.background.equals(color));
+        g.resume();
+        if (duel) g.encounter.damage(g.encounter.hp, g);
+        else g.boss.damage(g.boss.hp, g);
+        for (let i = 0; i < 600; i++) g.world.update(CONFIG.step, 0, false);
+        assert.ok(g.world.inferno.strength < .001);
+        assert.ok(!g.world.inferno.group.visible);
+        assert.ok(Math.abs(scene.background.r - sky.r) < .001);
+        assert.ok(Math.abs(scene.fog.far - 160) < .001);
+        g.menu();
+        assert.equal(g.world.inferno.strength, 0);
+        assert.ok(!g.world.inferno.group.visible);
+    }
+});
+check('effetti: elettricità dello scudo, vampa per arma e scia dei razzi', () => {
+    g.start();
+    g.powerups.shield = 5;
+    g.render(1, .1);
+    const arc = g.effects.shieldArc.material.uniforms;
+    const before = arc.time.value;
+    g.update(CONFIG.step);
+    g.render(1, .1);
+    assert.ok(g.effects.shield.visible && arc.strength.value > 0 && arc.time.value > before);
+    g.pause();
+    const frozen = arc.time.value;
+    ticks(10);
+    g.render(1, .1);
+    assert.equal(arc.time.value, frozen);
+    g.resume();
+    g.powerups.shield = 0;
+    for (const kind of ['blaster', 'scatter', 'rocket']) {
+        g.weapons.reset();
+        if (kind !== 'blaster') g.weapons.equip(kind, g);
+        g.input.auto = true;
+        g.update(CONFIG.step);
+        g.input.auto = false;
+        assert.ok(g.weapons.flash.visible, kind);
+        g.weapons.render(1);
+        assert.ok(g.weapons.glowBox.count + g.weapons.glowBall.count > 0, kind);
+    }
+    const sparks = () => g.effects.pool.filter(p => p.life > 0).length;
+    g.effects.reset();
+    g.update(CONFIG.step);
+    assert.ok(sparks() > 0, 'scia del razzo');
+    g.menu();
+    g.render(1, .1);
+    assert.ok(!g.effects.shield.visible);
+});
 check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () => {
     g.start();
     g.input.auto = true;
@@ -274,6 +513,7 @@ check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () =>
     for (let i = 0; i < 60 * 184; i++) {
         // Invulnerabilità solo per misurare il ciclo lungo; non dimostra la sopravvivenza.
         g.player.invulnerable = 2;
+        if (g.encounter.active) g.encounter.damage(g.encounter.hp, g);
         g.update(CONFIG.step);
         if (i % 6 === 0)
             g.render(.5, .1);

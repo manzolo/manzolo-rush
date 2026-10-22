@@ -358,9 +358,12 @@ footer i {
     font-size:10px;
     color:var(--mint);
 }
+#hud {
+    --tutorial-top:max(20vh, 180px);
+}
 #tutorial {
     position:fixed;
-    bottom:19%;
+    top:var(--tutorial-top);
     left:50%;
     transform:translateX(-50%);
     background:#122b3be6;
@@ -369,11 +372,17 @@ footer i {
     padding:13px 24px;
     font-size:12px;
     text-align:center;
-    white-space:nowrap;
+    width:max-content;
+    max-width:94vw;
+    white-space:normal;
     pointer-events:none;
 }
 #tutorial:empty {
     display:none;
+}
+/* Durante l'introduzione gli annunci restano sotto il suggerimento. */
+#hud:has(#tutorial:not(:empty)) #announcement {
+    top:calc(var(--tutorial-top) + 62px);
 }
 #announcement {
     position:fixed;
@@ -628,15 +637,15 @@ footer i {
         top:155px;
         width:80vw;
     }
+    #hud {
+        --tutorial-top:max(24vh, 185px);
+    }
+    #hud:has(#boss-hud:not(.hidden)) {
+        --tutorial-top:max(24vh, 210px);
+    }
     #tutorial {
         font-size:10px;
         padding:11px 15px;
-        /* in alto, sotto il punteggio: in basso copriva il personaggio */
-        top:max(24%, 185px);
-        bottom:auto;
-        max-width:94%;
-        white-space:normal;
-        width:max-content;
     }
     .bottom-left {
         bottom:65px;
@@ -717,8 +726,16 @@ footer i {
     .dialog .secondary {
         margin-top:12px;
     }
+    #hud {
+        --tutorial-top:150px;
+    }
     #tutorial {
-        bottom:13%;
+        padding:8px 16px;
+        font-size:10px;
+    }
+    #hud:has(#tutorial:not(:empty)) #announcement {
+        top:calc(var(--tutorial-top) + 42px);
+        font-size:18px;
     }
 }
 

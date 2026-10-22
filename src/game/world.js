@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { CONFIG, THEMES } from './config.js';
 import { block } from './models.js';
 import { SPRITES } from './sprites.js';
+import { Inferno } from './inferno.js';
+import { residentialFacade, officeFacade } from './facades.js';
 // Texture ripetibili per tema (sheet_textures) e oggetti di contorno (sheet_props).
 const THEME_TEXTURES = [
     { facadeA: 'city_facade_a', facadeB: 'city_facade_b', road: 'city_road', ground: 'city_sidewalk' },
@@ -44,6 +46,12 @@ export class World {
         if (this.textured) {
             // Ripetizioni tarate sulle geometrie: strada 10×24 m (una tile per corsia), terreno 700 m, palazzi 4–21 m.
             this.tiles = THEME_TEXTURES.map(t => ({ facadeA: tile(t.facadeA, 1, 2.5), facadeB: tile(t.facadeB, 1, 2.5), road: tile(t.road, 3, 7), ground: tile(t.ground, 90, 90) }));
+            // Città: facciate vettoriali disegnate su canvas, più leggere e intonate al tramonto.
+            if (s.vectorCity) {
+                const a = residentialFacade(1, 2.5), b = officeFacade(1, 2.5);
+                if (a && b)
+                    Object.assign(this.tiles[0], { facadeA: a, facadeB: b });
+            }
             for (const m of [this.roadMaterial, this.groundMaterial, ...this.buildingMaterials]) {
                 m.color.set(0xffffff);
             }
@@ -178,6 +186,7 @@ export class World {
             this.batches.push(batch);
         }
         this.color = new THREE.Color();
+        this.inferno = new Inferno(scene);
         this.setTheme(0, true);
         this.update(0, 0);
     }
@@ -201,6 +210,7 @@ export class World {
             p.mesh.scale.set(h * SPRITES.aspect(name), h, 1);
         }
         if (immediate) {
+            this.inferno.reset();
             this.scene.background = new THREE.Color(this.target.sky);
             this.scene.fog = new THREE.Fog(this.target.fog, 35, 160);
             if (!this.textured) {
@@ -209,12 +219,17 @@ export class World {
                 this.buildingMaterials[0].color.set(this.target.primary);
                 this.buildingMaterials[1].color.set(this.target.secondary);
             }
+            else
+                for (const material of [this.roadMaterial, this.groundMaterial, ...this.buildingMaterials])
+                    material.color.set(0xffffff);
             this.accentMaterial.color.set(this.target.accent);
             for (let k = 0; k < 2; k++)
                 this.roofMaterials[k].color.set(ROOF_COLORS[this.theme][k]);
+            this.sun.material.color.set(this.target.sun);
         }
     }
-    update(dt, speed) {
+    update(dt, speed, battle = false) {
+        this.inferno.update(dt, battle);
         this.phase += dt;
         for (const chunk of this.chunks) {
             chunk.position.z += speed * dt;
@@ -265,19 +280,19 @@ export class World {
         }
         for (const mesh of this.propBatches.values())
             mesh.instanceMatrix.needsUpdate = true;
-        const blend = 1 - Math.exp(-dt * .8), t = this.target;
-        this.scene.background.lerp(this.color.set(t.sky), blend);
-        this.scene.fog.color.lerp(this.color.set(t.fog), blend);
-        if (!this.textured) {
-            this.roadMaterial.color.lerp(this.color.set(t.road), blend);
-            this.groundMaterial.color.lerp(this.color.set(t.ground), blend);
-            this.buildingMaterials[0].color.lerp(this.color.set(t.primary), blend);
-            this.buildingMaterials[1].color.lerp(this.color.set(t.secondary), blend);
-        }
-        this.accentMaterial.color.lerp(this.color.set(t.accent), blend);
+        const blend = 1 - Math.exp(-dt * 1.8), t = this.target, heat = this.inferno.strength, hell = this.inferno.palette;
+        this.scene.background.lerp(this.color.set(t.sky).lerp(hell.sky, heat), blend);
+        this.scene.fog.color.lerp(this.color.set(t.fog).lerp(hell.fog, heat), blend);
+        this.scene.fog.near = 35 - heat * 7;
+        this.scene.fog.far = 160 - heat * 65;
+        this.roadMaterial.color.lerp(this.color.set(this.textured ? 0xffffff : t.road).lerp(hell.road, heat), blend);
+        this.groundMaterial.color.lerp(this.color.set(this.textured ? 0xffffff : t.ground).lerp(hell.ground, heat), blend);
+        this.buildingMaterials[0].color.lerp(this.color.set(this.textured ? 0xffffff : t.primary).lerp(hell.building, heat), blend);
+        this.buildingMaterials[1].color.lerp(this.color.set(this.textured ? 0xffffff : t.secondary).lerp(hell.building, heat), blend);
+        this.accentMaterial.color.lerp(this.color.set(t.accent).lerp(hell.accent, heat), blend);
         for (let k = 0; k < 2; k++)
-            this.roofMaterials[k].color.lerp(this.color.set(ROOF_COLORS[this.theme][k]), blend);
-        this.sun.material.color.lerp(this.color.set(t.sun), blend);
+            this.roofMaterials[k].color.lerp(this.color.set(ROOF_COLORS[this.theme][k]).lerp(hell.roof, heat), blend);
+        this.sun.material.color.lerp(this.color.set(t.sun).lerp(hell.sun, heat), blend);
     }
     render(alpha, speed) {
         const offset = (alpha - 1) * speed * CONFIG.step;

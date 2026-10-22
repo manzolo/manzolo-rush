@@ -5,7 +5,7 @@ import { SPRITES } from './sprites.js';
 export class UI {
     constructor() {
         this.nodes = {};
-        for (const id of ['score', 'coins', 'distance', 'lives', 'combo', 'heat-fill', 'heat-value', 'weapon-label', 'powerups', 'tutorial', 'announcement', 'fire', 'boss-hud', 'boss-fill', 'boss-percent', 'zone', 'damage-flash', 'next-life'])
+        for (const id of ['score', 'coins', 'distance', 'lives', 'combo', 'heat-fill', 'heat-value', 'weapon-label', 'powerups', 'tutorial', 'announcement', 'fire', 'boss-hud', 'boss-fill', 'boss-percent', 'boss-label', 'boss-icon', 'zone', 'damage-flash', 'next-life'])
             this.nodes[id] = document.getElementById(id);
         this.last = {};
         this.timer = 0;
@@ -156,10 +156,18 @@ export class UI {
         }
         const touch = matchMedia('(pointer:coarse)').matches;
         const t = g.time;
-        this.text('tutorial', t < 4 ? (touch ? 'SWIPE ← → · Cambia corsia' : '← → / A D · Cambia corsia') : t < 8 ? (touch ? 'SWIPE ↑ · Salta le barriere' : '↑ / SPAZIO · Salta le barriere') : t < 12 ? (touch ? 'SWIPE ↓ · Scivola sotto le barre' : '↓ / S · Scivola sotto le barre') : t < 16 ? (touch ? 'TIENI IL DITO SULLO SCHERMO · Spara' : 'CTRL · Tieni premuto per sparare (anche J o click)') : t < 20 ? (touch ? 'FUOCO · Tocca: automatico · Tieni: raffica' : 'SHIFT · Raffica! Occhio al calore (anche K)') : '');
-        const boss = g.boss;
+        this.text('tutorial', g.encounter?.active ? (touch ? 'SCHIVA, SALTA, SCIVOLA · INSEGUI IL RIVALE E SPARA' : '← → ↑ ↓ SCHIVA · CTRL / J SPARA NELLA SUA CORSIA') : t < 4 ? (touch ? 'SWIPE ← → · Cambia corsia' : '← → / A D · Cambia corsia') : t < 8 ? (touch ? 'SWIPE ↑ · Salta le barriere' : '↑ / SPAZIO · Salta le barriere') : t < 12 ? (touch ? 'SWIPE ↓ · Scivola sotto le barre' : '↓ / S · Scivola sotto le barre') : t < 16 ? (touch ? 'TIENI IL DITO SULLO SCHERMO · Spara' : 'CTRL · Tieni premuto per sparare (anche J o click)') : t < 20 ? (touch ? 'FUOCO · Tocca: automatico · Tieni: raffica' : 'SHIFT · Raffica! Occhio al calore (anche K)') : '');
+        const boss = g.encounter?.active ? g.encounter : g.boss;
         this.nodes['boss-hud'].classList.toggle('hidden', !boss?.active);
         if (boss?.active) {
+            this.text('boss-label', g.encounter?.active ? boss.label : '☠ SENTINELLA');
+            const iconName = g.encounter?.active ? boss.enemy.spriteName : 'boss_sentinel_v2';
+            if (this.lastBossIcon !== iconName) {
+                this.lastBossIcon = iconName;
+                const url = SPRITES.url(iconName, true);
+                this.nodes['boss-icon'].style.display = url ? '' : 'none';
+                if (url) this.nodes['boss-icon'].src = url;
+            }
             this.nodes['boss-fill'].style.width = `${Math.max(0, boss.hp / boss.maxHp) * 100}%`;
             this.text('boss-percent', `${Math.ceil(Math.max(0, boss.hp / boss.maxHp) * 100)}%`);
         }

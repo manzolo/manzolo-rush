@@ -18,6 +18,7 @@ import { CHARACTERS, characterById, characterReady, poseName } from './character
 import { SPRITES } from './sprites.js';
 import { playerOverlap, bulletOverlap, obstaclePassBonus } from './collisions.js';
 import { difficultyById } from './difficulty.js';
+import { Encounter } from './encounter.js';
 export class Game {
     constructor(renderer, scene, camera) {
         this.renderer = renderer;
@@ -31,6 +32,7 @@ export class Game {
         this.enemies = new Enemies(scene);
         this.pickups = new Pickups(scene);
         this.boss = new Boss(scene);
+        this.encounter = new Encounter(scene);
         this.ui = new UI();
         this.powerups = { triple: 0, shield: 0, magnet: 0, double: 0 };
         this.effects = new Effects(scene, this.player);
@@ -140,6 +142,7 @@ export class Game {
             fly.el.style.display = 'none';
     }
     start() {
+        this.encounter.reset();
         this.audio.unlock();
         this.runCharacter = this.player.character;
         this.difficulty = difficultyById(this.save.difficulty);
@@ -170,6 +173,7 @@ export class Game {
     }
     menu() {
         this.bank();
+        this.encounter.reset();
         this.setState(STATES.MENU);
         this.obstacles.reset();
         this.enemies.reset();
@@ -217,6 +221,8 @@ export class Game {
             this.gameOver();
     }
     gameOver() {
+        this.encounter.reset();
+        this.player.dueling = false;
         this.score = this.distance * CONFIG.bonuses.distanceScore + this.reward;
         this.bank();
         this.audio.play('over');
@@ -241,8 +247,9 @@ export class Game {
         }
         while (this.input.queue.length)
             this.player.command(this.input.queue.shift());
-        this.time += dt;
-        this.speed = Math.min(CONFIG.speed.max, CONFIG.speed.initial + this.time * CONFIG.speed.acceleration) * this.difficulty.speed;
+        if (!this.encounter.active)
+            this.time += dt;
+        this.speed = this.encounter.active ? 0 : Math.min(CONFIG.speed.max, CONFIG.speed.initial + this.time * CONFIG.speed.acceleration) * this.difficulty.speed;
         this.distance += this.speed * dt;
         if (this.powerups.double > 0)
             this.reward += this.speed * dt * CONFIG.bonuses.distanceScore;
@@ -252,14 +259,16 @@ export class Game {
         for (const key in this.powerups)
             this.powerups[key] = Math.max(0, this.powerups[key] - dt);
         this.player.update(dt);
-        this.world.update(dt, this.speed);
+        this.world.update(dt, this.speed, this.encounter.active || this.boss.active);
         const theme = Math.floor(this.time / CONFIG.world.themeSeconds) % THEMES.length;
         if (this.world.theme !== theme) {
             this.world.setTheme(theme);
             this.announce(THEMES[theme].name);
         }
         this.ui.text('zone', `${String(theme + 1).padStart(2, '0')} / ${THEMES[theme].name} · ${this.difficulty.name.toUpperCase()}`);
-        this.boss.update(dt, this);
+        if (!this.encounter.active)
+            this.boss.update(dt, this);
+        this.encounter.update(dt, this);
         this.spawner.update(dt);
         this.obstacles.update(dt, this.speed);
         this.enemies.update(dt, this);
@@ -315,10 +324,14 @@ export class Game {
                 target = this.boss;
                 kind = 'boss';
             }
+            if (this.encounter.active && bulletOverlap(bullet, this.encounter)) {
+                target = this.encounter;
+                kind = 'encounter';
+            }
             if (!target)
                 continue;
             // Perforazione: plasma e laser attraversano nemici e casse, mai treni, barriere o boss.
-            const solid = kind === 'boss' || (kind === 'obstacle' && target.type !== 'crate');
+            const solid = kind === 'boss' || kind === 'encounter' || (kind === 'obstacle' && target.type !== 'crate');
             if (bullet.pierce > 0 && !solid) {
                 bullet.pierce--;
                 bullet.hits.push(target);
@@ -342,7 +355,9 @@ export class Game {
                     if (obstacle.active && obstacle !== target && obstacle.type === 'crate' && (obstacle.x - bullet.x) ** 2 + (obstacle.z - bullet.z) ** 2 < r2)
                         this.hitCrate(obstacle, damage);
             }
-            if (kind === 'boss')
+            if (kind === 'encounter')
+                this.encounter.damage(damage, this);
+            else if (kind === 'boss')
                 this.boss.damage(damage, this);
             else if (kind === 'enemy')
                 this.hitEnemy(target, damage);
@@ -351,9 +366,8 @@ export class Game {
         }
         for (const enemy of this.enemies.pool) {
             if (enemy.active && playerOverlap(this.player, enemy)) {
-                this.damage();
-                this.enemies.remove(enemy);
-                if (this.state !== STATES.PLAY)
+                this.encounter.start(enemy, this);
+                if (this.encounter.active)
                     return;
             }
         }
@@ -521,6 +535,7 @@ export class Game {
             this.player.root.visible = false;
         this.weapons.render(alpha);
         this.enemies.render(alpha);
+        this.encounter.render();
         this.boss.render(alpha);
         this.pickups.render(alpha, this.speed);
         this.effects.render(this);
@@ -538,13 +553,18 @@ export class Game {
         const cameraDepth = menu ? (portrait ? 14 : 11) : (portrait ? 18 : 13);
         this.camera.position.set(this.cameraX + (Math.random() - .5) * shake, cameraHeight + (Math.random() - .5) * shake, cameraDepth);
         this.camera.lookAt(menu ? 1.8 : this.player.x * .2, 1, -23);
-        const fov = menu ? 57 : (portrait ? 62 : 58) + (this.speed - CONFIG.speed.initial) * .65;
+        const fov = menu ? 57 : (portrait ? 62 : 58) + (this.encounter.active ? 0 : this.speed - CONFIG.speed.initial) * .65;
         if (Math.abs(this.camera.fov - fov) > .01) {
             this.camera.fov += (fov - this.camera.fov) * (1 - Math.exp(-dt * 3));
             this.camera.updateProjectionMatrix();
         }
+        const heat = this.world.inferno.strength;
         if (this.sunlight)
-            this.sunlight.color.lerp(this.lightColor.set(THEMES[this.world.theme].sun), 1 - Math.exp(-dt));
+            this.sunlight.color.lerp(this.lightColor.set(THEMES[this.world.theme].sun).lerp(this.world.inferno.palette.sun, heat), 1 - Math.exp(-dt * 2));
+        if (this.ambientLight) {
+            this.ambientLight.intensity = 2 - heat * .9;
+            this.ambientLight.color.set(0xffffff).lerp(this.world.inferno.palette.building, heat * .45);
+        }
         this.ui.nodes['damage-flash'].style.opacity = this.state === STATES.PLAY ? this.damageFlash * 2 : 0;
         this.renderer.render(this.scene, this.camera);
     }

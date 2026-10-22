@@ -8,7 +8,9 @@ class Context {
     constructor() { this.currentTime = 1; this.sampleRate = 100; this.state = 'running'; this.destination = {}; this.connections = []; }
     createGain() { return { gain: gain(), connect: target => this.connections.push(target), disconnect() {} }; }
     createBuffer() { return { getChannelData: () => new Float32Array(50) }; }
-    createOscillator() { return { frequency: gain(), connect() {}, start() {}, stop() {} }; }
+    createOscillator() { this.oscillators = (this.oscillators || 0) + 1; return { frequency: gain(), connect() {}, start() {}, stop() {} }; }
+    createBufferSource() { this.sources = (this.sources || 0) + 1; return { playbackRate: gain(), connect() {}, start() {}, stop() {} }; }
+    createBiquadFilter() { return { frequency: gain(), Q: gain(), connect() {}, disconnect() {} }; }
 }
 globalThis.window = { AudioContext: Context, addEventListener() {} };
 
@@ -58,4 +60,21 @@ test('musica procedurale continua con gli effetti disattivati', () => {
     audio.setMusic(false);
     audio.update(1, true);
     assert.equal(audio.note, 1);
+});
+
+test('ogni arma ha un suono di sparo distinto e limitato a ~30 al secondo', () => {
+    const audio = new Audio();
+    audio.unlock();
+    const signatures = new Set();
+    for (const kind of ['blaster', 'scatter', 'plasma', 'laser', 'rocket']) {
+        audio.context.oscillators = audio.context.sources = 0;
+        audio.context.currentTime += 1;
+        audio.play('shoot', kind);
+        signatures.add(`${audio.context.oscillators}/${audio.context.sources}`);
+        assert.ok(audio.context.oscillators + audio.context.sources > 0, kind);
+        const before = audio.context.oscillators + audio.context.sources;
+        audio.play('shoot', kind);
+        assert.equal(audio.context.oscillators + audio.context.sources, before, `${kind}: limite di frequenza`);
+    }
+    assert.ok(signatures.size >= 4);
 });

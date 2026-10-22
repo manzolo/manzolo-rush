@@ -36,7 +36,7 @@ export class Player {
         }
         this.sprite.scale.set(height * SPRITES.aspect(name) * (mirror ? -1 : 1), height, 1);
     }
-    reset() { this.x = 0; this.y = 0; this.previousX = 0; this.previousY = 0; this.lane = 0; this.vy = 0; this.slide = 0; this.buffer = ''; this.bufferTime = 0; this.invulnerable = 0; this.lives = CONFIG.player.lives; this.recoil = 0; this.phase = 0; this.root.visible = true; }
+    reset() { this.dueling = false; this.x = 0; this.y = 0; this.previousX = 0; this.previousY = 0; this.lane = 0; this.vy = 0; this.slide = 0; this.buffer = ''; this.bufferTime = 0; this.invulnerable = 0; this.lives = CONFIG.player.lives; this.recoil = 0; this.phase = 0; this.root.visible = true; }
     command(command) {
         if (command === 'left' || command === 'right')
             this.lane = Math.max(-1, Math.min(1, this.lane + (command === 'left' ? -1 : 1)));
@@ -58,7 +58,7 @@ export class Player {
     update(dt) {
         this.previousX = this.x;
         this.previousY = this.y;
-        this.phase += dt * 13;
+        this.phase += this.dueling ? 0 : dt * 13;
         this.x += (this.lane * CONFIG.player.laneWidth - this.x) * (1 - Math.exp(-dt * 3 / CONFIG.player.laneTime));
         this.slide = Math.max(0, this.slide - dt);
         this.invulnerable = Math.max(0, this.invulnerable - dt);
@@ -90,7 +90,7 @@ export class Player {
                 this.setFrame(this.poses.jump, s.heroHeight);
             else if (Math.abs(drift) > s.leanThreshold && SPRITES.has(this.poses.lean))
                 this.setFrame(this.poses.lean, s.heroHeight, drift < 0); // il frame piega a destra: specchiato verso sinistra
-            else if (this.recoil > CONFIG.weapon.recoil * .5)
+            else if (this.dueling || this.recoil > CONFIG.weapon.recoil * .5)
                 this.setFrame(this.poses.shoot, s.heroHeight);
             else
                 this.setFrame(this.frames[Math.floor(this.phase / 13 * s.runFps) % this.frames.length], s.heroHeight);
@@ -102,7 +102,7 @@ export class Player {
         this.body.rotation.x = this.y > 0 ? -.15 : 0;
         this.body.position.y = this.y === 0 && this.slide <= 0 ? Math.abs(Math.sin(this.phase)) * .05 : 0;
         for (let i = 0; i < 4; i++)
-            this.limbs[i].rotation.x = this.slide > 0 ? -1.2 : this.y > 0 ? (i < 2 ? -.5 : -.7) : Math.sin(this.phase + (i % 2) * Math.PI) * (i < 2 ? .7 : .35);
+            this.limbs[i].rotation.x = this.slide > 0 ? -1.2 : this.y > 0 ? (i < 2 ? -.5 : -.7) : this.dueling ? 0 : Math.sin(this.phase + (i % 2) * Math.PI) * (i < 2 ? .7 : .35);
         this.gun.position.z = -.42 + this.recoil * .7;
     }
     get height() { return this.slide > 0 ? CONFIG.player.slideHeight : CONFIG.player.height; }

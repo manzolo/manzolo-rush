@@ -23,7 +23,7 @@ export class Spawner {
     reset() { this.timer = CONFIG.spawn.initialDelay; this.safeLane = 0; this.rows = 0; }
     update(dt) {
         const g = this.game;
-        if (g.boss?.active)
+        if (g.boss?.active || g.encounter?.active)
             return;
         this.timer -= dt;
         if (this.timer > 0)
@@ -31,18 +31,24 @@ export class Spawner {
         const interval = Math.max(CONFIG.spawn.intervalMin, CONFIG.spawn.intervalStart - g.time * CONFIG.spawn.intervalDecay);
         this.timer = interval * (g.difficulty?.spawnInterval ?? 1);
         // Una sola corsia di differenza tra vie di fuga successive. Ogni riga è
-        // separata da almeno 1,75 s: molto più di cambio corsia + lunghezza treno.
+        // separata da almeno 1,4 s (Difficile): più di cambio corsia + lunghezza treno.
         this.safeLane = Math.max(-1, Math.min(1, this.safeLane + (Math.floor(Math.random() * 3) - 1)));
         this.rows++;
         const pattern = this.rows < 3 ? (this.rows === 1 ? 'jump' : 'slide') : choosePattern();
-        const row = makeRow(this.safeLane, pattern);
-        if (pattern === 'mixed' && Math.random() < CONFIG.spawn.enemyChance)
+        let row = makeRow(this.safeLane, pattern);
+        if (pattern === 'mixed' && Math.random() < (g.difficulty?.enemyChance ?? CONFIG.spawn.enemyChance))
             row[1].kind = 'soldier';
+        if (g.difficulty?.rowSize === 1)
+            row = [row[Math.floor(Math.random() * row.length)]];
+        if (g.difficulty?.id === 'hard' && this.rows >= 3)
+            for (const entry of row)
+                if (entry.kind === 'crate' && Math.random() < .5)
+                    entry.kind = 'soldier';
         for (const entry of row) {
             if (entry.kind === 'soldier' && g.enemies) {
                 let kind = 'soldier', r = Math.random();
                 for (const entry of CONFIG.enemyMix) {
-                    if (g.time >= entry.unlock) {
+                    if (g.time >= entry.unlock * (g.difficulty?.unlockTime ?? 1)) {
                         r -= entry.weight;
                         if (r < 0) {
                             kind = entry.type;
@@ -50,7 +56,7 @@ export class Spawner {
                         }
                     }
                 }
-                g.enemies.spawn(kind, entry.lane, CONFIG.world.spawnZ, this.safeLane);
+                g.enemies.spawn(kind, entry.lane, CONFIG.world.spawnZ, this.safeLane, g.difficulty);
             }
             else if (entry.kind === 'soldier')
                 g.obstacles.spawn('crate', entry.lane, CONFIG.world.spawnZ);

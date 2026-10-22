@@ -134,7 +134,7 @@ export class Enemies {
         this.glowTexture ||= radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)');
         return new THREE.SpriteMaterial({ map: this.glowTexture, color: type === 'tank' ? 0xffa030 : type === 'drone' ? 0xff4040 : 0xff6a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
     }
-    spawn(type, lane, z, safeLane) {
+    spawn(type, lane, z, safeLane, difficulty) {
         const e = this.pool.find(e => !e.active && e.type === type);
         if (!e)
             return;
@@ -145,7 +145,7 @@ export class Enemies {
         e.z = z;
         e.previousZ = z;
         e.previousX = e.x;
-        e.maxHp = CONFIG.enemies[type].hp;
+        e.maxHp = Math.max(1, Math.round(CONFIG.enemies[type].hp * (difficulty?.enemyHp ?? 1)));
         e.hp = e.maxHp;
         e.age = e.previousAge = 0;
         e.phase = (lane + 1) * 1.7 + Math.abs(z) * .09;
@@ -153,7 +153,7 @@ export class Enemies {
         e.flash = 0;
         const spec = CONFIG.enemies[type];
         // Primo colpo sfasato: due soldati vicini non sparano mai all'unisono.
-        e.fireTimer = (spec.fireInterval || 99) * (.45 + Math.random() * .55);
+        e.fireTimer = (spec.fireInterval || 99) * (.45 + Math.random() * .55) * (difficulty?.attackInterval ?? 1);
         e.charge = e.recoil = e.knock = e.dying = 0;
         e.dash = false;
         e.muzzle.visible = false;

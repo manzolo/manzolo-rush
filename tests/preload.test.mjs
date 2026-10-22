@@ -10,8 +10,12 @@ test('preparazione GPU: texture uniche, pool invisibili, attesa shader prima del
         initTexture(texture) { events.push(texture); },
         compileAsync() { events.push('compile'); return new Promise(resolve => { finishCompile = resolve; }); },
     };
+    const hiddenPool = { visible: false, material: { map: textures[3] } };
+    let visibleDuringCompile;
+    const compileAsync = renderer.compileAsync;
+    renderer.compileAsync = () => { visibleDuringCompile = hiddenPool.visible; return compileAsync(); };
     const scene = { traverse(visit) {
-        visit({ visible: false, material: { map: textures[3] } });
+        visit(hiddenPool);
         visit({ material: [{ map: textures[4] }, { map: textures[0] }] });
         visit({});
     } };
@@ -20,6 +24,8 @@ test('preparazione GPU: texture uniche, pool invisibili, attesa shader prima del
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(ready, false);
     assert.deepEqual(events, [...textures.slice(0, 4), 'frame', textures[4], 'compile']);
+    assert.equal(visibleDuringCompile, true);
+    assert.equal(hiddenPool.visible, false);
     finishCompile();
     await task;
     assert.equal(ready, true);
