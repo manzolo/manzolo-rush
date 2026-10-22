@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { actor } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
 import { poseName } from './characters.js';
+import { runPose } from './runcycle.js';
 export class Player {
     constructor(scene) { Object.assign(this, actor(0xff7263, true)); scene.add(this.root); this.setupSprite(); this.reset(); }
     // Con gli sprite caricati il protagonista è un piano animato (corsa, salto, scivolata, sparo)
@@ -92,10 +93,18 @@ export class Player {
                 this.setFrame(this.poses.lean, s.heroHeight, drift < 0); // il frame piega a destra: specchiato verso sinistra
             else if (this.dueling || this.recoil > CONFIG.weapon.recoil * .5)
                 this.setFrame(this.poses.shoot, s.heroHeight);
-            else
-                this.setFrame(this.frames[Math.floor(this.phase / 13 * s.runFps) % this.frames.length], s.heroHeight);
-            // Leggero molleggio della corsa, come il modello a blocchi.
-            this.sprite.position.y = this.y === 0 && this.slide <= 0 ? Math.abs(Math.sin(this.phase)) * .05 : 0;
+            else {
+                // Corsa: molleggio, ondeggiamento e schiacciamento a tempo con i passi dei frame.
+                const run = runPose(this.phase, s.runFps, this.frames.length, s.runBounce, s.runSway);
+                this.setFrame(this.frames[run.frame], s.heroHeight);
+                this.sprite.position.y = run.bounce;
+                this.sprite.rotation.z = run.sway;
+                this.sprite.scale.x *= 2 - run.squash;
+                this.sprite.scale.y *= run.squash;
+                return;
+            }
+            this.sprite.position.y = 0;
+            this.sprite.rotation.z = 0;
             return;
         }
         this.body.scale.y = this.slide > 0 ? .37 : 1;

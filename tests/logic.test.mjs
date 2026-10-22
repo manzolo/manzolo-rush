@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { runPose } from '../src/game/runcycle.js';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/game/config.js';
 import { makeRow, choosePattern } from '../src/game/spawner.js';
@@ -115,4 +116,20 @@ test('ogni difficoltà mantiene fattibili i cambi tra corsie di fuga', () => {
             for (const to of [-1, 0, 1])
                 for (const speed of [CONFIG.speed.initial, CONFIG.speed.max])
                     assert.ok(safeTransition(from, to, CONFIG.spawn.intervalMin * level.spawnInterval, speed * level.speed), level.name);
+});
+
+test('corsa: il corpo tocca terra sugli appoggi (frame 1 e 3), due rimbalzi e ondeggiamento alternato per ciclo', () => {
+    const fps = 11, frames = 4, perFrame = 13 / fps; // fase che dura un frame
+    for (const k of [0, 2, 4, 6]) {
+        // Inizio di un frame d'appoggio: a terra e schiacciato.
+        const contact = runPose(k * perFrame + 1e-9, fps, frames);
+        assert.equal(contact.frame, k % frames);
+        assert.ok(contact.bounce < .001 && contact.squash < 1);
+        // Inizio del frame di passaggio successivo: in alto, niente schiacciamento.
+        const air = runPose((k + 1) * perFrame, fps, frames);
+        assert.ok(air.bounce > .06 && air.squash > .999);
+    }
+    // L'inclinazione cambia lato da un passo all'altro.
+    assert.ok(runPose(1 * perFrame, fps, frames).sway > 0);
+    assert.ok(runPose(3 * perFrame, fps, frames).sway < 0);
 });
