@@ -149,7 +149,7 @@ export class Encounter {
         game.kills++;
         game.effects.emit(this.x, 2, this.z, this.spec.color, 40);
         game.effects.burst(this.x, 2, this.z, 5);
-        game.ui.scorePop(`+${points}`, this.x, 4, this.z, game.camera, true);
+        game.ui.scorePop(`+${points}`, this.x, 4, this.z, game.camera, true, 'big');
         game.announce(`${this.spec.name} SCONFITTO +${points} · RIPARTI!`);
         game.audio.play('explosion');
         for (const shot of game.enemies.shots)

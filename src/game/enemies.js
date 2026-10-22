@@ -104,17 +104,28 @@ export class Enemies {
                     #endif
                     gl_Position = projectionMatrix * modelViewMatrix * p;
                 }`,
+            // Campo di forza esagonale che scorre e si dissolve in alto: un muro di energia, non un cancello.
             fragmentShader: `uniform float uTime; uniform vec3 uColor; varying vec2 vUv;
-                float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+                float hexEdge(vec2 p) {
+                    vec2 r = vec2(1.0, 1.732), h = r * 0.5;
+                    vec2 a = mod(p, r) - h, b = mod(p - h, r) - h;
+                    vec2 g = dot(a, a) < dot(b, b) ? a : b;
+                    vec2 q = abs(g);
+                    return 0.5 - max(dot(q, normalize(vec2(1.0, 1.732))), q.x);
+                }
                 void main() {
-                    float side = pow(1.0 - min(vUv.x, 1.0 - vUv.x) * 2.0, 7.0);
-                    float cap = pow(1.0 - min(vUv.y, 1.0 - vUv.y) * 2.0, 10.0);
-                    float bands = 0.5 + 0.5 * sin(vUv.y * 34.0 - uTime * 11.0);
-                    float waves = 0.5 + 0.5 * sin(vUv.x * 18.0 + vUv.y * 6.0 + uTime * 5.0);
-                    float sparks = step(0.94, hash(floor(vec2(vUv.x * 14.0, vUv.y * 5.0 - uTime * 3.0))));
-                    float flicker = 0.85 + 0.15 * sin(uTime * 37.0 + vUv.y * 9.0);
-                    float a = (0.3 + 0.55 * bands * bands * waves + side * 1.4 + cap * 1.0 + sparks * 0.5) * flicker;
-                    vec3 col = mix(uColor, vec3(1.0, 0.92, 0.8), clamp(side * 0.7 + cap * 0.6 + sparks * 0.5, 0.0, 1.0));
+                    vec2 p = vUv * vec2(2.7, 3.4) * 2.2 + vec2(0.0, -uTime * 0.6);
+                    float edge = hexEdge(p);
+                    float lines = smoothstep(0.07, 0.0, edge);
+                    float side = pow(1.0 - min(vUv.x, 1.0 - vUv.x) * 2.0, 6.0);
+                    float ground = pow(1.0 - vUv.y, 9.0);
+                    // Bordo superiore irregolare, come una fiamma che sale.
+                    float crest = 0.82 + 0.08 * sin(vUv.x * 17.0 + uTime * 6.0) + 0.05 * sin(vUv.x * 41.0 - uTime * 9.0);
+                    float fade = smoothstep(crest, crest - 0.35, vUv.y);
+                    float sweep = exp(-pow((vUv.y - fract(uTime * 0.7) * 1.3 + 0.15) * 7.0, 2.0));
+                    float pulse = 0.85 + 0.15 * sin(uTime * 23.0 + p.y * 2.0);
+                    float a = (0.16 + lines * (0.55 + sweep * 1.2) + side * 0.9 + ground * 1.5) * fade * pulse + ground * 0.6;
+                    vec3 col = mix(uColor, vec3(1.0, 0.86, 0.62), clamp(lines * 0.45 + sweep * 0.5 + ground * 0.8, 0.0, 1.0));
                     // Fusione additiva: l'intensità va nel colore, l'alpha resta piena.
                     gl_FragColor = vec4(col * a, 1.0);
                 }`,
@@ -126,7 +137,8 @@ export class Enemies {
         this.beamHalo = inst(beam, new THREE.MeshBasicMaterial({ color: 0xff6a1a, opacity: .25, ...additive }), this.shots.length * 2);
         this.shadows = inst(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: radialTexture('rgba(0,0,0,.45)', 'rgba(0,0,0,0)'), transparent: true, depthWrite: false }), this.pool.length);
         this.shotHalo = inst(new THREE.SphereGeometry(.5, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff5a3a, opacity: .35, ...additive }), this.shots.length);
-        this.posts = inst(new THREE.CylinderGeometry(.11, .16, 1, 8).translate(0, .5, 0), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), this.shots.length * 2);
+        // Emettitori: piccoli cristalli luminosi alla base del muro e alle estremità delle barre.
+        this.posts = inst(new THREE.OctahedronGeometry(.5, 0), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), this.shots.length * 4);
         this.postColor = new THREE.Color();
         this.posts.setColorAt(0, this.postColor);
     }
@@ -396,14 +408,18 @@ export class Enemies {
                         d.updateMatrix();
                         this.beamHalo.setMatrixAt(beams++, d.matrix);
                     }
-                // Piloni emettitori ai due lati della corsia.
-                for (const side of [-1, 1]) {
-                    d.position.set(s.x + side * (s.hw + .05), 0, z);
-                    d.scale.set(1, full ? s.top + .25 : s.top + .15, 1);
-                    d.updateMatrix();
-                    this.posts.setMatrixAt(posts, d.matrix);
-                    this.posts.setColorAt(posts++, this.postColor.set(full ? 0xff5040 : 0xffb347));
-                }
+                // Emettitori ai due lati: alla base del muro pieno, alle estremità delle barre.
+                const spin = time * 3 + z * .3, heights = full ? [.18] : [.28, .78].map(f => s.bottom + (s.top - s.bottom) * f);
+                for (const side of [-1, 1])
+                    for (const y of heights) {
+                        d.position.set(s.x + side * (s.hw + .05), y, z);
+                        d.rotation.set(0, spin * side, 0);
+                        d.scale.set(.32, full ? .5 : .42, .32);
+                        d.updateMatrix();
+                        this.posts.setMatrixAt(posts, d.matrix);
+                        this.posts.setColorAt(posts++, this.postColor.set(full ? 0xff6a50 : 0xffc066));
+                    }
+                d.rotation.set(0, 0, 0);
             }
             else if (s.active) {
                 // Sfera piena + alone additivo che pulsa; il proiettile del tank è più grosso.

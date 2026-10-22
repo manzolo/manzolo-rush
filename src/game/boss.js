@@ -190,7 +190,7 @@ export class Boss {
             game.announce('SENTINELLA DISTRUTTA +' + CONFIG.boss.score);
             game.effects?.emit(0, 2, this.z, 0xffa678, 60);
             game.effects?.burst(0, 3, this.z, 7);
-            game.ui?.scorePop(`+${CONFIG.boss.score * game.multiplier}`, 0, 5, this.z, game.camera, true);
+            game.ui?.scorePop(`+${CONFIG.boss.score * game.multiplier}`, 0, 5, this.z, game.camera, true, 'big');
             game.audio?.play('explosion');
             game.shake = .4;
             for (let lane = -1; lane <= 1; lane++)

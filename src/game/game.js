@@ -287,9 +287,10 @@ export class Game {
             const bonus = obstaclePassBonus(this.player, obstacle) * this.multiplier;
             if (bonus > 0) {
                 this.reward += bonus;
-                this.announce(`${obstacle.passAction === 'jump' ? 'SALTO' : 'SCIVOLATA'} +${bonus}`);
+                this.ui.scorePop(`${obstacle.passAction === 'jump' ? 'SALTO' : 'SCIVOLATA'} +${bonus}`, this.player.x, this.player.y + 2.2, CONFIG.player.z - 1, this.camera, false, 'move');
                 this.audio.play('coin');
                 this.effects.emit(this.player.x, .4, CONFIG.player.z, 0x8bffd1, 6);
+                this.effects.spark(this.player.x, this.player.y + 1.2, CONFIG.player.z, 0xffe08a, 10, 1.2);
             }
         }
         this.effects.update(dt, this.speed);

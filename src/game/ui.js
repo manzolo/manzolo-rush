@@ -45,16 +45,23 @@ export class UI {
         }
     }
     // Punti che salgono dal nemico abbattuto: posizione 3D proiettata sullo schermo.
-    scorePop(text, x, y, z, camera, combo = false) {
+    // style: '' uccisione, 'move' salto/scivolata, 'big' boss e duelli (combo = uccisioni in serie).
+    scorePop(text, x, y, z, camera, combo = false, style = '') {
         const p = this.popPool[this.popIndex++ % this.popPool.length];
         if (!p || !camera)
             return;
         this.popVector.set(x, y, z).project(camera);
         p.el.textContent = text;
-        p.el.className = combo ? 'score-pop combo' : 'score-pop';
+        if (p.el.dataset)
+            p.el.dataset.text = text; // copia per il bagliore nel ::after
+        // Riassegnare la classe dopo un reflow fa ripartire l'esplosione di raggi del ::before.
+        p.el.className = 'score-pop';
+        void p.el.offsetWidth;
+        p.el.className = `score-pop${combo ? ' combo' : ''}${style ? ` ${style}` : ''}`;
+        p.tilt = (this.popIndex % 2 ? -1 : 1) * (6 + (this.popIndex * 7) % 5);
         // Più punti = scritta più grande; ogni uccisione alimenta il bagliore del punteggio.
         const points = parseInt(text.replace(/\D/g, ''), 10) || 0;
-        p.size = Math.min(1.9, .85 + points / 600);
+        p.size = Math.min(2.2, (style === 'big' ? 1.3 : .9) + points / 600);
         this.heat = Math.min(10, this.heat + .6 + points / 250);
         this.bump = Math.min(.5, this.bump + .14 + points / 4000);
         p.el.style.left = `${(this.popVector.x * .5 + .5) * innerWidth}px`;
@@ -106,8 +113,11 @@ export class UI {
             if (p.time > 0) {
                 p.time -= dt;
                 const t = 1 - p.time / .9;
-                p.el.style.transform = `translate(-50%,${-70 * t}px) scale(${(p.size || 1) * (1 + .35 * Math.min(1, t * 5) - .2 * t)})`;
-                p.el.style.opacity = t < .7 ? 1 : 1 - (t - .7) / .3;
+                // Entrata "a schiaffo" con rimbalzo (easeOutBack), poi sale e si dissolve.
+                const k = Math.min(1, t * 5), back = 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;
+                const scale = (p.size || 1) * (.3 + .9 * back) * (1 - .12 * t);
+                p.el.style.transform = `translate(-50%,-50%) translateY(${-80 * t * t - 18 * t}px) rotate(${(p.tilt || 0) * (1 - k)}deg) scale(${scale})`;
+                p.el.style.opacity = t < .72 ? 1 : 1 - (t - .72) / .28;
                 if (p.time <= 0)
                     p.el.style.display = 'none';
             }

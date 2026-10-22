@@ -7,6 +7,57 @@ export const POWER_LABELS = { triple: 'TRIPLE', shield: 'SCUDO', magnet: 'MAGNET
 export const POWER_SPRITES = { triple: 'powerup_triple', shield: 'powerup_shield', magnet: 'powerup_magnet', double: 'powerup_multiplier' };
 const COLORS = { triple: 0xfa9b86, shield: 0x8bffd1, magnet: 0xbfa6ff, double: 0xffdc80 };
 const COIN_HEIGHT = .62, POWER_HEIGHT = 1.15;
+// Texture additive generate su canvas: alone dorato e stellina a quattro punte.
+function glowTexture(draw) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (ctx)
+        draw(ctx);
+    return new THREE.CanvasTexture(canvas);
+}
+function haloTexture() {
+    return glowTexture(ctx => {
+        const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 31);
+        g.addColorStop(0, 'rgba(255,226,140,.35)');
+        g.addColorStop(.35, 'rgba(255,190,60,.12)');
+        g.addColorStop(1, 'rgba(255,170,40,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 64, 64);
+    });
+}
+function starTexture() {
+    return glowTexture(ctx => {
+        const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
+        g.addColorStop(0, 'rgba(255,255,255,1)');
+        g.addColorStop(.25, 'rgba(255,240,190,.9)');
+        g.addColorStop(1, 'rgba(255,220,120,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            const r = i % 2 ? 4 : 31, a = i * Math.PI / 4;
+            ctx.lineTo(32 + Math.cos(a) * r, 32 + Math.sin(a) * r);
+        }
+        ctx.fill();
+    });
+}
+// Riflesso che attraversa la moneta in diagonale, sfasato per ogni moneta (posizione Z).
+function addCoinShine(material, time) {
+    material.onBeforeCompile = shader => {
+        shader.uniforms.uTime = time;
+        shader.vertexShader = shader.vertexShader
+            .replace('#include <common>', '#include <common>\nvarying vec2 vShineUv; varying float vSeed;')
+            .replace('#include <uv_vertex>', '#include <uv_vertex>\nvShineUv = uv;\n#ifdef USE_INSTANCING\nvSeed = instanceMatrix[3].z;\n#else\nvSeed = 0.0;\n#endif');
+        shader.fragmentShader = shader.fragmentShader
+            .replace('#include <common>', '#include <common>\nuniform float uTime; varying vec2 vShineUv; varying float vSeed;')
+            .replace('#include <map_fragment>', `#include <map_fragment>
+                float sweep = fract(uTime * 0.55 + vSeed * 0.071) * 2.2 - 0.6;
+                float d = (vShineUv.x + vShineUv.y) * 0.5 - sweep;
+                float glint = exp(-d * d * 420.0);
+                diffuseColor.rgb = diffuseColor.rgb * 1.04 + vec3(1.0, 0.96, 0.8) * glint * 0.7;`);
+    };
+    material.customProgramCacheKey = () => 'coin-shine';
+}
 export class Pickups {
     constructor(scene) {
         this.coins = Array.from({ length: CONFIG.spawn.coinPool }, () => ({ active: false, x: 0, y: 0, z: 0 }));
@@ -23,6 +74,19 @@ export class Pickups {
         this.coinMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         this.coinMesh.frustumCulled = false;
         scene.add(this.coinMesh);
+        // Lucentezza: riflesso sulla moneta, alone caldo dietro e stelline che brillano a turno.
+        this.shineTime = { value: 0 };
+        if (this.coinSprite)
+            addCoinShine(this.coinMesh.material, this.shineTime);
+        const additive = map => new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+        this.coinHalo = new THREE.InstancedMesh(SPRITES.geometry(false), additive(haloTexture()), this.coins.length);
+        this.coinStars = new THREE.InstancedMesh(SPRITES.geometry(false), additive(starTexture()), this.coins.length);
+        for (const mesh of [this.coinHalo, this.coinStars]) {
+            mesh.count = 0;
+            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            mesh.frustumCulled = false;
+            scene.add(mesh);
+        }
         // Power-up: un InstancedMesh per tipo (texture diversa), altrimenti un unico ottaedro colorato.
         this.powerSprites = useSprites && Object.values(POWER_SPRITES).every(name => SPRITES.has(name)) ? {} : null;
         if (this.powerSprites) {
@@ -169,18 +233,40 @@ export class Pickups {
             this.dummy.scale.set(COIN_HEIGHT * SPRITES.aspect('coin'), COIN_HEIGHT, 1);
         else
             this.dummy.scale.setScalar(1);
+        const coinScale = this.dummy.scale.clone();
+        let stars = 0;
+        this.shineTime.value = this.phase;
         for (const c of this.coins)
             if (c.active) {
-                this.dummy.position.set(c.x, c.y + Math.sin(this.phase * 3 + c.z) * .04, c.z + offset);
+                const y = c.y + Math.sin(this.phase * 3 + c.z) * .04, z = c.z + offset;
+                this.dummy.position.set(c.x, y, z);
+                this.dummy.scale.copy(coinScale);
                 if (this.coinSprite)
                     this.dummy.rotation.set(0, this.phase * 2.5 + c.z * .25, 0);
                 else
                     this.dummy.rotation.set(Math.PI / 2, this.phase * 2, 0);
                 this.dummy.updateMatrix();
-                this.coinMesh.setMatrixAt(n++, this.dummy.matrix);
+                this.coinMesh.setMatrixAt(n, this.dummy.matrix);
+                // Alone appena dietro, rivolto alla camera, che respira lentamente.
+                this.dummy.rotation.set(0, 0, 0);
+                this.dummy.position.z = z - .04;
+                this.dummy.scale.setScalar(.72 + Math.sin(this.phase * 4 + c.z * .5) * .04);
+                this.dummy.updateMatrix();
+                this.coinHalo.setMatrixAt(n++, this.dummy.matrix);
+                // Stellina: brilla per un attimo, a turno, sul bordo della moneta.
+                const twinkle = Math.max(0, Math.sin(this.phase * 2.2 + c.z * 1.37)) ** 10;
+                if (twinkle > .05) {
+                    this.dummy.position.set(c.x + .17, y + .2, z + .05);
+                    this.dummy.rotation.set(0, 0, this.phase * 1.5);
+                    this.dummy.scale.setScalar(.55 * twinkle);
+                    this.dummy.updateMatrix();
+                    this.coinStars.setMatrixAt(stars++, this.dummy.matrix);
+                }
             }
-        this.coinMesh.count = n;
-        this.coinMesh.instanceMatrix.needsUpdate = true;
+        for (const [mesh, count] of [[this.coinMesh, n], [this.coinHalo, n], [this.coinStars, stars]]) {
+            mesh.count = count;
+            mesh.instanceMatrix.needsUpdate = true;
+        }
         const gunCounts = {};
         let rings = 0;
         for (const type in this.gunMeshes)

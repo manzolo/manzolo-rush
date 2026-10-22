@@ -133,10 +133,18 @@ body.playing .vignette {
 .difficulty-picker { border:0; padding:0; margin:0 0 18px; width:290px; }
 .difficulty-picker legend { padding:0; margin-bottom:9px; color:var(--muted); font-size:9px; letter-spacing:1.7px; }
 .difficulty-picker>div { display:flex; padding:4px; gap:4px; border:1px solid #ffffff25; border-radius:8px; background:#102a36b8; }
-.difficulty-picker label { position:relative; flex:1; cursor:pointer; }
+.difficulty-picker label { position:relative; flex:1 1 0; min-width:0; cursor:pointer; }
 .difficulty-picker input { position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; }
-.difficulty-picker label span { display:block; padding:9px 6px; text-align:center; border-radius:5px; font-size:12px; }
-.difficulty-picker input:checked+span { background:var(--mint); color:#132d35; font-weight:700; }
+.difficulty-picker label span { display:block; padding:9px 6px; text-align:center; border-radius:5px; font-size:12px; font-weight:700; transition:background .2s, color .2s, box-shadow .2s; }
+/* Colore del livello: verde, ambra, rosso; il testo del suggerimento prende la stessa tinta. */
+.difficulty-picker input[value="easy"]+span { --level:#8bffd1; }
+.difficulty-picker input[value="medium"]+span { --level:#ffc857; }
+.difficulty-picker input[value="hard"]+span { --level:#ff6b5e; }
+.difficulty-picker input:checked+span { background:var(--level); color:#132d35; box-shadow:0 0 14px color-mix(in srgb, var(--level) 55%, transparent); }
+.difficulty-picker label:hover input:not(:checked)+span { color:var(--level); }
+.difficulty-picker:has(input[value="easy"]:checked) p { color:#8bffd1cc; }
+.difficulty-picker:has(input[value="medium"]:checked) p { color:#ffc857cc; }
+.difficulty-picker:has(input[value="hard"]:checked) p { color:#ff8a7ecc; }
 .difficulty-picker input:focus-visible+span { outline:2px solid white; outline-offset:2px; }
 .difficulty-picker p { margin:8px 0 0; color:var(--muted); font-size:10px; line-height:1.4; }
 .screen {
@@ -885,15 +893,57 @@ body.playing .hero-stage {
     pointer-events:none;
     font-weight:900;
     font-style:italic;
-    font-size:22px;
-    color:#fff;
-    text-shadow:0 2px 0 #0009,0 0 10px #8bffd1,0 0 24px #8bffd1aa;
+    font-size:24px;
+    letter-spacing:.02em;
     white-space:nowrap;
+    /* Testo a gradiente metallico con contorno scuro e bagliore. */
+    color:transparent;
+    background:linear-gradient(180deg,#fff 0%,#d9fff1 40%,#5ff0bf 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-stroke:1px #0a2a2280;
+    filter:drop-shadow(0 2px 0 #000b) drop-shadow(0 0 10px #8bffd1aa);
+}
+/* Esplosione di raggi dietro ai punti: parte a ogni nuovo punteggio. */
+.score-pop::before {
+    content:'';
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:150%;
+    aspect-ratio:1;
+    z-index:-1;
+    background:repeating-conic-gradient(from 0deg,#ffffff00 0deg 9deg,var(--ray,#8bffd166) 11deg 13deg,#ffffff00 15deg 30deg);
+    -webkit-mask:radial-gradient(closest-side,#000 25%,#0000 100%);
+    mask:radial-gradient(closest-side,#000 25%,#0000 100%);
+    transform:translate(-50%,-50%) scale(.2);
+    opacity:0;
+    animation:pop-rays .7s ease-out;
+}
+@keyframes pop-rays {
+    0% { transform:translate(-50%,-50%) scale(.2) rotate(0deg); opacity:1; }
+    100% { transform:translate(-50%,-50%) scale(1.6) rotate(40deg); opacity:0; }
 }
 .score-pop.combo {
-    color:#fff1c2;
-    font-size:26px;
-    text-shadow:0 2px 0 #0009,0 0 10px #ffcf6a,0 0 26px #ff9a3caa,0 0 44px #ff7a3066;
+    --ray:#ffcf6a88;
+    font-size:28px;
+    background-image:linear-gradient(180deg,#fff 0%,#ffe9a8 38%,#ffb13c 70%,#ff7a30 100%);
+    filter:drop-shadow(0 2px 0 #000b) drop-shadow(0 0 12px #ffcf6a) drop-shadow(0 0 28px #ff9a3c99);
+}
+.score-pop.move {
+    --ray:#bff8ff77;
+    font-size:20px;
+    background-image:linear-gradient(180deg,#fff 0%,#c8f6ff 45%,#6fc8ff 100%);
+    filter:drop-shadow(0 2px 0 #000b) drop-shadow(0 0 10px #7fd8ffaa);
+}
+.score-pop.big {
+    --ray:#ffd36daa;
+    font-size:34px;
+    background-image:linear-gradient(180deg,#fff 0%,#fff0b8 30%,#ffc23c 60%,#ff6a2a 100%);
+    filter:drop-shadow(0 3px 0 #000c) drop-shadow(0 0 16px #ffd36d) drop-shadow(0 0 40px #ff7a30);
+}
+@media (prefers-reduced-motion:reduce) {
+    .score-pop::before { animation:none; }
 }
 /* Il contatore pulsa dal bordo sinistro, senza spostare l'HUD. */
 .score-panel>strong {

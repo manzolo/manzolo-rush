@@ -25,7 +25,7 @@ class Node {
     appendChild(child) { this.children.push(child); }
     addEventListener(type, fn) { this.listeners[type] = fn; }
     setPointerCapture() { }
-    getContext() { return { fillRect() { }, createRadialGradient() { return { addColorStop() { } }; } }; }
+    getContext() { return { fillRect() { }, beginPath() { }, moveTo() { }, lineTo() { }, fill() { }, createRadialGradient() { return { addColorStop() { } }; }, createLinearGradient() { return { addColorStop() { } }; } }; }
 }
 const node = id => {
     if (!nodes.has(id))
