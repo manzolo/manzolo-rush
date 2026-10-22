@@ -56,6 +56,59 @@ SHEETS = {
         "back_jump", "back_slide", "back_shoot", "back_lean",
         "front_idle", "portrait", "front_thumbs", "front_tired",
     ],
+    # Secondo boss: la nuvola temporalesca (pose, colpi e impatti).
+    "storm": [
+        "storm_front", "storm_angry", "storm_left", "storm_back", "storm_right", "storm_front_2",
+        "storm_glare", "storm_roar", "storm_blow", "storm_charge", "storm_tornado", "storm_hurt",
+        "storm_drop", "storm_drops", "storm_bolt", "storm_strike", "storm_twister", "storm_gust",
+        "storm_splash", "storm_splash_big", "storm_bolt_impact", "storm_burst", "storm_rain", "storm_twister_impact",
+    ],
+    # Nemico demone (al posto dei robot): righe da 7, 6, 6, 6, 6 celle.
+    "demon": [
+        "demon_front", "demon_turn_1", "demon_left", "demon_back", "demon_turn_4", "demon_right", "demon_angry",
+        "demon_run_1", "demon_run_2", "demon_run_3", "demon_run_4", "demon_run_5", "demon_run_6",
+        "demon_leap", "demon_flail", "demon_breath", "demon_slash", "demon_pound", "demon_ready",
+        "demon_hit", "demon_knock", "demon_fall", "demon_ko", "demon_dazed", "demon_dead",
+        "demon_fireball_1", "demon_fireball_2", "demon_fireball_3", "demon_ring", "demon_blast", "demon_pillar",
+    ],
+    # Nemico di roccia: stessa disposizione del demone.
+    "rock": [
+        "rock_front", "rock_turn_1", "rock_left", "rock_back", "rock_turn_4", "rock_right", "rock_angry",
+        "rock_run_1", "rock_run_2", "rock_run_3", "rock_run_4", "rock_run_5", "rock_run_6",
+        "rock_windup", "rock_throw", "rock_lift", "rock_pound", "rock_swing", "rock_ready",
+        "rock_hit", "rock_knock", "rock_fall", "rock_down", "rock_dazed", "rock_dead",
+        "rock_boulder_1", "rock_boulders", "rock_boulder_2", "rock_blast", "rock_spikes", "rock_ring",
+    ],
+    # Nemico di ferro: righe da 7, 6, 5, 6, 6 celle.
+    "iron": [
+        "iron_front", "iron_turn_1", "iron_left", "iron_back", "iron_turn_4", "iron_right", "iron_angry",
+        "iron_run_1", "iron_run_2", "iron_run_3", "iron_run_4", "iron_run_5", "iron_run_6",
+        "iron_windup", "iron_punch", "iron_pound", "iron_charge", "iron_spin",
+        "iron_dazed", "iron_hit", "iron_knock", "iron_fall", "iron_down", "iron_dead",
+        "iron_spikeball", "iron_spikeballs", "iron_drill", "iron_blast", "iron_pillar", "iron_ring",
+    ],
+    # Camaleonte che si mimetizza (pose "ghost" semitrasparenti): righe da 8, 7, 5, 6, 7 celle.
+    "chameleon": [
+        "cham_front", "cham_turn_1", "cham_ghost_front", "cham_back", "cham_turn_4", "cham_ghost_side", "cham_ghost_eyes", "cham_angry",
+        "cham_sneak_1", "cham_sneak_2", "cham_sneak_3", "cham_sneak_4", "cham_sneak_5", "cham_sneak_6", "cham_sneak_7",
+        "cham_leap", "cham_swipe", "cham_slash", "cham_emerge", "cham_spin",
+        "cham_fade_1", "cham_fade_2", "cham_fade_3", "cham_fade_4", "cham_appear", "cham_fade_5",
+        "cham_smoke", "cham_leafburst", "cham_tornado", "cham_leaves", "cham_ring", "cham_blast", "cham_dart",
+    ],
+    # Boss di magma: righe da 8, 8, 6, 6 celle (--row-cols 8,8,6,6).
+    "magma": [
+        "magma_front", "magma_turn_1", "magma_turn_2", "magma_turn_3", "magma_back", "magma_turn_5", "magma_turn_6", "magma_front_2",
+        "magma_glare", "magma_roar", "magma_blow", "magma_charge", "magma_tornado", "magma_erupt", "magma_dash", "magma_hurt",
+        "magma_rock", "magma_rocks", "magma_flame", "magma_boulder", "magma_spikes", "magma_wave",
+        "magma_splash", "magma_splash_big", "magma_pillar", "magma_burst", "magma_ring", "magma_crystals",
+    ],
+    # Boss di ghiaccio: quattro righe da 7 celle (--row-cols 7,7,7,7).
+    "ice": [
+        "ice_front", "ice_turn_1", "ice_turn_2", "ice_back", "ice_turn_4", "ice_angry", "ice_front_2",
+        "ice_glare", "ice_roar", "ice_blow", "ice_stomp", "ice_charge", "ice_dash", "ice_hurt",
+        "ice_shard", "ice_shards", "ice_volley", "ice_tornado", "ice_spike", "ice_boulder", "ice_spikes",
+        "ice_splash", "ice_splash_big", "ice_pillar", "ice_burst", "ice_twister_impact", "ice_crystals", "ice_debris",
+    ],
     "weapons": [
         "weapon_scatter", "weapon_plasma", "weapon_laser", "weapon_rocket",
         "shot_scatter", "shot_plasma", "shot_laser", "shot_rocket",
@@ -156,6 +209,26 @@ def snapped_grid(im: Image.Image, cols: int, rows: int, window: float = .06):
         return [(edges[i][1], edges[i + 1][0]) for i in range(n)]
 
     return axis(col_frac, w, cols), axis(row_frac, h, rows)
+
+
+def line_cuts(im: Image.Image, n: int, axis: int, min_frac: float = .3):
+    """Intervalli delle n celle lungo un asse (0 = colonne, 1 = righe) usando le sottili
+    linee scure (nere o verde scuro) di separazione; None se non se ne trovano esattamente n - 1."""
+    rgb = im.convert("RGB")
+    gray = Image.new("L", rgb.size)
+    data = rgb.get_flattened_data() if hasattr(rgb, "get_flattened_data") else rgb.getdata()
+    gray.putdata([255 if r < 8 and b < 14 and g < 170 else 0 for r, g, b in data])
+    w, h = gray.size
+    size, other = (w, h) if axis == 0 else (h, w)
+    def frac(k):
+        box = (k, 0, k + 1, h) if axis == 0 else (0, k, w, k + 1)
+        return gray.crop(box).histogram()[255] / other
+    lines = find_runs([frac(k) >= min_frac for k in range(size)])
+    lines = [r for r in lines if 0 < r[0] and r[1] < size and r[1] - r[0] < 12]
+    if len(lines) != n - 1:
+        return None
+    edges = [0] + [x for r in lines for x in r] + [size]
+    return [(edges[2 * i], edges[2 * i + 1]) for i in range(n)]
 
 
 def key_out_background(cell: Image.Image, bg: tuple, thresh: int, band: int = 8,
@@ -325,6 +398,8 @@ def main():
     ap.add_argument("--out", default="assets/sprites")
     ap.add_argument("--cols", type=int, default=0, help="forza il numero di colonne")
     ap.add_argument("--rows", type=int, default=0, help="forza il numero di righe")
+    ap.add_argument("--row-cols", default="",
+                    help="celle per riga quando le righe hanno larghezze diverse (es. 8,8,6,6)")
     ap.add_argument("--thresh", type=int, default=200,
                     help="eccesso di verde (g - max(r,b)) oltre cui un pixel è sfondo certo (0-255)")
     ap.add_argument("--pad", type=int, default=4)
@@ -349,13 +424,28 @@ def main():
     bg = sample_background(sheet)
     print(f"sheet {sheet.size[0]}x{sheet.size[1]}, sfondo campionato {bg}")
 
-    cols, rows = detect_grid(sheet, bg)
-    if args.cols and args.rows and (len(cols) != args.cols or len(rows) != args.rows):
-        print(f"griglia rilevata {len(cols)}x{len(rows)} diversa da quella richiesta: aggancio le linee attese")
-        cols, rows = snapped_grid(sheet, args.cols, args.rows)
-    print(f"griglia: {len(cols)} colonne x {len(rows)} righe")
-    if len(cols) * len(rows) != len(names):
-        sys.exit(f"attese {len(names)} celle, trovate {len(cols) * len(rows)}: usa --cols/--rows")
+    if args.row_cols:
+        # Righe con celle di larghezza diversa: prima le linee orizzontali, poi le
+        # verticali di ogni riga, entrambe agganciate alle fasce più verdi.
+        counts = [int(c) for c in args.row_cols.split(",")]
+        rows = line_cuts(sheet, len(counts), 1) or snapped_grid(sheet, 1, len(counts))[1]
+        cells = []
+        for (y0, y1), n in zip(rows, counts):
+            band = sheet.crop((0, y0, sheet.width, y1))
+            band_cols = line_cuts(band, n, 0) or snapped_grid(band, n, 1)[0]
+            cells += [(x0, y0, x1, y1) for x0, x1 in band_cols]
+        ncols = max(counts)
+        print(f"griglia per righe: {counts}")
+    else:
+        cols, rows = detect_grid(sheet, bg)
+        if args.cols and args.rows and (len(cols) != args.cols or len(rows) != args.rows):
+            print(f"griglia rilevata {len(cols)}x{len(rows)} diversa da quella richiesta: aggancio le linee attese")
+            cols, rows = snapped_grid(sheet, args.cols, args.rows)
+        print(f"griglia: {len(cols)} colonne x {len(rows)} righe")
+        cells = [(x0, y0, x1, y1) for (y0, y1) in rows for (x0, x1) in cols]
+        ncols = len(cols)
+    if len(cells) != len(names):
+        sys.exit(f"attese {len(names)} celle, trovate {len(cells)}: usa --cols/--rows o --row-cols")
 
     out_dir = Path(args.out)
     small_dir = out_dir / str(args.small)
@@ -366,11 +456,8 @@ def main():
     atlas_path = out_dir / "atlas.json"
     atlas = json.loads(atlas_path.read_text()) if atlas_path.exists() else {}
     sprites = []
-    i = 0
-    for (y0, y1) in rows:
-        for (x0, x1) in cols:
-            name = names[i]
-            i += 1
+    for name, (x0, y0, x1, y1) in zip(names, cells):
+        if True:
             cell = sheet.crop((x0, y0, x1, y1))
             if args.no_key:
                 # Texture piena: rifilo righe/colonne di bordo con più del 2% di verde
@@ -417,8 +504,7 @@ def main():
 
     # Anteprima su scacchiera per controllo visivo.
     tile = max(max(s.width, s.height) for _, s in sprites)
-    ncols = len(cols)
-    nrows = len(rows)
+    nrows = -(-len(sprites) // ncols)
     prev = checkerboard((tile * ncols, tile * nrows))
     for k, (_, s) in enumerate(sprites):
         px = (k % ncols) * tile + (tile - s.width) // 2

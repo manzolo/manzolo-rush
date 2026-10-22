@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { block } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
+import { BOSSES, LEVELS, bossReady } from './bosses.js';
 export class Boss {
     constructor(scene) {
         this.mesh = new THREE.Group();
@@ -53,11 +54,21 @@ export class Boss {
                 this.parts.push({ mesh: child, material: child.material });
         });
         this.white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        // Boss dei livelli (nuvola, magma, ghiaccio): un piano a cui si cambiano i fotogrammi.
+        // Il gruppo della Sentinella resta come ripiego se gli sprite del livello mancano.
+        this.sentinel = this.mesh.children.filter(c => c !== this.core && c !== this.groundRing && !this.muzzles.includes(c));
+        this.beast = null;
+        this.frame = '';
+        this.beastSprite = new THREE.Mesh(SPRITES.geometry(true), new THREE.MeshBasicMaterial({ transparent: true, alphaTest: .35, side: THREE.DoubleSide, toneMapped: false }));
+        this.beastSprite.visible = false;
+        this.mesh.add(this.beastSprite);
         this.x = 0;
         this.hw = 3.7;
         this.hd = 2;
         this.bottom = .3;
         this.top = this.sprite ? CONFIG.boss.height : 4.2;
+        this.label = '☠ SENTINELLA';
+        this.icon = 'boss_sentinel_v2';
         this.reset();
     }
     reset() {
@@ -77,7 +88,36 @@ export class Boss {
         for (const m of this.warnings)
             m.visible = false;
     }
+    // Sceglie l'aspetto del boss del livello in corso, o la Sentinella se mancano gli sprite.
+    dress(level) {
+        const id = LEVELS[Math.min(level, LEVELS.length - 1)].boss;
+        this.beast = CONFIG.sprites.enabled && bossReady(id) ? BOSSES[id] : null;
+        for (const child of this.sentinel)
+            child.visible = !this.beast;
+        this.beastSprite.visible = Boolean(this.beast);
+        this.core.visible = !this.beast;
+        for (const m of this.muzzles)
+            m.visible = false;
+        this.name = this.beast ? this.beast.name : 'SENTINELLA';
+        this.label = `☠ ${this.name}`;
+        this.icon = this.beast ? this.beast.idle[0] : 'boss_sentinel_v2';
+        this.top = this.beast ? this.beast.height : this.sprite ? CONFIG.boss.height : 4.2;
+        this.frame = '';
+        if (this.beast)
+            this.pose(this.beast.idle[0]);
+        this.groundRing.material.color.set(this.beast ? this.beast.color : 0xff7043);
+    }
+    pose(name) {
+        if (this.frame !== name && SPRITES.has(name)) {
+            this.frame = name;
+            this.beastSprite.material.map = SPRITES.texture(name);
+            this.beastSprite.material.needsUpdate = true;
+            const h = this.beast.height;
+            this.beastSprite.scale.set(h * SPRITES.aspect(name), h, 1);
+        }
+    }
     start(game) {
+        this.dress(game.level ?? 0);
         this.active = true;
         this.number++;
         this.hp = CONFIG.boss.hp + (this.number - 1) * CONFIG.boss.hpGrowth;
@@ -99,7 +139,7 @@ export class Boss {
         game.enemies.reset();
         game.pickups.reset();
         game.weapons.reset(true);
-        game.announce('☠ SENTINELLA IN ARRIVO');
+        game.announce(`☠ ${this.name} IN ARRIVO`);
         game.audio?.play('boss');
     }
     update(dt, game) {
@@ -116,7 +156,7 @@ export class Boss {
         this.recoil = Math.max(0, this.recoil - dt);
         if (!this.enraged && this.hp < this.maxHp * .4) {
             this.enraged = true;
-            game.announce('SENTINELLA · REATTORE INSTABILE');
+            game.announce(this.beast ? this.beast.enragedText : 'SENTINELLA · REATTORE INSTABILE');
         }
         this.flash = Math.max(0, this.flash - dt);
         for (const part of this.parts)
@@ -133,8 +173,16 @@ export class Boss {
             if (this.warning <= 0) {
                 for (const m of this.warnings)
                     m.visible = false;
-                for (let lane = -1; lane <= 1; lane++)
-                    game.enemies.shoot(lane, this.z + 3, CONFIG.boss.projectileSpeed * (game.difficulty?.projectileSpeed ?? 1), 0, lane === this.safeLane ? this.safeMove : 'full');
+                let variant = 0;
+                for (let lane = -1; lane <= 1; lane++) {
+                    const kind = lane === this.safeLane ? this.safeMove : 'full';
+                    const shot = game.enemies.shoot(lane, this.z + 3, CONFIG.boss.projectileSpeed * (game.difficulty?.projectileSpeed ?? 1), 0, kind);
+                    // Aspetto del colpo: fulmine, colata, spuntone… (le varianti del muro si alternano).
+                    if (shot && this.beast) {
+                        const look = this.beast.walls[kind];
+                        shot.skin = Array.isArray(look) ? look[(this.number + variant++) % look.length] : look;
+                    }
+                }
                 game.audio?.play('bossShot');
                 this.recoil = .22;
             }
@@ -151,6 +199,15 @@ export class Boss {
         if (!this.active)
             return;
         const kick = this.recoil / .22;
+        if (this.beast) {
+            // Posa: colpito, colpo (soffio se la corsia di riparo si salta), carica, furia, attesa.
+            const b = this.beast;
+            const name = this.flash > 0 ? b.hurt : this.recoil > 0 ? (this.safeMove === 'low' ? b.blow : b.fire) : this.warning > 0 ? b.charge
+                : this.enraged && Math.floor(this.age / .9) % 3 === 0 ? b.enraged : b.idle[Math.floor(this.age / 1.1) % b.idle.length];
+            this.pose(name);
+            this.beastSprite.position.y = b.float + Math.sin(this.age * (b.float ? 1.6 : 2.5)) * (b.float ? .5 : .1);
+            this.beastSprite.material.color.setScalar(this.flash > 0 ? 1.8 : 1);
+        }
         this.mesh.position.set(0, .08 + Math.sin(this.age * 2.5) * .08, this.previousZ + (this.z - this.previousZ) * alpha - kick * .45);
         this.mesh.rotation.z = Math.sin(this.age * 1.4) * .012;
         this.mesh.scale.set(1 + kick * .015, 1 - kick * .025, 1);
@@ -161,7 +218,7 @@ export class Boss {
         this.core.material.opacity = .25 + charge * .6;
         this.core.material.color.set(this.enraged ? 0xff4730 : 0xffae42);
         for (const muzzle of this.muzzles) {
-            muzzle.visible = this.warning > 0 || this.recoil > 0;
+            muzzle.visible = !this.beast && (this.warning > 0 || this.recoil > 0);
             muzzle.scale.setScalar(.25 + charge * .65 + kick * 1.3);
             muzzle.material.opacity = .15 + charge * .45 + kick * .4;
         }
@@ -187,16 +244,17 @@ export class Boss {
         if (killed) {
             game.reward += CONFIG.boss.score * game.multiplier;
             game.kills++;
-            game.announce('SENTINELLA DISTRUTTA +' + CONFIG.boss.score);
-            game.effects?.emit(0, 2, this.z, 0xffa678, 60);
-            game.effects?.burst(0, 3, this.z, 7);
+            game.announce(`${this.name} SCONFITTO +${CONFIG.boss.score}`);
+            game.effects?.emit(0, 2, this.z, this.beast ? this.beast.color : 0xffa678, 60);
+            game.effects?.burst(0, this.beast ? this.beast.height * .45 + this.beast.float : 3, this.z, this.beast ? this.beast.height : 7, this.beast?.burst);
             game.ui?.scorePop(`+${CONFIG.boss.score * game.multiplier}`, 0, 5, this.z, game.camera, true, 'big');
             game.audio?.play('explosion');
             game.shake = .4;
             for (let lane = -1; lane <= 1; lane++)
                 game.pickups.power(lane * CONFIG.player.laneWidth, -25, CONFIG.bonuses.types[(lane + 1) % 4]);
+            game.levelUp?.();
         }
         else
-            game.announce('SENTINELLA EVITATA · AVANTI!');
+            game.announce(`${this.name} EVITATO · AVANTI!`);
     }
 }

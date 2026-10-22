@@ -246,7 +246,7 @@ check('record conserva personaggio e livello anche dopo cambio selezione e pareg
     g.setDifficulty('medium');
 });
 check('difficoltà applicata a velocità e spawn, bloccata durante la corsa', () => {
-    for (const [id, speed, interval] of [['easy', .7, 1.45], ['medium', 1, 1], ['hard', 1.25, .8]]) {
+    for (const [id, speed, interval] of [['easy', 1, 1.45], ['medium', 1.25, 1], ['hard', 1.5, .8]]) {
         g.menu();
         g.setDifficulty(id);
         g.start();
@@ -277,7 +277,7 @@ check('livelli: Facile ha una corsia occupata, Medio e Difficile due', () => {
 });
 check('contatto: tutti i nemici avviano il duello senza danno e fermano corsa e spawn', () => {
     const count = scene.children.length;
-    for (const type of ['soldier', 'runner', 'drone', 'tank']) {
+    for (const type of ['soldier', 'runner', 'drone', 'tank', 'stalker']) {
         g.start();
         const e = g.enemies.spawn(type, 0, CONFIG.player.z, 1);
         g.powerups.shield = 5;
@@ -366,9 +366,9 @@ check('duello: game over e retry rimuovono rivale e segnali', () => {
     assert.ok(!g.encounter.active && !g.player.dueling);
     assert.equal(g.player.lives, CONFIG.player.lives);
 });
-check('12 duelli: ogni rivale si può sconfiggere schivando, nelle tre difficoltà', () => {
+check('15 duelli: ogni rivale si può sconfiggere schivando, nelle tre difficoltà', () => {
     for (const level of ['easy', 'medium', 'hard'])
-        for (const type of ['soldier', 'runner', 'drone', 'tank']) {
+        for (const type of ['soldier', 'runner', 'drone', 'tank', 'stalker']) {
             g.menu(); g.setDifficulty(level); g.start();
             g.enemies.spawn(type, 0, CONFIG.player.z, 1);
             g.combat();
@@ -438,7 +438,7 @@ check('duello: il rivale cambia corsia, raffiche alte e basse casuali e muri mir
     assert.ok(!wall.active);
     g.menu();
 });
-check('atmosfera infernale: boss e duelli, pausa immobile e ritorno al tema', () => {
+check('stagioni: tempesta nel livello 1, ritorno al tema, poi livello 2 e stagione infernale', () => {
     for (const duel of [false, true]) {
         g.start();
         const sky = scene.background.clone();
@@ -447,26 +447,39 @@ check('atmosfera infernale: boss e duelli, pausa immobile e ritorno al tema', ()
             g.combat();
         } else g.boss.start(g);
         ticks(150);
-        assert.ok(g.world.inferno.strength > .98);
-        assert.ok(g.world.inferno.group.visible);
+        const air = g.world.atmosphere;
+        assert.equal(air.season, 'storm');
+        assert.ok(air.strength > .98 && air.group.visible);
         assert.ok(scene.fog.far < 100);
         assert.ok(scene.background.r < sky.r);
         g.pause();
-        const phase = g.world.inferno.time, color = scene.background.clone();
+        const phase = air.time, color = scene.background.clone();
         ticks(30);
-        assert.equal(g.world.inferno.time, phase);
+        assert.equal(air.time, phase);
         assert.ok(scene.background.equals(color));
         g.resume();
         if (duel) g.encounter.damage(g.encounter.hp, g);
         else g.boss.damage(g.boss.hp, g);
+        // Il duello non cambia livello; il boss sconfitto porta al livello 2 con i suoi colori.
+        assert.equal(g.level, duel ? 0 : 1);
         for (let i = 0; i < 600; i++) g.world.update(CONFIG.step, 0, false);
-        assert.ok(g.world.inferno.strength < .001);
-        assert.ok(!g.world.inferno.group.visible);
-        assert.ok(Math.abs(scene.background.r - sky.r) < .001);
+        assert.ok(air.strength < .001 && !air.group.visible);
         assert.ok(Math.abs(scene.fog.far - 160) < .001);
+        if (duel)
+            assert.ok(Math.abs(scene.background.r - sky.r) < .001);
+        else {
+            assert.ok(scene.background.distanceTo?.(sky) > .02 || Math.abs(scene.background.r - sky.r) > .01);
+            assert.equal(g.timeLeft, CONFIG.timer.max);
+            // Secondo boss: magma, e la stagione diventa estate infernale.
+            g.boss.start(g);
+            assert.ok(g.boss.label.includes(g.boss.name));
+            ticks(150);
+            assert.equal(air.season, 'inferno');
+        }
         g.menu();
-        assert.equal(g.world.inferno.strength, 0);
-        assert.ok(!g.world.inferno.group.visible);
+        assert.equal(air.strength, 0);
+        assert.ok(!air.group.visible);
+        assert.equal(g.level, 0);
     }
 });
 check('effetti: elettricità dello scudo, vampa per arma e scia dei razzi', () => {
@@ -503,6 +516,49 @@ check('effetti: elettricità dello scudo, vampa per arma e scia dei razzi', () =
     g.render(1, .1);
     assert.ok(!g.effects.shield.visible);
 });
+check('tempo: monete lo ricaricano, tic negli ultimi secondi, a zero si perde', () => {
+    g.start();
+    g.obstacles.reset(); g.enemies.reset(); g.pickups.reset(); g.spawner.timer = 99;
+    const played = [], play = g.audio.play.bind(g.audio);
+    g.audio.play = (name, variant) => { played.push(variant === undefined ? name : `${name}:${variant}`); play(name, variant); };
+    g.timeLeft = 10;
+    g.addTime(CONFIG.timer.coin);
+    assert.equal(g.timeLeft, 10 + CONFIG.timer.coin);
+    g.addTime(99);
+    assert.equal(g.timeLeft, CONFIG.timer.max);
+    // Fermo durante il boss.
+    g.boss.start(g);
+    ticks(60);
+    assert.equal(g.timeLeft, CONFIG.timer.max);
+    g.boss.end(g, false);
+    g.timeLeft = 5.5;
+    ticks(60 * 8);
+    g.audio.play = play;
+    assert.deepEqual(played.filter(n => n.startsWith('tick')), ['tick:false', 'tick:false', 'tick:true', 'tick:true', 'tick:true']);
+    assert.ok(played.includes('timeup'));
+    assert.equal(g.state, 'over');
+    assert.ok(node('#result-label').textContent.includes('TEMPO SCADUTO'));
+    g.menu();
+});
+check('pulsante suggerimenti: spegne la barra degli aiuti (anche nei duelli) e resta salvato', () => {
+    g.start();
+    ticks(30);
+    assert.notEqual(node('#tutorial').textContent, '');
+    node('#hints').onclick();
+    assert.equal(g.save.hints, false);
+    ticks(30);
+    assert.equal(node('#tutorial').textContent, '');
+    g.enemies.spawn('soldier', 0, CONFIG.player.z, 1);
+    g.combat();
+    ticks(30);
+    assert.equal(node('#tutorial').textContent, '');
+    assert.equal(node('#hints').getAttribute?.('aria-pressed') ?? 'false', 'false');
+    node('#hints').onclick();
+    assert.equal(g.save.hints, true);
+    ticks(30);
+    assert.notEqual(node('#tutorial').textContent, '');
+    g.menu();
+});
 check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () => {
     g.start();
     g.input.auto = true;
@@ -511,8 +567,9 @@ check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () =>
     const themes = new Set();
     let bosses = 0, previous = false;
     for (let i = 0; i < 60 * 184; i++) {
-        // Invulnerabilità solo per misurare il ciclo lungo; non dimostra la sopravvivenza.
+        // Invulnerabilità e tempo pieno solo per misurare il ciclo lungo; non dimostrano la sopravvivenza.
         g.player.invulnerable = 2;
+        g.timeLeft = CONFIG.timer.max;
         if (g.encounter.active) g.encounter.damage(g.encounter.hp, g);
         g.update(CONFIG.step);
         if (i % 6 === 0)
@@ -522,7 +579,7 @@ check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () =>
             bosses++;
         previous = g.boss.active;
         assert.ok(Number.isFinite(g.score));
-        assert.ok(g.speed <= CONFIG.speed.max);
+        assert.ok(g.speed <= CONFIG.speed.max * g.difficulty.speed);
     }
     assert.equal(g.state, 'play');
     assert.equal(themes.size, 3);
@@ -530,6 +587,31 @@ check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () =>
     assert.equal(scene.children.length, objectCount);
     assert.deepEqual([g.obstacles.pool.length, g.enemies.pool.length, g.pickups.coins.length, g.effects.pool.length], pools);
     console.log({ time: g.time, distance: Math.floor(g.distance), score: Math.floor(g.score), bosses, sceneObjects: objectCount, worldBatches: g.world.batches.length });
+});
+check('sinistra/destra tenuti: continua a cambiare corsia finché non si rilascia', () => {
+    g.start();
+    const key = (type, code) => window.listeners[type]({ code, repeat: false, preventDefault() { }, target: null });
+    g.player.command('right');
+    ticks(20);
+    assert.equal(g.player.lane, 1);
+    key('keydown', 'ArrowLeft');
+    ticks(30); // mezzo secondo tenuto: due corsie, fino al bordo
+    assert.equal(g.player.lane, -1);
+    key('keyup', 'ArrowLeft');
+    // Tocco breve: una sola corsia.
+    key('keydown', 'KeyD');
+    ticks(2);
+    key('keyup', 'KeyD');
+    ticks(30);
+    assert.equal(g.player.lane, 0);
+    // Swipe con il dito che resta giù: stessa ripetizione.
+    const canvas = renderer.domElement, finger = { pointerId: 7, pointerType: 'touch', clientX: 200, clientY: 300, preventDefault() { } };
+    canvas.listeners.pointerdown(finger);
+    canvas.listeners.pointermove({ ...finger, clientX: 140 });
+    ticks(12);
+    assert.equal(g.player.lane, -1);
+    window.listeners.pointerup(finger);
+    g.menu();
 });
 check('touch simulato: swipe, toggle fuoco e pressione prolungata', () => {
     g.start();
@@ -627,7 +709,9 @@ check('nove corse da 3 minuti: tre difficoltà percorribili senza invulnerabilit
                 if (g.boss.active && g.boss.warning > 0 && options.includes(g.boss.safeLane))
                     options = [g.boss.safeLane];
                 assert.ok(options.length, `nessun corridoio al tick ${tick}, seed ${seed}`);
-                options.sort((a, b) => Math.abs(a - g.player.lane) - Math.abs(b - g.player.lane));
+                // Tra le corsie libere preferisce quella con monete in arrivo: servono a recuperare tempo.
+                const coinsAhead = lane => g.pickups.coins.some(c => c.active && c.z > -26 && c.z < CONFIG.player.z && Math.abs(c.x - lane * CONFIG.player.laneWidth) < 1);
+                options.sort((a, b) => (coinsAhead(b) - coinsAhead(a)) || Math.abs(a - g.player.lane) - Math.abs(b - g.player.lane));
                 const lane = options[0];
                 if (lane !== g.player.lane)
                     g.player.command(lane < g.player.lane ? 'left' : 'right');
@@ -646,7 +730,7 @@ check('nove corse da 3 minuti: tre difficoltà percorribili senza invulnerabilit
                 g.update(CONFIG.step);
                 if (tick % 12 === 0)
                     g.render(.5, .2);
-                assert.equal(g.state, 'play', `game over al tick ${tick}, seed ${seed}`);
+                assert.equal(g.state, 'play', `game over al tick ${tick}, seed ${seed}, ${level}, tempo ${g.timeLeft.toFixed(1)}, vite ${g.player.lives}`);
             }
             // Senza danni le vite sono le 3 iniziali più quelle dei traguardi di punteggio.
             const expected = Math.min(CONFIG.player.maxLives, CONFIG.player.lives + Math.floor(g.score / CONFIG.player.extraLifeEvery));

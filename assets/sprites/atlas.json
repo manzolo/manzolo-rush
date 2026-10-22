@@ -2022,5 +2022,2875 @@
       1254,
       1246
     ]
+  },
+  "storm_front": {
+    "file": "storm_front.webp",
+    "png": "storm_front.png",
+    "small": "128/storm_front.webp",
+    "width": 242,
+    "height": 231,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      257,
+      261
+    ]
+  },
+  "storm_angry": {
+    "file": "storm_angry.webp",
+    "png": "storm_angry.png",
+    "small": "128/storm_angry.webp",
+    "width": 233,
+    "height": 232,
+    "anchor": "center",
+    "cell": [
+      258,
+      0,
+      513,
+      261
+    ]
+  },
+  "storm_left": {
+    "file": "storm_left.webp",
+    "png": "storm_left.png",
+    "small": "128/storm_left.webp",
+    "width": 205,
+    "height": 230,
+    "anchor": "center",
+    "cell": [
+      515,
+      0,
+      768,
+      261
+    ]
+  },
+  "storm_back": {
+    "file": "storm_back.webp",
+    "png": "storm_back.png",
+    "small": "128/storm_back.webp",
+    "width": 237,
+    "height": 228,
+    "anchor": "center",
+    "cell": [
+      770,
+      0,
+      1025,
+      261
+    ]
+  },
+  "storm_right": {
+    "file": "storm_right.webp",
+    "png": "storm_right.png",
+    "small": "128/storm_right.webp",
+    "width": 203,
+    "height": 230,
+    "anchor": "center",
+    "cell": [
+      1027,
+      0,
+      1280,
+      261
+    ]
+  },
+  "storm_front_2": {
+    "file": "storm_front_2.webp",
+    "png": "storm_front_2.png",
+    "small": "128/storm_front_2.webp",
+    "width": 232,
+    "height": 232,
+    "anchor": "center",
+    "cell": [
+      1282,
+      0,
+      1536,
+      261
+    ]
+  },
+  "storm_glare": {
+    "file": "storm_glare.webp",
+    "png": "storm_glare.png",
+    "small": "128/storm_glare.webp",
+    "width": 243,
+    "height": 232,
+    "anchor": "center",
+    "cell": [
+      0,
+      262,
+      257,
+      528
+    ]
+  },
+  "storm_roar": {
+    "file": "storm_roar.webp",
+    "png": "storm_roar.png",
+    "small": "128/storm_roar.webp",
+    "width": 241,
+    "height": 248,
+    "anchor": "center",
+    "cell": [
+      258,
+      262,
+      513,
+      528
+    ]
+  },
+  "storm_blow": {
+    "file": "storm_blow.webp",
+    "png": "storm_blow.png",
+    "small": "128/storm_blow.webp",
+    "width": 253,
+    "height": 243,
+    "anchor": "center",
+    "cell": [
+      515,
+      262,
+      768,
+      528
+    ]
+  },
+  "storm_charge": {
+    "file": "storm_charge.webp",
+    "png": "storm_charge.png",
+    "small": "128/storm_charge.webp",
+    "width": 247,
+    "height": 238,
+    "anchor": "center",
+    "cell": [
+      770,
+      262,
+      1025,
+      528
+    ]
+  },
+  "storm_tornado": {
+    "file": "storm_tornado.webp",
+    "png": "storm_tornado.png",
+    "small": "128/storm_tornado.webp",
+    "width": 238,
+    "height": 248,
+    "anchor": "center",
+    "cell": [
+      1027,
+      262,
+      1280,
+      528
+    ]
+  },
+  "storm_hurt": {
+    "file": "storm_hurt.webp",
+    "png": "storm_hurt.png",
+    "small": "128/storm_hurt.webp",
+    "width": 240,
+    "height": 235,
+    "anchor": "center",
+    "cell": [
+      1282,
+      262,
+      1536,
+      528
+    ]
+  },
+  "storm_drop": {
+    "file": "storm_drop.webp",
+    "png": "storm_drop.png",
+    "small": "128/storm_drop.webp",
+    "width": 158,
+    "height": 158,
+    "anchor": "center",
+    "cell": [
+      0,
+      529,
+      257,
+      767
+    ]
+  },
+  "storm_drops": {
+    "file": "storm_drops.webp",
+    "png": "storm_drops.png",
+    "small": "128/storm_drops.webp",
+    "width": 199,
+    "height": 189,
+    "anchor": "center",
+    "cell": [
+      258,
+      529,
+      513,
+      767
+    ]
+  },
+  "storm_bolt": {
+    "file": "storm_bolt.webp",
+    "png": "storm_bolt.png",
+    "small": "128/storm_bolt.webp",
+    "width": 204,
+    "height": 214,
+    "anchor": "center",
+    "cell": [
+      515,
+      529,
+      768,
+      767
+    ]
+  },
+  "storm_strike": {
+    "file": "storm_strike.webp",
+    "png": "storm_strike.png",
+    "small": "128/storm_strike.webp",
+    "width": 235,
+    "height": 235,
+    "anchor": "center",
+    "cell": [
+      770,
+      529,
+      1025,
+      767
+    ]
+  },
+  "storm_twister": {
+    "file": "storm_twister.webp",
+    "png": "storm_twister.png",
+    "small": "128/storm_twister.webp",
+    "width": 190,
+    "height": 225,
+    "anchor": "center",
+    "cell": [
+      1027,
+      529,
+      1280,
+      767
+    ]
+  },
+  "storm_gust": {
+    "file": "storm_gust.webp",
+    "png": "storm_gust.png",
+    "small": "128/storm_gust.webp",
+    "width": 244,
+    "height": 188,
+    "anchor": "center",
+    "cell": [
+      1282,
+      529,
+      1536,
+      767
+    ]
+  },
+  "storm_splash": {
+    "file": "storm_splash.webp",
+    "png": "storm_splash.png",
+    "small": "128/storm_splash.webp",
+    "width": 204,
+    "height": 153,
+    "anchor": "center",
+    "cell": [
+      0,
+      768,
+      257,
+      1024
+    ]
+  },
+  "storm_splash_big": {
+    "file": "storm_splash_big.webp",
+    "png": "storm_splash_big.png",
+    "small": "128/storm_splash_big.webp",
+    "width": 233,
+    "height": 206,
+    "anchor": "center",
+    "cell": [
+      258,
+      768,
+      513,
+      1024
+    ]
+  },
+  "storm_bolt_impact": {
+    "file": "storm_bolt_impact.webp",
+    "png": "storm_bolt_impact.png",
+    "small": "128/storm_bolt_impact.webp",
+    "width": 224,
+    "height": 231,
+    "anchor": "center",
+    "cell": [
+      515,
+      768,
+      768,
+      1024
+    ]
+  },
+  "storm_burst": {
+    "file": "storm_burst.webp",
+    "png": "storm_burst.png",
+    "small": "128/storm_burst.webp",
+    "width": 245,
+    "height": 212,
+    "anchor": "center",
+    "cell": [
+      770,
+      768,
+      1025,
+      1024
+    ]
+  },
+  "storm_rain": {
+    "file": "storm_rain.webp",
+    "png": "storm_rain.png",
+    "small": "128/storm_rain.webp",
+    "width": 239,
+    "height": 234,
+    "anchor": "center",
+    "cell": [
+      1027,
+      768,
+      1280,
+      1024
+    ]
+  },
+  "storm_twister_impact": {
+    "file": "storm_twister_impact.webp",
+    "png": "storm_twister_impact.png",
+    "small": "128/storm_twister_impact.webp",
+    "width": 228,
+    "height": 198,
+    "anchor": "center",
+    "cell": [
+      1282,
+      768,
+      1536,
+      1024
+    ]
+  },
+  "magma_front": {
+    "file": "magma_front.webp",
+    "png": "magma_front.png",
+    "small": "128/magma_front.webp",
+    "width": 228,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      231,
+      261
+    ]
+  },
+  "magma_turn_1": {
+    "file": "magma_turn_1.webp",
+    "png": "magma_turn_1.png",
+    "small": "128/magma_turn_1.webp",
+    "width": 188,
+    "height": 211,
+    "anchor": "center",
+    "cell": [
+      233,
+      0,
+      425,
+      261
+    ]
+  },
+  "magma_turn_2": {
+    "file": "magma_turn_2.webp",
+    "png": "magma_turn_2.png",
+    "small": "128/magma_turn_2.webp",
+    "width": 177,
+    "height": 211,
+    "anchor": "center",
+    "cell": [
+      426,
+      0,
+      609,
+      261
+    ]
+  },
+  "magma_turn_3": {
+    "file": "magma_turn_3.webp",
+    "png": "magma_turn_3.png",
+    "small": "128/magma_turn_3.webp",
+    "width": 148,
+    "height": 211,
+    "anchor": "center",
+    "cell": [
+      610,
+      0,
+      767,
+      261
+    ]
+  },
+  "magma_back": {
+    "file": "magma_back.webp",
+    "png": "magma_back.png",
+    "small": "128/magma_back.webp",
+    "width": 173,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      769,
+      0,
+      946,
+      261
+    ]
+  },
+  "magma_turn_5": {
+    "file": "magma_turn_5.webp",
+    "png": "magma_turn_5.png",
+    "small": "128/magma_turn_5.webp",
+    "width": 172,
+    "height": 210,
+    "anchor": "center",
+    "cell": [
+      948,
+      0,
+      1125,
+      261
+    ]
+  },
+  "magma_turn_6": {
+    "file": "magma_turn_6.webp",
+    "png": "magma_turn_6.png",
+    "small": "128/magma_turn_6.webp",
+    "width": 171,
+    "height": 210,
+    "anchor": "center",
+    "cell": [
+      1127,
+      0,
+      1304,
+      261
+    ]
+  },
+  "magma_front_2": {
+    "file": "magma_front_2.webp",
+    "png": "magma_front_2.png",
+    "small": "128/magma_front_2.webp",
+    "width": 229,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      1305,
+      0,
+      1536,
+      261
+    ]
+  },
+  "magma_glare": {
+    "file": "magma_glare.webp",
+    "png": "magma_glare.png",
+    "small": "128/magma_glare.webp",
+    "width": 191,
+    "height": 204,
+    "anchor": "center",
+    "cell": [
+      0,
+      262,
+      196,
+      524
+    ]
+  },
+  "magma_roar": {
+    "file": "magma_roar.webp",
+    "png": "magma_roar.png",
+    "small": "128/magma_roar.webp",
+    "width": 189,
+    "height": 211,
+    "anchor": "center",
+    "cell": [
+      198,
+      262,
+      392,
+      524
+    ]
+  },
+  "magma_blow": {
+    "file": "magma_blow.webp",
+    "png": "magma_blow.png",
+    "small": "128/magma_blow.webp",
+    "width": 239,
+    "height": 227,
+    "anchor": "center",
+    "cell": [
+      394,
+      262,
+      635,
+      524
+    ]
+  },
+  "magma_charge": {
+    "file": "magma_charge.webp",
+    "png": "magma_charge.png",
+    "small": "128/magma_charge.webp",
+    "width": 130,
+    "height": 182,
+    "anchor": "center",
+    "cell": [
+      637,
+      262,
+      767,
+      524
+    ]
+  },
+  "magma_tornado": {
+    "file": "magma_tornado.webp",
+    "png": "magma_tornado.png",
+    "small": "128/magma_tornado.webp",
+    "width": 184,
+    "height": 221,
+    "anchor": "center",
+    "cell": [
+      769,
+      262,
+      955,
+      524
+    ]
+  },
+  "magma_erupt": {
+    "file": "magma_erupt.webp",
+    "png": "magma_erupt.png",
+    "small": "128/magma_erupt.webp",
+    "width": 185,
+    "height": 221,
+    "anchor": "center",
+    "cell": [
+      957,
+      262,
+      1143,
+      524
+    ]
+  },
+  "magma_dash": {
+    "file": "magma_dash.webp",
+    "png": "magma_dash.png",
+    "small": "128/magma_dash.webp",
+    "width": 189,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      1144,
+      262,
+      1338,
+      524
+    ]
+  },
+  "magma_hurt": {
+    "file": "magma_hurt.webp",
+    "png": "magma_hurt.png",
+    "small": "128/magma_hurt.webp",
+    "width": 187,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      1340,
+      262,
+      1536,
+      524
+    ]
+  },
+  "magma_rock": {
+    "file": "magma_rock.webp",
+    "png": "magma_rock.png",
+    "small": "128/magma_rock.webp",
+    "width": 189,
+    "height": 172,
+    "anchor": "center",
+    "cell": [
+      0,
+      525,
+      251,
+      766
+    ]
+  },
+  "magma_rocks": {
+    "file": "magma_rocks.webp",
+    "png": "magma_rocks.png",
+    "small": "128/magma_rocks.webp",
+    "width": 204,
+    "height": 186,
+    "anchor": "center",
+    "cell": [
+      254,
+      525,
+      508,
+      766
+    ]
+  },
+  "magma_flame": {
+    "file": "magma_flame.webp",
+    "png": "magma_flame.png",
+    "small": "128/magma_flame.webp",
+    "width": 256,
+    "height": 185,
+    "anchor": "center",
+    "cell": [
+      510,
+      525,
+      767,
+      766
+    ]
+  },
+  "magma_boulder": {
+    "file": "magma_boulder.webp",
+    "png": "magma_boulder.png",
+    "small": "128/magma_boulder.webp",
+    "width": 237,
+    "height": 199,
+    "anchor": "center",
+    "cell": [
+      769,
+      525,
+      1024,
+      766
+    ]
+  },
+  "magma_spikes": {
+    "file": "magma_spikes.webp",
+    "png": "magma_spikes.png",
+    "small": "128/magma_spikes.webp",
+    "width": 229,
+    "height": 218,
+    "anchor": "center",
+    "cell": [
+      1025,
+      525,
+      1279,
+      766
+    ]
+  },
+  "magma_wave": {
+    "file": "magma_wave.webp",
+    "png": "magma_wave.png",
+    "small": "128/magma_wave.webp",
+    "width": 243,
+    "height": 212,
+    "anchor": "center",
+    "cell": [
+      1281,
+      525,
+      1536,
+      766
+    ]
+  },
+  "magma_splash": {
+    "file": "magma_splash.webp",
+    "png": "magma_splash.png",
+    "small": "128/magma_splash.webp",
+    "width": 229,
+    "height": 217,
+    "anchor": "center",
+    "cell": [
+      0,
+      767,
+      254,
+      1024
+    ]
+  },
+  "magma_splash_big": {
+    "file": "magma_splash_big.webp",
+    "png": "magma_splash_big.png",
+    "small": "128/magma_splash_big.webp",
+    "width": 238,
+    "height": 215,
+    "anchor": "center",
+    "cell": [
+      256,
+      767,
+      509,
+      1024
+    ]
+  },
+  "magma_pillar": {
+    "file": "magma_pillar.webp",
+    "png": "magma_pillar.png",
+    "small": "128/magma_pillar.webp",
+    "width": 230,
+    "height": 237,
+    "anchor": "center",
+    "cell": [
+      512,
+      767,
+      767,
+      1024
+    ]
+  },
+  "magma_burst": {
+    "file": "magma_burst.webp",
+    "png": "magma_burst.png",
+    "small": "128/magma_burst.webp",
+    "width": 237,
+    "height": 217,
+    "anchor": "center",
+    "cell": [
+      769,
+      767,
+      1023,
+      1024
+    ]
+  },
+  "magma_ring": {
+    "file": "magma_ring.webp",
+    "png": "magma_ring.png",
+    "small": "128/magma_ring.webp",
+    "width": 254,
+    "height": 201,
+    "anchor": "center",
+    "cell": [
+      1025,
+      767,
+      1279,
+      1024
+    ]
+  },
+  "magma_crystals": {
+    "file": "magma_crystals.webp",
+    "png": "magma_crystals.png",
+    "small": "128/magma_crystals.webp",
+    "width": 236,
+    "height": 247,
+    "anchor": "center",
+    "cell": [
+      1281,
+      767,
+      1536,
+      1024
+    ]
+  },
+  "ice_front": {
+    "file": "ice_front.webp",
+    "png": "ice_front.png",
+    "small": "128/ice_front.webp",
+    "width": 253,
+    "height": 248,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      253,
+      292
+    ]
+  },
+  "ice_turn_1": {
+    "file": "ice_turn_1.webp",
+    "png": "ice_turn_1.png",
+    "small": "128/ice_turn_1.webp",
+    "width": 221,
+    "height": 240,
+    "anchor": "center",
+    "cell": [
+      255,
+      0,
+      478,
+      292
+    ]
+  },
+  "ice_turn_2": {
+    "file": "ice_turn_2.webp",
+    "png": "ice_turn_2.png",
+    "small": "128/ice_turn_2.webp",
+    "width": 147,
+    "height": 235,
+    "anchor": "center",
+    "cell": [
+      479,
+      0,
+      665,
+      292
+    ]
+  },
+  "ice_back": {
+    "file": "ice_back.webp",
+    "png": "ice_back.png",
+    "small": "128/ice_back.webp",
+    "width": 203,
+    "height": 251,
+    "anchor": "center",
+    "cell": [
+      666,
+      0,
+      869,
+      292
+    ]
+  },
+  "ice_turn_4": {
+    "file": "ice_turn_4.webp",
+    "png": "ice_turn_4.png",
+    "small": "128/ice_turn_4.webp",
+    "width": 147,
+    "height": 236,
+    "anchor": "center",
+    "cell": [
+      871,
+      0,
+      1056,
+      292
+    ]
+  },
+  "ice_angry": {
+    "file": "ice_angry.webp",
+    "png": "ice_angry.png",
+    "small": "128/ice_angry.webp",
+    "width": 222,
+    "height": 240,
+    "anchor": "center",
+    "cell": [
+      1058,
+      0,
+      1281,
+      292
+    ]
+  },
+  "ice_front_2": {
+    "file": "ice_front_2.webp",
+    "png": "ice_front_2.png",
+    "small": "128/ice_front_2.webp",
+    "width": 253,
+    "height": 248,
+    "anchor": "center",
+    "cell": [
+      1283,
+      0,
+      1536,
+      292
+    ]
+  },
+  "ice_glare": {
+    "file": "ice_glare.webp",
+    "png": "ice_glare.png",
+    "small": "128/ice_glare.webp",
+    "width": 208,
+    "height": 232,
+    "anchor": "center",
+    "cell": [
+      0,
+      294,
+      215,
+      549
+    ]
+  },
+  "ice_roar": {
+    "file": "ice_roar.webp",
+    "png": "ice_roar.png",
+    "small": "128/ice_roar.webp",
+    "width": 204,
+    "height": 232,
+    "anchor": "center",
+    "cell": [
+      217,
+      294,
+      422,
+      549
+    ]
+  },
+  "ice_blow": {
+    "file": "ice_blow.webp",
+    "png": "ice_blow.png",
+    "small": "128/ice_blow.webp",
+    "width": 235,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      424,
+      294,
+      659,
+      549
+    ]
+  },
+  "ice_stomp": {
+    "file": "ice_stomp.webp",
+    "png": "ice_stomp.png",
+    "small": "128/ice_stomp.webp",
+    "width": 215,
+    "height": 229,
+    "anchor": "center",
+    "cell": [
+      661,
+      294,
+      876,
+      549
+    ]
+  },
+  "ice_charge": {
+    "file": "ice_charge.webp",
+    "png": "ice_charge.png",
+    "small": "128/ice_charge.webp",
+    "width": 218,
+    "height": 236,
+    "anchor": "center",
+    "cell": [
+      878,
+      294,
+      1096,
+      549
+    ]
+  },
+  "ice_dash": {
+    "file": "ice_dash.webp",
+    "png": "ice_dash.png",
+    "small": "128/ice_dash.webp",
+    "width": 220,
+    "height": 236,
+    "anchor": "center",
+    "cell": [
+      1097,
+      294,
+      1317,
+      549
+    ]
+  },
+  "ice_hurt": {
+    "file": "ice_hurt.webp",
+    "png": "ice_hurt.png",
+    "small": "128/ice_hurt.webp",
+    "width": 210,
+    "height": 218,
+    "anchor": "center",
+    "cell": [
+      1319,
+      294,
+      1536,
+      549
+    ]
+  },
+  "ice_shard": {
+    "file": "ice_shard.webp",
+    "png": "ice_shard.png",
+    "small": "128/ice_shard.webp",
+    "width": 180,
+    "height": 149,
+    "anchor": "center",
+    "cell": [
+      0,
+      551,
+      209,
+      764
+    ]
+  },
+  "ice_shards": {
+    "file": "ice_shards.webp",
+    "png": "ice_shards.png",
+    "small": "128/ice_shards.webp",
+    "width": 203,
+    "height": 157,
+    "anchor": "center",
+    "cell": [
+      211,
+      551,
+      428,
+      764
+    ]
+  },
+  "ice_volley": {
+    "file": "ice_volley.webp",
+    "png": "ice_volley.png",
+    "small": "128/ice_volley.webp",
+    "width": 221,
+    "height": 201,
+    "anchor": "center",
+    "cell": [
+      430,
+      551,
+      664,
+      764
+    ]
+  },
+  "ice_tornado": {
+    "file": "ice_tornado.webp",
+    "png": "ice_tornado.png",
+    "small": "128/ice_tornado.webp",
+    "width": 189,
+    "height": 204,
+    "anchor": "center",
+    "cell": [
+      665,
+      551,
+      882,
+      764
+    ]
+  },
+  "ice_spike": {
+    "file": "ice_spike.webp",
+    "png": "ice_spike.png",
+    "small": "128/ice_spike.webp",
+    "width": 189,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      884,
+      551,
+      1078,
+      764
+    ]
+  },
+  "ice_boulder": {
+    "file": "ice_boulder.webp",
+    "png": "ice_boulder.png",
+    "small": "128/ice_boulder.webp",
+    "width": 225,
+    "height": 173,
+    "anchor": "center",
+    "cell": [
+      1080,
+      551,
+      1318,
+      764
+    ]
+  },
+  "ice_spikes": {
+    "file": "ice_spikes.webp",
+    "png": "ice_spikes.png",
+    "small": "128/ice_spikes.webp",
+    "width": 206,
+    "height": 166,
+    "anchor": "center",
+    "cell": [
+      1320,
+      551,
+      1536,
+      764
+    ]
+  },
+  "ice_splash": {
+    "file": "ice_splash.webp",
+    "png": "ice_splash.png",
+    "small": "128/ice_splash.webp",
+    "width": 204,
+    "height": 214,
+    "anchor": "center",
+    "cell": [
+      0,
+      766,
+      213,
+      1024
+    ]
+  },
+  "ice_splash_big": {
+    "file": "ice_splash_big.webp",
+    "png": "ice_splash_big.png",
+    "small": "128/ice_splash_big.webp",
+    "width": 215,
+    "height": 207,
+    "anchor": "center",
+    "cell": [
+      215,
+      766,
+      433,
+      1024
+    ]
+  },
+  "ice_pillar": {
+    "file": "ice_pillar.webp",
+    "png": "ice_pillar.png",
+    "small": "128/ice_pillar.webp",
+    "width": 228,
+    "height": 220,
+    "anchor": "center",
+    "cell": [
+      435,
+      766,
+      664,
+      1024
+    ]
+  },
+  "ice_burst": {
+    "file": "ice_burst.webp",
+    "png": "ice_burst.png",
+    "small": "128/ice_burst.webp",
+    "width": 227,
+    "height": 189,
+    "anchor": "center",
+    "cell": [
+      665,
+      766,
+      892,
+      1024
+    ]
+  },
+  "ice_twister_impact": {
+    "file": "ice_twister_impact.webp",
+    "png": "ice_twister_impact.png",
+    "small": "128/ice_twister_impact.webp",
+    "width": 213,
+    "height": 216,
+    "anchor": "center",
+    "cell": [
+      894,
+      766,
+      1112,
+      1024
+    ]
+  },
+  "ice_crystals": {
+    "file": "ice_crystals.webp",
+    "png": "ice_crystals.png",
+    "small": "128/ice_crystals.webp",
+    "width": 212,
+    "height": 212,
+    "anchor": "center",
+    "cell": [
+      1114,
+      766,
+      1326,
+      1024
+    ]
+  },
+  "ice_debris": {
+    "file": "ice_debris.webp",
+    "png": "ice_debris.png",
+    "small": "128/ice_debris.webp",
+    "width": 202,
+    "height": 205,
+    "anchor": "center",
+    "cell": [
+      1327,
+      766,
+      1536,
+      1024
+    ]
+  },
+  "demon_front": {
+    "file": "demon_front.webp",
+    "png": "demon_front.png",
+    "small": "128/demon_front.webp",
+    "width": 182,
+    "height": 200,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      192,
+      245
+    ]
+  },
+  "demon_turn_1": {
+    "file": "demon_turn_1.webp",
+    "png": "demon_turn_1.png",
+    "small": "128/demon_turn_1.webp",
+    "width": 169,
+    "height": 194,
+    "anchor": "center",
+    "cell": [
+      193,
+      0,
+      367,
+      245
+    ]
+  },
+  "demon_left": {
+    "file": "demon_left.webp",
+    "png": "demon_left.png",
+    "small": "128/demon_left.webp",
+    "width": 165,
+    "height": 194,
+    "anchor": "center",
+    "cell": [
+      369,
+      0,
+      538,
+      245
+    ]
+  },
+  "demon_back": {
+    "file": "demon_back.webp",
+    "png": "demon_back.png",
+    "small": "128/demon_back.webp",
+    "width": 183,
+    "height": 192,
+    "anchor": "center",
+    "cell": [
+      539,
+      0,
+      730,
+      245
+    ]
+  },
+  "demon_turn_4": {
+    "file": "demon_turn_4.webp",
+    "png": "demon_turn_4.png",
+    "small": "128/demon_turn_4.webp",
+    "width": 158,
+    "height": 193,
+    "anchor": "center",
+    "cell": [
+      732,
+      0,
+      897,
+      245
+    ]
+  },
+  "demon_right": {
+    "file": "demon_right.webp",
+    "png": "demon_right.png",
+    "small": "128/demon_right.webp",
+    "width": 168,
+    "height": 196,
+    "anchor": "center",
+    "cell": [
+      899,
+      0,
+      1070,
+      245
+    ]
+  },
+  "demon_angry": {
+    "file": "demon_angry.webp",
+    "png": "demon_angry.png",
+    "small": "128/demon_angry.webp",
+    "width": 166,
+    "height": 191,
+    "anchor": "center",
+    "cell": [
+      1072,
+      0,
+      1254,
+      245
+    ]
+  },
+  "demon_run_1": {
+    "file": "demon_run_1.webp",
+    "png": "demon_run_1.png",
+    "small": "128/demon_run_1.webp",
+    "width": 196,
+    "height": 189,
+    "anchor": "center",
+    "cell": [
+      0,
+      246,
+      208,
+      472
+    ]
+  },
+  "demon_run_2": {
+    "file": "demon_run_2.webp",
+    "png": "demon_run_2.png",
+    "small": "128/demon_run_2.webp",
+    "width": 209,
+    "height": 186,
+    "anchor": "center",
+    "cell": [
+      209,
+      246,
+      431,
+      472
+    ]
+  },
+  "demon_run_3": {
+    "file": "demon_run_3.webp",
+    "png": "demon_run_3.png",
+    "small": "128/demon_run_3.webp",
+    "width": 201,
+    "height": 204,
+    "anchor": "center",
+    "cell": [
+      432,
+      246,
+      653,
+      472
+    ]
+  },
+  "demon_run_4": {
+    "file": "demon_run_4.webp",
+    "png": "demon_run_4.png",
+    "small": "128/demon_run_4.webp",
+    "width": 182,
+    "height": 194,
+    "anchor": "center",
+    "cell": [
+      654,
+      246,
+      853,
+      472
+    ]
+  },
+  "demon_run_5": {
+    "file": "demon_run_5.webp",
+    "png": "demon_run_5.png",
+    "small": "128/demon_run_5.webp",
+    "width": 185,
+    "height": 187,
+    "anchor": "center",
+    "cell": [
+      855,
+      246,
+      1063,
+      472
+    ]
+  },
+  "demon_run_6": {
+    "file": "demon_run_6.webp",
+    "png": "demon_run_6.png",
+    "small": "128/demon_run_6.webp",
+    "width": 183,
+    "height": 192,
+    "anchor": "center",
+    "cell": [
+      1064,
+      246,
+      1254,
+      472
+    ]
+  },
+  "demon_leap": {
+    "file": "demon_leap.webp",
+    "png": "demon_leap.png",
+    "small": "128/demon_leap.webp",
+    "width": 212,
+    "height": 208,
+    "anchor": "center",
+    "cell": [
+      0,
+      473,
+      220,
+      715
+    ]
+  },
+  "demon_flail": {
+    "file": "demon_flail.webp",
+    "png": "demon_flail.png",
+    "small": "128/demon_flail.webp",
+    "width": 173,
+    "height": 217,
+    "anchor": "center",
+    "cell": [
+      221,
+      473,
+      406,
+      715
+    ]
+  },
+  "demon_breath": {
+    "file": "demon_breath.webp",
+    "png": "demon_breath.png",
+    "small": "128/demon_breath.webp",
+    "width": 226,
+    "height": 227,
+    "anchor": "center",
+    "cell": [
+      407,
+      473,
+      633,
+      715
+    ]
+  },
+  "demon_slash": {
+    "file": "demon_slash.webp",
+    "png": "demon_slash.png",
+    "small": "128/demon_slash.webp",
+    "width": 212,
+    "height": 215,
+    "anchor": "center",
+    "cell": [
+      634,
+      473,
+      846,
+      715
+    ]
+  },
+  "demon_pound": {
+    "file": "demon_pound.webp",
+    "png": "demon_pound.png",
+    "small": "128/demon_pound.webp",
+    "width": 205,
+    "height": 213,
+    "anchor": "center",
+    "cell": [
+      847,
+      473,
+      1055,
+      715
+    ]
+  },
+  "demon_ready": {
+    "file": "demon_ready.webp",
+    "png": "demon_ready.png",
+    "small": "128/demon_ready.webp",
+    "width": 189,
+    "height": 210,
+    "anchor": "center",
+    "cell": [
+      1056,
+      473,
+      1254,
+      715
+    ]
+  },
+  "demon_hit": {
+    "file": "demon_hit.webp",
+    "png": "demon_hit.png",
+    "small": "128/demon_hit.webp",
+    "width": 188,
+    "height": 206,
+    "anchor": "center",
+    "cell": [
+      0,
+      716,
+      206,
+      956
+    ]
+  },
+  "demon_knock": {
+    "file": "demon_knock.webp",
+    "png": "demon_knock.png",
+    "small": "128/demon_knock.webp",
+    "width": 198,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      207,
+      716,
+      405,
+      956
+    ]
+  },
+  "demon_fall": {
+    "file": "demon_fall.webp",
+    "png": "demon_fall.png",
+    "small": "128/demon_fall.webp",
+    "width": 201,
+    "height": 171,
+    "anchor": "center",
+    "cell": [
+      406,
+      716,
+      633,
+      956
+    ]
+  },
+  "demon_ko": {
+    "file": "demon_ko.webp",
+    "png": "demon_ko.png",
+    "small": "128/demon_ko.webp",
+    "width": 208,
+    "height": 195,
+    "anchor": "center",
+    "cell": [
+      634,
+      716,
+      846,
+      956
+    ]
+  },
+  "demon_dazed": {
+    "file": "demon_dazed.webp",
+    "png": "demon_dazed.png",
+    "small": "128/demon_dazed.webp",
+    "width": 198,
+    "height": 185,
+    "anchor": "center",
+    "cell": [
+      848,
+      716,
+      1051,
+      956
+    ]
+  },
+  "demon_dead": {
+    "file": "demon_dead.webp",
+    "png": "demon_dead.png",
+    "small": "128/demon_dead.webp",
+    "width": 202,
+    "height": 109,
+    "anchor": "center",
+    "cell": [
+      1052,
+      716,
+      1254,
+      956
+    ]
+  },
+  "demon_fireball_1": {
+    "file": "demon_fireball_1.webp",
+    "png": "demon_fireball_1.png",
+    "small": "128/demon_fireball_1.webp",
+    "width": 161,
+    "height": 171,
+    "anchor": "center",
+    "cell": [
+      0,
+      957,
+      199,
+      1254
+    ]
+  },
+  "demon_fireball_2": {
+    "file": "demon_fireball_2.webp",
+    "png": "demon_fireball_2.png",
+    "small": "128/demon_fireball_2.webp",
+    "width": 207,
+    "height": 170,
+    "anchor": "center",
+    "cell": [
+      200,
+      957,
+      412,
+      1254
+    ]
+  },
+  "demon_fireball_3": {
+    "file": "demon_fireball_3.webp",
+    "png": "demon_fireball_3.png",
+    "small": "128/demon_fireball_3.webp",
+    "width": 211,
+    "height": 158,
+    "anchor": "center",
+    "cell": [
+      414,
+      957,
+      626,
+      1254
+    ]
+  },
+  "demon_ring": {
+    "file": "demon_ring.webp",
+    "png": "demon_ring.png",
+    "small": "128/demon_ring.webp",
+    "width": 210,
+    "height": 171,
+    "anchor": "center",
+    "cell": [
+      627,
+      957,
+      839,
+      1254
+    ]
+  },
+  "demon_blast": {
+    "file": "demon_blast.webp",
+    "png": "demon_blast.png",
+    "small": "128/demon_blast.webp",
+    "width": 211,
+    "height": 189,
+    "anchor": "center",
+    "cell": [
+      841,
+      957,
+      1053,
+      1254
+    ]
+  },
+  "demon_pillar": {
+    "file": "demon_pillar.webp",
+    "png": "demon_pillar.png",
+    "small": "128/demon_pillar.webp",
+    "width": 191,
+    "height": 215,
+    "anchor": "center",
+    "cell": [
+      1055,
+      957,
+      1254,
+      1254
+    ]
+  },
+  "rock_front": {
+    "file": "rock_front.webp",
+    "png": "rock_front.png",
+    "small": "128/rock_front.webp",
+    "width": 207,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      208,
+      253
+    ]
+  },
+  "rock_turn_1": {
+    "file": "rock_turn_1.webp",
+    "png": "rock_turn_1.png",
+    "small": "128/rock_turn_1.webp",
+    "width": 175,
+    "height": 206,
+    "anchor": "center",
+    "cell": [
+      210,
+      0,
+      385,
+      253
+    ]
+  },
+  "rock_left": {
+    "file": "rock_left.webp",
+    "png": "rock_left.png",
+    "small": "128/rock_left.webp",
+    "width": 150,
+    "height": 204,
+    "anchor": "center",
+    "cell": [
+      387,
+      0,
+      543,
+      253
+    ]
+  },
+  "rock_back": {
+    "file": "rock_back.webp",
+    "png": "rock_back.png",
+    "small": "128/rock_back.webp",
+    "width": 181,
+    "height": 205,
+    "anchor": "center",
+    "cell": [
+      545,
+      0,
+      726,
+      253
+    ]
+  },
+  "rock_turn_4": {
+    "file": "rock_turn_4.webp",
+    "png": "rock_turn_4.png",
+    "small": "128/rock_turn_4.webp",
+    "width": 145,
+    "height": 204,
+    "anchor": "center",
+    "cell": [
+      727,
+      0,
+      875,
+      253
+    ]
+  },
+  "rock_right": {
+    "file": "rock_right.webp",
+    "png": "rock_right.png",
+    "small": "128/rock_right.webp",
+    "width": 158,
+    "height": 205,
+    "anchor": "center",
+    "cell": [
+      877,
+      0,
+      1043,
+      253
+    ]
+  },
+  "rock_angry": {
+    "file": "rock_angry.webp",
+    "png": "rock_angry.png",
+    "small": "128/rock_angry.webp",
+    "width": 209,
+    "height": 204,
+    "anchor": "center",
+    "cell": [
+      1045,
+      0,
+      1254,
+      253
+    ]
+  },
+  "rock_run_1": {
+    "file": "rock_run_1.webp",
+    "png": "rock_run_1.png",
+    "small": "128/rock_run_1.webp",
+    "width": 216,
+    "height": 198,
+    "anchor": "center",
+    "cell": [
+      0,
+      255,
+      223,
+      484
+    ]
+  },
+  "rock_run_2": {
+    "file": "rock_run_2.webp",
+    "png": "rock_run_2.png",
+    "small": "128/rock_run_2.webp",
+    "width": 213,
+    "height": 195,
+    "anchor": "center",
+    "cell": [
+      224,
+      255,
+      438,
+      484
+    ]
+  },
+  "rock_run_3": {
+    "file": "rock_run_3.webp",
+    "png": "rock_run_3.png",
+    "small": "128/rock_run_3.webp",
+    "width": 210,
+    "height": 198,
+    "anchor": "center",
+    "cell": [
+      440,
+      255,
+      653,
+      484
+    ]
+  },
+  "rock_run_4": {
+    "file": "rock_run_4.webp",
+    "png": "rock_run_4.png",
+    "small": "128/rock_run_4.webp",
+    "width": 179,
+    "height": 194,
+    "anchor": "center",
+    "cell": [
+      654,
+      255,
+      842,
+      484
+    ]
+  },
+  "rock_run_5": {
+    "file": "rock_run_5.webp",
+    "png": "rock_run_5.png",
+    "small": "128/rock_run_5.webp",
+    "width": 186,
+    "height": 198,
+    "anchor": "center",
+    "cell": [
+      843,
+      255,
+      1043,
+      484
+    ]
+  },
+  "rock_run_6": {
+    "file": "rock_run_6.webp",
+    "png": "rock_run_6.png",
+    "small": "128/rock_run_6.webp",
+    "width": 192,
+    "height": 198,
+    "anchor": "center",
+    "cell": [
+      1044,
+      255,
+      1254,
+      484
+    ]
+  },
+  "rock_windup": {
+    "file": "rock_windup.webp",
+    "png": "rock_windup.png",
+    "small": "128/rock_windup.webp",
+    "width": 191,
+    "height": 224,
+    "anchor": "center",
+    "cell": [
+      0,
+      486,
+      198,
+      733
+    ]
+  },
+  "rock_throw": {
+    "file": "rock_throw.webp",
+    "png": "rock_throw.png",
+    "small": "128/rock_throw.webp",
+    "width": 191,
+    "height": 176,
+    "anchor": "center",
+    "cell": [
+      199,
+      486,
+      390,
+      733
+    ]
+  },
+  "rock_lift": {
+    "file": "rock_lift.webp",
+    "png": "rock_lift.png",
+    "small": "128/rock_lift.webp",
+    "width": 192,
+    "height": 234,
+    "anchor": "center",
+    "cell": [
+      392,
+      486,
+      586,
+      733
+    ]
+  },
+  "rock_pound": {
+    "file": "rock_pound.webp",
+    "png": "rock_pound.png",
+    "small": "128/rock_pound.webp",
+    "width": 218,
+    "height": 218,
+    "anchor": "center",
+    "cell": [
+      588,
+      486,
+      806,
+      733
+    ]
+  },
+  "rock_swing": {
+    "file": "rock_swing.webp",
+    "png": "rock_swing.png",
+    "small": "128/rock_swing.webp",
+    "width": 222,
+    "height": 224,
+    "anchor": "center",
+    "cell": [
+      808,
+      486,
+      1032,
+      733
+    ]
+  },
+  "rock_ready": {
+    "file": "rock_ready.webp",
+    "png": "rock_ready.png",
+    "small": "128/rock_ready.webp",
+    "width": 214,
+    "height": 196,
+    "anchor": "center",
+    "cell": [
+      1034,
+      486,
+      1254,
+      733
+    ]
+  },
+  "rock_hit": {
+    "file": "rock_hit.webp",
+    "png": "rock_hit.png",
+    "small": "128/rock_hit.webp",
+    "width": 193,
+    "height": 192,
+    "anchor": "center",
+    "cell": [
+      0,
+      735,
+      198,
+      954
+    ]
+  },
+  "rock_knock": {
+    "file": "rock_knock.webp",
+    "png": "rock_knock.png",
+    "small": "128/rock_knock.webp",
+    "width": 177,
+    "height": 196,
+    "anchor": "center",
+    "cell": [
+      199,
+      735,
+      388,
+      954
+    ]
+  },
+  "rock_fall": {
+    "file": "rock_fall.webp",
+    "png": "rock_fall.png",
+    "small": "128/rock_fall.webp",
+    "width": 197,
+    "height": 185,
+    "anchor": "center",
+    "cell": [
+      389,
+      735,
+      591,
+      954
+    ]
+  },
+  "rock_down": {
+    "file": "rock_down.webp",
+    "png": "rock_down.png",
+    "small": "128/rock_down.webp",
+    "width": 189,
+    "height": 152,
+    "anchor": "center",
+    "cell": [
+      593,
+      735,
+      783,
+      954
+    ]
+  },
+  "rock_dazed": {
+    "file": "rock_dazed.webp",
+    "png": "rock_dazed.png",
+    "small": "128/rock_dazed.webp",
+    "width": 193,
+    "height": 191,
+    "anchor": "center",
+    "cell": [
+      785,
+      735,
+      978,
+      954
+    ]
+  },
+  "rock_dead": {
+    "file": "rock_dead.webp",
+    "png": "rock_dead.png",
+    "small": "128/rock_dead.webp",
+    "width": 266,
+    "height": 136,
+    "anchor": "center",
+    "cell": [
+      980,
+      735,
+      1254,
+      954
+    ]
+  },
+  "rock_boulder_1": {
+    "file": "rock_boulder_1.webp",
+    "png": "rock_boulder_1.png",
+    "small": "128/rock_boulder_1.webp",
+    "width": 184,
+    "height": 165,
+    "anchor": "center",
+    "cell": [
+      0,
+      956,
+      194,
+      1254
+    ]
+  },
+  "rock_boulders": {
+    "file": "rock_boulders.webp",
+    "png": "rock_boulders.png",
+    "small": "128/rock_boulders.webp",
+    "width": 189,
+    "height": 156,
+    "anchor": "center",
+    "cell": [
+      195,
+      956,
+      390,
+      1254
+    ]
+  },
+  "rock_boulder_2": {
+    "file": "rock_boulder_2.webp",
+    "png": "rock_boulder_2.png",
+    "small": "128/rock_boulder_2.webp",
+    "width": 189,
+    "height": 162,
+    "anchor": "center",
+    "cell": [
+      391,
+      956,
+      586,
+      1254
+    ]
+  },
+  "rock_blast": {
+    "file": "rock_blast.webp",
+    "png": "rock_blast.png",
+    "small": "128/rock_blast.webp",
+    "width": 210,
+    "height": 207,
+    "anchor": "center",
+    "cell": [
+      588,
+      956,
+      798,
+      1254
+    ]
+  },
+  "rock_spikes": {
+    "file": "rock_spikes.webp",
+    "png": "rock_spikes.png",
+    "small": "128/rock_spikes.webp",
+    "width": 243,
+    "height": 222,
+    "anchor": "center",
+    "cell": [
+      800,
+      956,
+      1043,
+      1254
+    ]
+  },
+  "rock_ring": {
+    "file": "rock_ring.webp",
+    "png": "rock_ring.png",
+    "small": "128/rock_ring.webp",
+    "width": 208,
+    "height": 194,
+    "anchor": "center",
+    "cell": [
+      1044,
+      956,
+      1254,
+      1254
+    ]
+  },
+  "iron_front": {
+    "file": "iron_front.webp",
+    "png": "iron_front.png",
+    "small": "128/iron_front.webp",
+    "width": 197,
+    "height": 214,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      199,
+      250
+    ]
+  },
+  "iron_turn_1": {
+    "file": "iron_turn_1.webp",
+    "png": "iron_turn_1.png",
+    "small": "128/iron_turn_1.webp",
+    "width": 171,
+    "height": 208,
+    "anchor": "center",
+    "cell": [
+      200,
+      0,
+      372,
+      250
+    ]
+  },
+  "iron_left": {
+    "file": "iron_left.webp",
+    "png": "iron_left.png",
+    "small": "128/iron_left.webp",
+    "width": 120,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      373,
+      0,
+      521,
+      250
+    ]
+  },
+  "iron_back": {
+    "file": "iron_back.webp",
+    "png": "iron_back.png",
+    "small": "128/iron_back.webp",
+    "width": 192,
+    "height": 211,
+    "anchor": "center",
+    "cell": [
+      522,
+      0,
+      714,
+      250
+    ]
+  },
+  "iron_turn_4": {
+    "file": "iron_turn_4.webp",
+    "png": "iron_turn_4.png",
+    "small": "128/iron_turn_4.webp",
+    "width": 126,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      716,
+      0,
+      873,
+      250
+    ]
+  },
+  "iron_right": {
+    "file": "iron_right.webp",
+    "png": "iron_right.png",
+    "small": "128/iron_right.webp",
+    "width": 171,
+    "height": 208,
+    "anchor": "center",
+    "cell": [
+      874,
+      0,
+      1053,
+      250
+    ]
+  },
+  "iron_angry": {
+    "file": "iron_angry.webp",
+    "png": "iron_angry.png",
+    "small": "128/iron_angry.webp",
+    "width": 198,
+    "height": 214,
+    "anchor": "center",
+    "cell": [
+      1054,
+      0,
+      1254,
+      250
+    ]
+  },
+  "iron_run_1": {
+    "file": "iron_run_1.webp",
+    "png": "iron_run_1.png",
+    "small": "128/iron_run_1.webp",
+    "width": 203,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      0,
+      252,
+      209,
+      483
+    ]
+  },
+  "iron_run_2": {
+    "file": "iron_run_2.webp",
+    "png": "iron_run_2.png",
+    "small": "128/iron_run_2.webp",
+    "width": 194,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      210,
+      252,
+      419,
+      483
+    ]
+  },
+  "iron_run_3": {
+    "file": "iron_run_3.webp",
+    "png": "iron_run_3.png",
+    "small": "128/iron_run_3.webp",
+    "width": 174,
+    "height": 205,
+    "anchor": "center",
+    "cell": [
+      420,
+      252,
+      628,
+      483
+    ]
+  },
+  "iron_run_4": {
+    "file": "iron_run_4.webp",
+    "png": "iron_run_4.png",
+    "small": "128/iron_run_4.webp",
+    "width": 193,
+    "height": 206,
+    "anchor": "center",
+    "cell": [
+      629,
+      252,
+      827,
+      483
+    ]
+  },
+  "iron_run_5": {
+    "file": "iron_run_5.webp",
+    "png": "iron_run_5.png",
+    "small": "128/iron_run_5.webp",
+    "width": 208,
+    "height": 206,
+    "anchor": "center",
+    "cell": [
+      829,
+      252,
+      1048,
+      483
+    ]
+  },
+  "iron_run_6": {
+    "file": "iron_run_6.webp",
+    "png": "iron_run_6.png",
+    "small": "128/iron_run_6.webp",
+    "width": 189,
+    "height": 206,
+    "anchor": "center",
+    "cell": [
+      1050,
+      252,
+      1254,
+      483
+    ]
+  },
+  "iron_windup": {
+    "file": "iron_windup.webp",
+    "png": "iron_windup.png",
+    "small": "128/iron_windup.webp",
+    "width": 197,
+    "height": 224,
+    "anchor": "center",
+    "cell": [
+      0,
+      485,
+      212,
+      730
+    ]
+  },
+  "iron_punch": {
+    "file": "iron_punch.webp",
+    "png": "iron_punch.png",
+    "small": "128/iron_punch.webp",
+    "width": 229,
+    "height": 222,
+    "anchor": "center",
+    "cell": [
+      213,
+      485,
+      448,
+      730
+    ]
+  },
+  "iron_pound": {
+    "file": "iron_pound.webp",
+    "png": "iron_pound.png",
+    "small": "128/iron_pound.webp",
+    "width": 300,
+    "height": 221,
+    "anchor": "center",
+    "cell": [
+      450,
+      485,
+      752,
+      730
+    ]
+  },
+  "iron_charge": {
+    "file": "iron_charge.webp",
+    "png": "iron_charge.png",
+    "small": "128/iron_charge.webp",
+    "width": 224,
+    "height": 222,
+    "anchor": "center",
+    "cell": [
+      754,
+      485,
+      992,
+      730
+    ]
+  },
+  "iron_spin": {
+    "file": "iron_spin.webp",
+    "png": "iron_spin.png",
+    "small": "128/iron_spin.webp",
+    "width": 247,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      994,
+      485,
+      1254,
+      730
+    ]
+  },
+  "iron_dazed": {
+    "file": "iron_dazed.webp",
+    "png": "iron_dazed.png",
+    "small": "128/iron_dazed.webp",
+    "width": 196,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      0,
+      732,
+      210,
+      955
+    ]
+  },
+  "iron_hit": {
+    "file": "iron_hit.webp",
+    "png": "iron_hit.png",
+    "small": "128/iron_hit.webp",
+    "width": 183,
+    "height": 197,
+    "anchor": "center",
+    "cell": [
+      212,
+      732,
+      403,
+      955
+    ]
+  },
+  "iron_knock": {
+    "file": "iron_knock.webp",
+    "png": "iron_knock.png",
+    "small": "128/iron_knock.webp",
+    "width": 212,
+    "height": 187,
+    "anchor": "center",
+    "cell": [
+      405,
+      732,
+      626,
+      955
+    ]
+  },
+  "iron_fall": {
+    "file": "iron_fall.webp",
+    "png": "iron_fall.png",
+    "small": "128/iron_fall.webp",
+    "width": 214,
+    "height": 154,
+    "anchor": "center",
+    "cell": [
+      628,
+      732,
+      847,
+      955
+    ]
+  },
+  "iron_down": {
+    "file": "iron_down.webp",
+    "png": "iron_down.png",
+    "small": "128/iron_down.webp",
+    "width": 161,
+    "height": 142,
+    "anchor": "center",
+    "cell": [
+      848,
+      732,
+      1028,
+      955
+    ]
+  },
+  "iron_dead": {
+    "file": "iron_dead.webp",
+    "png": "iron_dead.png",
+    "small": "128/iron_dead.webp",
+    "width": 213,
+    "height": 163,
+    "anchor": "center",
+    "cell": [
+      1029,
+      732,
+      1254,
+      955
+    ]
+  },
+  "iron_spikeball": {
+    "file": "iron_spikeball.webp",
+    "png": "iron_spikeball.png",
+    "small": "128/iron_spikeball.webp",
+    "width": 188,
+    "height": 188,
+    "anchor": "center",
+    "cell": [
+      0,
+      956,
+      201,
+      1254
+    ]
+  },
+  "iron_spikeballs": {
+    "file": "iron_spikeballs.webp",
+    "png": "iron_spikeballs.png",
+    "small": "128/iron_spikeballs.webp",
+    "width": 207,
+    "height": 192,
+    "anchor": "center",
+    "cell": [
+      202,
+      956,
+      415,
+      1254
+    ]
+  },
+  "iron_drill": {
+    "file": "iron_drill.webp",
+    "png": "iron_drill.png",
+    "small": "128/iron_drill.webp",
+    "width": 197,
+    "height": 202,
+    "anchor": "center",
+    "cell": [
+      416,
+      956,
+      622,
+      1254
+    ]
+  },
+  "iron_blast": {
+    "file": "iron_blast.webp",
+    "png": "iron_blast.png",
+    "small": "128/iron_blast.webp",
+    "width": 206,
+    "height": 219,
+    "anchor": "center",
+    "cell": [
+      624,
+      956,
+      830,
+      1254
+    ]
+  },
+  "iron_pillar": {
+    "file": "iron_pillar.webp",
+    "png": "iron_pillar.png",
+    "small": "128/iron_pillar.webp",
+    "width": 192,
+    "height": 221,
+    "anchor": "center",
+    "cell": [
+      832,
+      956,
+      1024,
+      1254
+    ]
+  },
+  "iron_ring": {
+    "file": "iron_ring.webp",
+    "png": "iron_ring.png",
+    "small": "128/iron_ring.webp",
+    "width": 218,
+    "height": 219,
+    "anchor": "center",
+    "cell": [
+      1025,
+      956,
+      1254,
+      1254
+    ]
+  },
+  "cham_front": {
+    "file": "cham_front.webp",
+    "png": "cham_front.png",
+    "small": "128/cham_front.webp",
+    "width": 205,
+    "height": 207,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      215,
+      252
+    ]
+  },
+  "cham_turn_1": {
+    "file": "cham_turn_1.webp",
+    "png": "cham_turn_1.png",
+    "small": "128/cham_turn_1.webp",
+    "width": 174,
+    "height": 202,
+    "anchor": "center",
+    "cell": [
+      216,
+      0,
+      403,
+      252
+    ]
+  },
+  "cham_ghost_front": {
+    "file": "cham_ghost_front.webp",
+    "png": "cham_ghost_front.png",
+    "small": "128/cham_ghost_front.webp",
+    "width": 135,
+    "height": 199,
+    "anchor": "center",
+    "cell": [
+      405,
+      0,
+      549,
+      252
+    ]
+  },
+  "cham_back": {
+    "file": "cham_back.webp",
+    "png": "cham_back.png",
+    "small": "128/cham_back.webp",
+    "width": 130,
+    "height": 200,
+    "anchor": "center",
+    "cell": [
+      551,
+      0,
+      693,
+      252
+    ]
+  },
+  "cham_turn_4": {
+    "file": "cham_turn_4.webp",
+    "png": "cham_turn_4.png",
+    "small": "128/cham_turn_4.webp",
+    "width": 145,
+    "height": 195,
+    "anchor": "center",
+    "cell": [
+      695,
+      0,
+      845,
+      252
+    ]
+  },
+  "cham_ghost_side": {
+    "file": "cham_ghost_side.webp",
+    "png": "cham_ghost_side.png",
+    "small": "128/cham_ghost_side.webp",
+    "width": 142,
+    "height": 196,
+    "anchor": "center",
+    "cell": [
+      846,
+      0,
+      996,
+      252
+    ]
+  },
+  "cham_ghost_eyes": {
+    "file": "cham_ghost_eyes.webp",
+    "png": "cham_ghost_eyes.png",
+    "small": "128/cham_ghost_eyes.webp",
+    "width": 71,
+    "height": 161,
+    "anchor": "center",
+    "cell": [
+      997,
+      0,
+      1074,
+      252
+    ]
+  },
+  "cham_angry": {
+    "file": "cham_angry.webp",
+    "png": "cham_angry.png",
+    "small": "128/cham_angry.webp",
+    "width": 174,
+    "height": 207,
+    "anchor": "center",
+    "cell": [
+      1075,
+      0,
+      1254,
+      252
+    ]
+  },
+  "cham_sneak_1": {
+    "file": "cham_sneak_1.webp",
+    "png": "cham_sneak_1.png",
+    "small": "128/cham_sneak_1.webp",
+    "width": 194,
+    "height": 182,
+    "anchor": "center",
+    "cell": [
+      0,
+      254,
+      205,
+      462
+    ]
+  },
+  "cham_sneak_2": {
+    "file": "cham_sneak_2.webp",
+    "png": "cham_sneak_2.png",
+    "small": "128/cham_sneak_2.webp",
+    "width": 165,
+    "height": 163,
+    "anchor": "center",
+    "cell": [
+      206,
+      254,
+      391,
+      462
+    ]
+  },
+  "cham_sneak_3": {
+    "file": "cham_sneak_3.webp",
+    "png": "cham_sneak_3.png",
+    "small": "128/cham_sneak_3.webp",
+    "width": 177,
+    "height": 182,
+    "anchor": "center",
+    "cell": [
+      392,
+      254,
+      581,
+      462
+    ]
+  },
+  "cham_sneak_4": {
+    "file": "cham_sneak_4.webp",
+    "png": "cham_sneak_4.png",
+    "small": "128/cham_sneak_4.webp",
+    "width": 138,
+    "height": 167,
+    "anchor": "center",
+    "cell": [
+      583,
+      254,
+      738,
+      462
+    ]
+  },
+  "cham_sneak_5": {
+    "file": "cham_sneak_5.webp",
+    "png": "cham_sneak_5.png",
+    "small": "128/cham_sneak_5.webp",
+    "width": 152,
+    "height": 174,
+    "anchor": "center",
+    "cell": [
+      740,
+      254,
+      907,
+      462
+    ]
+  },
+  "cham_sneak_6": {
+    "file": "cham_sneak_6.webp",
+    "png": "cham_sneak_6.png",
+    "small": "128/cham_sneak_6.webp",
+    "width": 154,
+    "height": 173,
+    "anchor": "center",
+    "cell": [
+      908,
+      254,
+      1080,
+      462
+    ]
+  },
+  "cham_sneak_7": {
+    "file": "cham_sneak_7.webp",
+    "png": "cham_sneak_7.png",
+    "small": "128/cham_sneak_7.webp",
+    "width": 159,
+    "height": 180,
+    "anchor": "center",
+    "cell": [
+      1082,
+      254,
+      1254,
+      462
+    ]
+  },
+  "cham_leap": {
+    "file": "cham_leap.webp",
+    "png": "cham_leap.png",
+    "small": "128/cham_leap.webp",
+    "width": 271,
+    "height": 213,
+    "anchor": "center",
+    "cell": [
+      0,
+      464,
+      291,
+      692
+    ]
+  },
+  "cham_swipe": {
+    "file": "cham_swipe.webp",
+    "png": "cham_swipe.png",
+    "small": "128/cham_swipe.webp",
+    "width": 221,
+    "height": 212,
+    "anchor": "center",
+    "cell": [
+      293,
+      464,
+      530,
+      692
+    ]
+  },
+  "cham_slash": {
+    "file": "cham_slash.webp",
+    "png": "cham_slash.png",
+    "small": "128/cham_slash.webp",
+    "width": 210,
+    "height": 209,
+    "anchor": "center",
+    "cell": [
+      532,
+      464,
+      775,
+      692
+    ]
+  },
+  "cham_emerge": {
+    "file": "cham_emerge.webp",
+    "png": "cham_emerge.png",
+    "small": "128/cham_emerge.webp",
+    "width": 197,
+    "height": 202,
+    "anchor": "center",
+    "cell": [
+      777,
+      464,
+      984,
+      692
+    ]
+  },
+  "cham_spin": {
+    "file": "cham_spin.webp",
+    "png": "cham_spin.png",
+    "small": "128/cham_spin.webp",
+    "width": 251,
+    "height": 219,
+    "anchor": "center",
+    "cell": [
+      986,
+      464,
+      1254,
+      692
+    ]
+  },
+  "cham_fade_1": {
+    "file": "cham_fade_1.webp",
+    "png": "cham_fade_1.png",
+    "small": "128/cham_fade_1.webp",
+    "width": 148,
+    "height": 187,
+    "anchor": "center",
+    "cell": [
+      0,
+      694,
+      189,
+      952
+    ]
+  },
+  "cham_fade_2": {
+    "file": "cham_fade_2.webp",
+    "png": "cham_fade_2.png",
+    "small": "128/cham_fade_2.webp",
+    "width": 168,
+    "height": 176,
+    "anchor": "center",
+    "cell": [
+      190,
+      694,
+      389,
+      952
+    ]
+  },
+  "cham_fade_3": {
+    "file": "cham_fade_3.webp",
+    "png": "cham_fade_3.png",
+    "small": "128/cham_fade_3.webp",
+    "width": 151,
+    "height": 191,
+    "anchor": "center",
+    "cell": [
+      391,
+      694,
+      587,
+      952
+    ]
+  },
+  "cham_fade_4": {
+    "file": "cham_fade_4.webp",
+    "png": "cham_fade_4.png",
+    "small": "128/cham_fade_4.webp",
+    "width": 201,
+    "height": 171,
+    "anchor": "center",
+    "cell": [
+      589,
+      694,
+      830,
+      952
+    ]
+  },
+  "cham_appear": {
+    "file": "cham_appear.webp",
+    "png": "cham_appear.png",
+    "small": "128/cham_appear.webp",
+    "width": 184,
+    "height": 203,
+    "anchor": "center",
+    "cell": [
+      831,
+      694,
+      1029,
+      952
+    ]
+  },
+  "cham_fade_5": {
+    "file": "cham_fade_5.webp",
+    "png": "cham_fade_5.png",
+    "small": "128/cham_fade_5.webp",
+    "width": 176,
+    "height": 195,
+    "anchor": "center",
+    "cell": [
+      1030,
+      694,
+      1254,
+      952
+    ]
+  },
+  "cham_smoke": {
+    "file": "cham_smoke.webp",
+    "png": "cham_smoke.png",
+    "small": "128/cham_smoke.webp",
+    "width": 153,
+    "height": 196,
+    "anchor": "center",
+    "cell": [
+      0,
+      954,
+      167,
+      1254
+    ]
+  },
+  "cham_leafburst": {
+    "file": "cham_leafburst.webp",
+    "png": "cham_leafburst.png",
+    "small": "128/cham_leafburst.webp",
+    "width": 174,
+    "height": 167,
+    "anchor": "center",
+    "cell": [
+      169,
+      954,
+      346,
+      1254
+    ]
+  },
+  "cham_tornado": {
+    "file": "cham_tornado.webp",
+    "png": "cham_tornado.png",
+    "small": "128/cham_tornado.webp",
+    "width": 169,
+    "height": 218,
+    "anchor": "center",
+    "cell": [
+      348,
+      954,
+      526,
+      1254
+    ]
+  },
+  "cham_leaves": {
+    "file": "cham_leaves.webp",
+    "png": "cham_leaves.png",
+    "small": "128/cham_leaves.webp",
+    "width": 161,
+    "height": 172,
+    "anchor": "center",
+    "cell": [
+      528,
+      954,
+      713,
+      1254
+    ]
+  },
+  "cham_ring": {
+    "file": "cham_ring.webp",
+    "png": "cham_ring.png",
+    "small": "128/cham_ring.webp",
+    "width": 168,
+    "height": 180,
+    "anchor": "center",
+    "cell": [
+      715,
+      954,
+      890,
+      1254
+    ]
+  },
+  "cham_blast": {
+    "file": "cham_blast.webp",
+    "png": "cham_blast.png",
+    "small": "128/cham_blast.webp",
+    "width": 171,
+    "height": 170,
+    "anchor": "center",
+    "cell": [
+      891,
+      954,
+      1068,
+      1254
+    ]
+  },
+  "cham_dart": {
+    "file": "cham_dart.webp",
+    "png": "cham_dart.png",
+    "small": "128/cham_dart.webp",
+    "width": 179,
+    "height": 162,
+    "anchor": "center",
+    "cell": [
+      1069,
+      954,
+      1254,
+      1254
+    ]
   }
 }

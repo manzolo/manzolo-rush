@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
+import { creature } from './creatures.js';
 
 const RIVALS = {
     soldier: { name: 'SOLDATO', hp: 18, color: 0xffa85b },
     runner: { name: 'PATTUGLIATORE', hp: 22, color: 0xbfa6ff },
     drone: { name: 'DRONE', hp: 16, color: 0xff7263 },
     tank: { name: 'TANK', hp: 30, color: 0xffd36d },
+    stalker: { name: 'CAMALEONTE', hp: 18, color: 0xb8ff5a },
 };
 // Probabilità che una salva sia una raffica su tutte le corsie, alta o bassa a caso.
 const SWEEP_CHANCE = { easy: .3, medium: .4, hard: .45 };
@@ -45,7 +47,8 @@ export class Encounter {
             return;
         this.reset();
         this.enemy = enemy;
-        this.spec = RIVALS[enemy.type];
+        // Il nome è quello della creatura (DEMONE, GOLEM DI ROCCIA…).
+        this.spec = { ...RIVALS[enemy.type], name: creature(enemy.type)?.name ?? RIVALS[enemy.type].name };
         this.label = `DUELLO · ${this.spec.name}`;
         this.hp = this.maxHp = Math.round(this.spec.hp * game.difficulty.duelHp);
         this.attackTimer = 1.8;

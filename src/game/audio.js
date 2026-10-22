@@ -219,6 +219,18 @@ export class Audio {
             case 'boss':
                 this.tone(80, .5, 'sawtooth', .2, 110);
                 break;
+            case 'tick':
+                // Tempo agli sgoccioli: tic di orologio; negli ultimi secondi doppio bip più acuto.
+                this.noiseHit(.03, .25, { filter: 'highpass', from: 3500, to: 3000 });
+                this.tone(variant ? 1500 : 1000, .07, 'square', variant ? .12 : .08, variant ? 1500 : 1000);
+                if (variant)
+                    this.tone(1500, .07, 'square', .12, 1500, .14);
+                break;
+            case 'timeup':
+                // Tempo scaduto: sirena che cala.
+                this.tone(880, .6, 'sawtooth', .18, 220);
+                this.tone(440, .6, 'square', .1, 110, .05);
+                break;
             case 'bossShot':
                 this.tone(160, .18, 'sawtooth', .12, 45);
                 break;

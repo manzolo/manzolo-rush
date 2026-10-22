@@ -2,12 +2,16 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { actor, block, material } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
-const types = ['soldier', 'runner', 'drone', 'tank'];
+import { CREATURES, creatureReady } from './creatures.js';
+import { BOSSES } from './bosses.js';
+const types = ['soldier', 'runner', 'drone', 'tank', 'stalker'];
 // Preferisce le viste frontali (sheet_hero_rear), altrimenti quelle di profilo dello sheet principale.
-const FRONT_NAMES = { soldier: 'enemy_front_grunt', runner: 'enemy_front_dodger', drone: 'enemy_front_drone', tank: 'enemy_front_tank' };
-const SIDE_NAMES = { soldier: 'enemy_grunt', runner: 'enemy_dodger', drone: 'enemy_drone', tank: 'enemy_tank' };
+const FRONT_NAMES = { soldier: 'enemy_front_grunt', runner: 'enemy_front_dodger', drone: 'enemy_front_drone', tank: 'enemy_front_tank', stalker: 'enemy_front_grunt' };
+const SIDE_NAMES = { soldier: 'enemy_grunt', runner: 'enemy_dodger', drone: 'enemy_drone', tank: 'enemy_tank', stalker: 'enemy_grunt' };
 const spriteName = type => SPRITES.has(FRONT_NAMES[type]) ? FRONT_NAMES[type] : SIDE_NAMES[type];
 const white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+// Matrice a scala zero: nasconde un'istanza senza cambiare l'ordine del batch.
+const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
 // Gradiente radiale condiviso: ombre a terra (nero) e bagliori di carica dell'arma (additivo).
 function radialTexture(inner, outer) {
     const canvas = document.createElement('canvas');
@@ -20,18 +24,26 @@ function radialTexture(inner, outer) {
     return new THREE.CanvasTexture(canvas);
 }
 // Altezza dell'arma (bocca di fuoco) per il bagliore di carica e il colpo.
-const MUZZLE = { soldier: [0, 1.2, .45], runner: [0, 1.1, .4], drone: [0, 1.5, .5], tank: [0, .75, .9] };
+const MUZZLE = { soldier: [0, 1.2, .45], runner: [0, 1.1, .4], drone: [0, 1.5, .5], tank: [0, .75, .9], stalker: [0, 1.1, .4] };
 export class Enemies {
     constructor(scene) {
         this.pool = [];
         this.shots = [];
         this.shotDummy = new THREE.Object3D();
         for (let i = 0; i < CONFIG.spawn.enemyPool; i++) {
-            const type = types[i % 4], mesh = new THREE.Group();
+            const type = types[i % types.length], mesh = new THREE.Group();
             scene.add(mesh);
-            let limbs = null, sprite = null;
-            const name = spriteName(type);
-            if (CONFIG.sprites.enabled && CONFIG.sprites.enemies && SPRITES.has(name)) {
+            let limbs = null, sprite = null, beast = null;
+            let name = spriteName(type);
+            if (CONFIG.sprites.enabled && CONFIG.sprites.enemies && creatureReady(type)) {
+                // Creatura animata: un solo piano a cui si cambia il fotogramma in base alla posa.
+                beast = CREATURES[type];
+                name = beast.idle[0];
+                sprite = billboard(name, beast.height, true);
+                sprite.material = sprite.material.clone();
+                mesh.add(sprite);
+            }
+            else if (CONFIG.sprites.enabled && CONFIG.sprites.enemies && SPRITES.has(name)) {
                 // Sprite rivolto verso il giocatore; le hitbox restano quelle dei modelli.
                 sprite = billboard(name, type === 'tank' ? 2.2 : type === 'drone' ? 1.2 : 1.95, type !== 'drone');
                 if (type === 'drone')
@@ -61,6 +73,8 @@ export class Enemies {
                 limbs = model.limbs;
             }
             const bar = block(mesh, 0x8bffd1, 0, type === 'tank' ? 2 : 2.3, 0, 1.4, .09, .07, true);
+            if (beast)
+                bar.position.y = beast.height + .2;
             bar.visible = type === 'tank';
             const parts = [];
             mesh.traverse(child => {
@@ -72,14 +86,37 @@ export class Enemies {
             muzzle.visible = false;
             mesh.add(muzzle);
             mesh.visible = false;
-            this.pool.push({ type, mesh, limbs, sprite, muzzle, spriteName: name, parts, bar, active: false, dying: 0, charge: 0, recoil: 0, knock: 0, x: 0, z: 0, hw: type === 'tank' ? .95 : .52, hd: type === 'tank' ? 1 : .42, bottom: type === 'drone' ? 1.15 : 0, top: type === 'drone' ? 1.95 : 1.95, flash: 0, age: 0 });
+            this.pool.push({ type, mesh, limbs, sprite, beast, frame: name, muzzle, spriteName: name, parts, bar, active: false, hidden: false, cloak: 0, dying: 0, charge: 0, recoil: 0, knock: 0, x: 0, z: 0, hw: type === 'tank' ? .95 : .52, hd: type === 'tank' ? 1 : .42, bottom: type === 'drone' ? 1.15 : 0, top: type === 'drone' ? 1.95 : 1.95, flash: 0, age: 0 });
         }
         for (let i = 0; i < CONFIG.enemies.shotPool; i++)
-            this.shots.push({ active: false, x: 0, y: 0, z: 0, previousZ: 0, hw: .15, hd: .4, bottom: 0, top: 0, speed: 0, delay: 0, wall: false, wallKind: '' });
+            this.shots.push({ active: false, x: 0, y: 0, z: 0, previousZ: 0, hw: .15, hd: .4, bottom: 0, top: 0, speed: 0, delay: 0, wall: false, wallKind: '', skin: '' });
         this.shotMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(.18, 6, 4), material(0xff665b, true), this.shots.length);
         this.shotMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         this.shotMesh.frustumCulled = false;
         scene.add(this.shotMesh);
+        // Colpi delle creature (palla di fuoco, macigno, mazza chiodata, dardo di foglie): un batch per sprite.
+        this.shotSprites = new Map();
+        for (const c of Object.values(CREATURES))
+            if (SPRITES.has(c.shot) && !this.shotSprites.has(c.shot)) {
+                const mesh = new THREE.InstancedMesh(SPRITES.geometry(false), SPRITES.material(c.shot, { depthWrite: false }), this.shots.length);
+                mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+                mesh.frustumCulled = false;
+                mesh.count = 0;
+                scene.add(mesh);
+                this.shotSprites.set(c.shot, mesh);
+            }
+        // Muri e barre dei boss dei livelli (fulmine, colata, spuntoni di ghiaccio…), appoggiati a terra.
+        this.wallSprites = new Map();
+        for (const b of Object.values(BOSSES))
+            for (const name of [b.walls.full, b.walls.low, b.walls.high].flat())
+                if (SPRITES.has(name) && !this.wallSprites.has(name)) {
+                    const mesh = new THREE.InstancedMesh(SPRITES.geometry(true), SPRITES.material(name, { depthWrite: false }), this.shots.length);
+                    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+                    mesh.frustumCulled = false;
+                    mesh.count = 0;
+                    scene.add(mesh);
+                    this.wallSprites.set(name, mesh);
+                }
         // Colpi del boss. Muro pieno = cortina di plasma animata (shader) tra due piloni;
         // barra bassa/alta = due raggi laser con nucleo bianco tesi tra gli stessi piloni.
         const inst = (geometry, material, count) => {
@@ -168,6 +205,11 @@ export class Enemies {
         e.fireTimer = (spec.fireInterval || 99) * (.45 + Math.random() * .55) * (difficulty?.attackInterval ?? 1);
         e.charge = e.recoil = e.knock = e.dying = 0;
         e.dash = false;
+        e.hidden = false;
+        e.cloak = 0;
+        e.cloakTimer = (spec.showSeconds || 0) + (lane + 1) * .2;
+        if (e.sprite)
+            e.sprite.material.opacity = 1;
         e.muzzle.visible = false;
         e.switchTimer = (CONFIG.enemies[type].switchInterval || 3) + (lane + 1) * .15;
         e.mesh.visible = true;
@@ -198,6 +240,7 @@ export class Enemies {
         b.speed = speed;
         b.delay = delay;
         b.shell = false;
+        b.skin = '';
         return b;
     }
     // Proiettile pesante del tank: rotola raso terra, si evita saltando o cambiando corsia.
@@ -205,6 +248,18 @@ export class Enemies {
         const b = this.shoot(lane, z, speed);
         if (b)
             Object.assign(b, { y: .38, bottom: 0, top: .62, hw: .32, hd: .45, shell: true });
+        return b;
+    }
+    // Cambia il fotogramma della creatura; mirror = specchiato (si muove verso sinistra).
+    pose(e, name, mirror = false) {
+        if (!e.beast || !SPRITES.has(name))
+            return;
+        if (e.frame !== name) {
+            e.frame = name;
+            e.sprite.material.map = SPRITES.texture(name);
+        }
+        const h = e.beast.height;
+        e.sprite.scale.set(h * SPRITES.aspect(name) * (mirror ? -1 : 1), h, 1);
     }
     update(dt, game) {
         for (const e of this.pool)
@@ -232,11 +287,14 @@ export class Enemies {
                 }
                 e.recoil = Math.max(0, e.recoil - dt);
                 e.knock = Math.max(0, e.knock - dt);
+                e.appear = Math.max(0, (e.appear || 0) - dt);
                 if (e.type === 'runner' && !e.dash && e.z > movement.dashZ)
                     e.dash = true; // scatto finale verso il giocatore
                 if (e.dash)
                     e.z += movement.dashSpeed * dt;
-                if ((e.type === 'soldier' || e.type === 'tank') && e.z > movement.fireFarZ && e.z < movement.fireNearZ) {
+                if (e.type === 'stalker')
+                    this.stalk(e, dt, movement);
+                if ((e.type === 'soldier' || e.type === 'tank' || (e.type === 'stalker' && !e.hidden && e.cloak === 0)) && e.z > movement.fireFarZ && e.z < movement.fireNearZ) {
                     e.fireTimer -= dt;
                     e.charge = e.fireTimer < CONFIG.enemies.chargeSeconds ? 1 - Math.max(0, e.fireTimer) / CONFIG.enemies.chargeSeconds : 0;
                     if (e.fireTimer <= 0) {
@@ -245,10 +303,11 @@ export class Enemies {
                         e.recoil = .22;
                         const lane = Math.max(-1, Math.min(1, Math.round(e.x / CONFIG.player.laneWidth)));
                         // I colpi viaggiano più veloci della strada, così non vengono "superati" dal nemico.
-                        if (e.type === 'tank')
-                            this.shell(lane, e.z + 1.2, game.speed + CONFIG.enemies.shellSpeed * .35);
-                        else
-                            this.shoot(lane, e.z + .6, game.speed + CONFIG.enemies.shotSpeed * .45);
+                        const shot = e.type === 'tank'
+                            ? this.shell(lane, e.z + 1.2, game.speed + CONFIG.enemies.shellSpeed * .35)
+                            : this.shoot(lane, e.z + .6, game.speed + CONFIG.enemies.shotSpeed * .45);
+                        if (shot && e.beast)
+                            shot.skin = e.beast.shot;
                         const [, my] = MUZZLE[e.type];
                         game.effects?.emit(e.x, my, e.z + .8, e.type === 'tank' ? 0xffb050 : 0xff7a4a, 6);
                         game.audio?.play('bossShot');
@@ -265,7 +324,9 @@ export class Enemies {
                     if (e.fireTimer <= 0 && e.z < CONFIG.enemies.drone.fireNearZ && e.z > CONFIG.enemies.drone.fireFarZ) {
                         e.fireTimer = CONFIG.enemies.drone.fireInterval * (game.difficulty?.attackInterval ?? 1);
                         e.recoil = .2;
-                        this.shoot(e.lane, e.z, CONFIG.enemies.shotSpeed * (game.difficulty?.projectileSpeed ?? 1), CONFIG.enemies.warningSeconds);
+                        const shot = this.shoot(e.lane, e.z, CONFIG.enemies.shotSpeed * (game.difficulty?.projectileSpeed ?? 1), CONFIG.enemies.warningSeconds);
+                        if (shot && e.beast)
+                            shot.skin = e.beast.shot;
                     }
                 }
                 if (e.z > CONFIG.world.despawnZ)
@@ -291,6 +352,64 @@ export class Enemies {
                     s.active = false;
             }
     }
+    // Posa della creatura: colpita, spara, carica, scatta, cammina di lato o guarda il giocatore.
+    animate(e, age, x, lean, phase) {
+        const c = e.beast, moving = Math.abs(lean) > .12;
+        let name, mirror = false;
+        if (e.hidden)
+            name = c.hidden;
+        else if (e.appear > 0)
+            name = c.appear;
+        else if (e.flash > 0 || e.knock > .08)
+            name = c.hit;
+        else if (e.recoil > .1)
+            name = c.shoot;
+        else if (e.charge > 0)
+            name = c.charge;
+        else if (e.dash && c.dash)
+            name = c.dash;
+        else if (moving || e.type === 'runner' || c.fly) {
+            name = c.walk[Math.floor(phase * .5) % c.walk.length];
+            mirror = lean < 0; // i fotogrammi di corsa guardano a destra
+        }
+        else
+            name = c.idle[Math.floor(age / .7 + e.phase) % c.idle.length];
+        this.pose(e, name, mirror);
+        const walking = moving && !c.fly;
+        e.sprite.position.y = c.fly ? .9 + e.hover : walking ? Math.abs(Math.sin(phase)) * .08 : 0;
+        e.sprite.material.color.setScalar(e.flash > 0 ? 2 : 1);
+        // Mimetizzazione: sfuma in dissolvenza; nascosto restano gli occhi appena visibili.
+        e.sprite.material.opacity = e.hidden ? .8 + Math.sin(age * 9) * .2 : 1 - e.cloak * .85;
+        e.mesh.rotation.z = c.fly ? Math.cos(age * 1.8 + e.phase) * -.06 : -lean * .08;
+    }
+    // Camaleonte: visibile, poi sfuma e si mimetizza; riappare in un'altra corsia libera.
+    stalk(e, dt, spec) {
+        e.cloakTimer -= dt;
+        if (!e.hidden) {
+            // Durante la dissolvenza (cloak > 0) è ancora colpibile.
+            if (e.cloak > 0) {
+                e.cloak = Math.min(1, e.cloak + dt / spec.fadeSeconds);
+                if (e.cloak >= 1) {
+                    e.hidden = true;
+                    e.cloakTimer = spec.hideSeconds;
+                }
+            }
+            else if (e.cloakTimer <= 0 && e.z < -18)
+                e.cloak = .001;
+            return;
+        }
+        if (e.cloakTimer <= 0) {
+            const lanes = [-1, 0, 1].filter(l => l !== e.lane && l !== e.safeLane);
+            if (lanes.length)
+                e.lane = lanes[Math.floor(Math.random() * lanes.length)];
+            e.x = e.previousX = e.lane * CONFIG.player.laneWidth;
+            e.hidden = false;
+            e.cloak = 0;
+            e.appear = .35;
+            e.cloakTimer = spec.showSeconds;
+            e.fireTimer = Math.max(e.fireTimer, .6);
+        }
+    }
     damage(e, damage) { e.hp -= damage; e.flash = .08; e.knock = .16; e.bar.scale.x = 1.4 * Math.max(0, e.hp / e.maxHp); return e.hp <= 0; }
     // Abbattuto: esce dalla logica subito, ma resta visibile mentre cade all'indietro e si spegne.
     kill(e) {
@@ -303,6 +422,8 @@ export class Enemies {
     remove(e) {
         e.active = false;
         e.dying = 0;
+        e.hidden = false;
+        e.cloak = 0;
         e.mesh.visible = false;
         e.mesh.scale.setScalar(1);
         e.bar.visible = e.type === 'tank';
@@ -339,6 +460,17 @@ export class Enemies {
             if (!e.active && e.dying > 0) {
                 const t = 1 - e.dying / CONFIG.enemies.deathSeconds;
                 e.mesh.position.set(e.x, e.type === 'drone' ? e.hover - t * 1.4 : 0, e.previousZ + (e.z - e.previousZ) * alpha);
+                if (e.beast) {
+                    // Creatura: i fotogrammi della caduta fanno l'animazione, poi svanisce.
+                    const d = e.beast.death;
+                    e.mesh.rotation.set(0, 0, 0);
+                    e.mesh.scale.setScalar(1);
+                    this.pose(e, d[Math.min(d.length - 1, Math.floor(t * d.length * 1.25))]);
+                    e.sprite.material.color.setScalar(t < .15 ? 1.8 : 1);
+                    e.sprite.material.opacity = t < .75 ? 1 : 1 - (t - .75) / .25;
+                    e.sprite.position.y = e.beast.fly ? Math.max(0, 1 - t * 2) * 1.2 : 0;
+                    continue;
+                }
                 e.mesh.rotation.set(-t * 1.25, 0, (e.phase % 2 > 1 ? 1 : -1) * t * .5);
                 e.mesh.scale.setScalar(1 - t * .45);
                 if (e.sprite)
@@ -365,6 +497,10 @@ export class Enemies {
                     e.muzzle.material.opacity = e.recoil > .12 ? 1 : .35 + e.charge * .65;
                 }
                 e.mesh.rotation.z = e.type === 'drone' ? Math.cos(age * 1.8 + e.phase) * -.065 : e.type === 'tank' ? stride * .008 : -lean * .16 + stride * .025;
+                if (e.beast) {
+                    this.animate(e, age, x, lean, phase);
+                    continue;
+                }
                 if (e.sprite) {
                     const h = e.type === 'tank' ? 2.2 : e.type === 'drone' ? 1.2 : 1.95;
                     const walking = e.type === 'soldier' || e.type === 'runner';
@@ -381,10 +517,25 @@ export class Enemies {
                         e.limbs[i].rotation.x = Math.sin(phase + (i % 2) * Math.PI) * (i < 2 ? .55 : .35);
             }
         let n = 0, curtains = 0, beams = 0, posts = 0;
+        const shotSprites = new Map();
         const time = performance.now() / 1000;
         this.curtainMaterial.uniforms.uTime.value = time;
+        const wallSprites = new Map();
         for (const s of this.shots)
-            if (s.active && s.wall) {
+            if (s.active && s.wall && this.wallSprites.has(s.skin)) {
+                // Larghezza fissata alla corsia: si capisce subito quale corsia è chiusa.
+                const mesh = this.wallSprites.get(s.skin), z = s.previousZ + (s.z - s.previousZ) * alpha;
+                const kind = s.wallKind, h = kind === 'full' ? 4.4 : kind === 'low' ? 1.5 : 1.6;
+                const pulse = 1 + Math.sin(time * 14 + z) * .04;
+                d.position.set(s.x, kind === 'high' ? (s.bottom + s.top) / 2 - h / 2 : 0, z);
+                d.rotation.set(0, 0, 0);
+                d.scale.set(s.hw * 2.25 * pulse, h * pulse, 1);
+                d.updateMatrix();
+                const k = wallSprites.get(mesh) ?? 0;
+                mesh.setMatrixAt(k, d.matrix);
+                wallSprites.set(mesh, k + 1);
+            }
+            else if (s.active && s.wall) {
                 const z = s.previousZ + (s.z - s.previousZ) * alpha, w = s.hw * 2, full = s.wallKind === 'full';
                 d.rotation.set(0, 0, 0);
                 if (full) {
@@ -421,6 +572,22 @@ export class Enemies {
                     }
                 d.rotation.set(0, 0, 0);
             }
+            else if (s.active && this.shotSprites.has(s.skin)) {
+                // Colpo di una creatura: sprite rivolto alla camera, la scia punta lontano dal giocatore.
+                const mesh = this.shotSprites.get(s.skin), c = Object.values(CREATURES).find(c => c.shot === s.skin);
+                const size = s.shell ? 1.6 : 1.25, pulse = s.delay > 0 ? 1 + Math.sin(s.delay * 25) * .25 : 1;
+                d.position.set(s.x, s.y, s.previousZ + (s.z - s.previousZ) * alpha);
+                d.rotation.set(0, 0, c?.spin ? -time * 9 : -Math.PI / 4);
+                d.scale.set(size * SPRITES.aspect(s.skin) * pulse, size * pulse, 1);
+                d.updateMatrix();
+                mesh.setMatrixAt(shotSprites.get(mesh) ?? 0, d.matrix);
+                shotSprites.set(mesh, (shotSprites.get(mesh) ?? 0) + 1);
+                d.rotation.set(0, 0, 0);
+                d.scale.setScalar(size * .8);
+                d.updateMatrix();
+                this.shotHalo.setMatrixAt(n, d.matrix);
+                this.shotMesh.setMatrixAt(n++, HIDDEN);
+            }
             else if (s.active) {
                 // Sfera piena + alone additivo che pulsa; il proiettile del tank è più grosso.
                 const base = (s.shell ? 2.2 : 1) * (s.delay > 0 ? 1 + Math.sin(s.delay * 25) * .3 : 1);
@@ -433,6 +600,14 @@ export class Enemies {
                 this.shotDummy.updateMatrix();
                 this.shotHalo.setMatrixAt(n++, this.shotDummy.matrix);
             }
+        for (const mesh of this.shotSprites.values()) {
+            mesh.count = shotSprites.get(mesh) ?? 0;
+            mesh.instanceMatrix.needsUpdate = true;
+        }
+        for (const mesh of this.wallSprites.values()) {
+            mesh.count = wallSprites.get(mesh) ?? 0;
+            mesh.instanceMatrix.needsUpdate = true;
+        }
         this.shotMesh.count = n;
         this.shotMesh.instanceMatrix.needsUpdate = true;
         this.shotHalo.count = n;

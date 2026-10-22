@@ -513,6 +513,59 @@ footer i {
 .result-grid b {
     font-size:20px;
 }
+/* Tempo: stessa posizione della barra del boss, che lo sostituisce durante gli scontri. */
+#time-hud {
+    position:fixed;
+    top:85px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(400px,42vw);
+}
+#time-hud>div:first-child {
+    text-shadow:0 1px 2px #000c, 0 0 8px #0008;
+    font-weight:700;
+    display:flex;
+    justify-content:space-between;
+    font-size:10px;
+    letter-spacing:2px;
+    margin-bottom:8px;
+}
+#time-value {
+    font-variant-numeric:tabular-nums;
+}
+.time-track {
+    height:10px;
+    border-radius:5px;
+    overflow:hidden;
+    background:#151b2c;
+    border:1px solid #8bffd155;
+}
+#time-fill {
+    display:block;
+    height:100%;
+    width:100%;
+    border-radius:5px;
+    background:linear-gradient(90deg,#8bffd1,#ffe08a);
+    transition:width .15s linear;
+}
+#time-hud.gain .time-track {
+    animation:time-gain .35s ease-out;
+}
+@keyframes time-gain {
+    0% { box-shadow:0 0 0 #ffe08a00; }
+    30% { box-shadow:0 0 14px #ffe08a; }
+    100% { box-shadow:0 0 0 #ffe08a00; }
+}
+#time-hud.low #time-fill {
+    background:linear-gradient(90deg,#ff5e4f,#ffa04a);
+}
+#time-hud.low {
+    color:#ff8a7e;
+    animation:time-low .5s ease-in-out infinite alternate;
+}
+@keyframes time-low {
+    to { opacity:.55; }
+}
 #boss-hud {
     position:fixed;
     top:85px;
@@ -641,14 +694,12 @@ footer i {
         gap:10px;
         font-size:11px;
     }
-    #boss-hud {
+    #boss-hud, #time-hud {
         top:155px;
         width:80vw;
     }
+    /* Sotto la barra del tempo (o del boss), che occupa sempre la fascia in alto. */
     #hud {
-        --tutorial-top:max(24vh, 185px);
-    }
-    #hud:has(#boss-hud:not(.hidden)) {
         --tutorial-top:max(24vh, 210px);
     }
     #tutorial {

@@ -76,8 +76,8 @@ test('proiettile spazzato colpisce bersagli attraversati in un singolo tick', ()
     assert.ok(!bulletOverlap({ x: 0, y: 3, z: -13, previousZ: -8 }, enemy));
 });
 test('salvataggi corrotti, storage negato e valori non validi non bloccano il gioco', () => {
-    assert.deepEqual(readSave(null), { best: 0, bestCharacter: null, bestDifficulty: null, coins: 0, audio: true, music: true, soundVolume: 1, musicVolume: 1, character: 'manzolo', difficulty: 'medium' });
-    assert.deepEqual(readSave({ getItem: () => '{broken' }), { best: 0, bestCharacter: null, bestDifficulty: null, coins: 0, audio: true, music: true, soundVolume: 1, musicVolume: 1, character: 'manzolo', difficulty: 'medium' });
+    assert.deepEqual(readSave(null), { best: 0, bestCharacter: null, bestDifficulty: null, coins: 0, audio: true, music: true, hints: true, soundVolume: 1, musicVolume: 1, character: 'manzolo', difficulty: 'medium' });
+    assert.deepEqual(readSave({ getItem: () => '{broken' }), { best: 0, bestCharacter: null, bestDifficulty: null, coins: 0, audio: true, music: true, hints: true, soundVolume: 1, musicVolume: 1, character: 'manzolo', difficulty: 'medium' });
     assert.deepEqual(readSave({ getItem: () => '{"best":-5,"coins":"oops","audio":false}' }), { ...readSave(null), audio: false });
     assert.equal(writeSave({ setItem() { throw new Error('quota'); } }, {}), false);
     let value;

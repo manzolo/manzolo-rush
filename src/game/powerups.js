@@ -190,6 +190,7 @@ export class Pickups {
                 if (reachable && Math.abs(player.x - c.x) < CONFIG.collection.coinRadius && Math.abs(CONFIG.player.z - c.z) < CONFIG.collection.coinRadius && c.y > player.y - .2 && c.y < player.y + player.height + .35) {
                     c.active = false;
                     game.coins++;
+                    game.addTime?.(CONFIG.timer.coin);
                     game.reward += CONFIG.bonuses.coinScore * game.multiplier;
                     game.audio?.play('coin');
                     game.ui?.coinFly();

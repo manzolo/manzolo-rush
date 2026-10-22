@@ -19,6 +19,8 @@ import { SPRITES } from './sprites.js';
 import { playerOverlap, bulletOverlap, obstaclePassBonus } from './collisions.js';
 import { difficultyById } from './difficulty.js';
 import { Encounter } from './encounter.js';
+import { creature } from './creatures.js';
+import { BOSSES, LEVELS } from './bosses.js';
 export class Game {
     constructor(renderer, scene, camera) {
         this.renderer = renderer;
@@ -33,6 +35,8 @@ export class Game {
         this.pickups = new Pickups(scene);
         this.boss = new Boss(scene);
         this.encounter = new Encounter(scene);
+        this.timeLeft = CONFIG.timer.start;
+        this.level = 0;
         this.ui = new UI();
         this.powerups = { triple: 0, shield: 0, magnet: 0, double: 0 };
         this.effects = new Effects(scene, this.player);
@@ -77,6 +81,12 @@ export class Game {
                 this.audio.setVolume('sound', 1);
             }
             this.audio.setEnabled(this.save.audio);
+            writeSave(this.storage, this.save);
+            this.refreshSave();
+        };
+        // Suggerimenti in sovrimpressione: si possono spegnere, la scelta resta salvata.
+        document.querySelector('#hints').onclick = () => {
+            this.save.hints = !this.save.hints;
             writeSave(this.storage, this.save);
             this.refreshSave();
         };
@@ -143,6 +153,10 @@ export class Game {
     }
     start() {
         this.encounter.reset();
+        this.level = 0;
+        this.world.setLevel(null, true);
+        this.timeLeft = CONFIG.timer.start;
+        this.timeUp = false;
         this.audio.unlock();
         this.runCharacter = this.player.character;
         this.difficulty = difficultyById(this.save.difficulty);
@@ -174,6 +188,8 @@ export class Game {
     menu() {
         this.bank();
         this.encounter.reset();
+        this.level = 0;
+        this.world.setLevel(null, true);
         this.setState(STATES.MENU);
         this.obstacles.reset();
         this.enemies.reset();
@@ -249,6 +265,20 @@ export class Game {
             this.player.command(this.input.queue.shift());
         if (!this.encounter.active)
             this.time += dt;
+        // Il tempo scorre solo in corsa: boss e duelli non hanno monete per recuperarlo.
+        if (!this.encounter.active && !this.boss.active) {
+            const before = this.timeLeft;
+            this.timeLeft = Math.max(0, this.timeLeft - dt * (this.difficulty.timeDrain ?? 1));
+            // Sotto la soglia d'allarme un tic a ogni secondo intero, più urgente negli ultimi tre.
+            if (before < CONFIG.timer.warn && Math.ceil(this.timeLeft) < Math.ceil(before) && this.timeLeft > 0)
+                this.audio.play('tick', this.timeLeft < 3);
+            if (this.timeLeft <= 0) {
+                this.audio.play('timeup');
+                this.timeUp = true;
+                this.gameOver();
+                return;
+            }
+        }
         this.speed = this.encounter.active ? 0 : Math.min(CONFIG.speed.max, CONFIG.speed.initial + this.time * CONFIG.speed.acceleration) * this.difficulty.speed;
         this.distance += this.speed * dt;
         if (this.powerups.double > 0)
@@ -259,13 +289,15 @@ export class Game {
         for (const key in this.powerups)
             this.powerups[key] = Math.max(0, this.powerups[key] - dt);
         this.player.update(dt);
-        this.world.update(dt, this.speed, this.encounter.active || this.boss.active);
+        // Durante boss e duelli lo scenario passa alla stagione del boss del livello.
+        const battle = this.encounter.active || this.boss.active;
+        this.world.update(dt, this.speed, battle && BOSSES[LEVELS[this.level].boss].season);
         const theme = Math.floor(this.time / CONFIG.world.themeSeconds) % THEMES.length;
         if (this.world.theme !== theme) {
             this.world.setTheme(theme);
             this.announce(THEMES[theme].name);
         }
-        this.ui.text('zone', `${String(theme + 1).padStart(2, '0')} / ${THEMES[theme].name} · ${this.difficulty.name.toUpperCase()}`);
+        this.ui.text('zone', `LV ${this.level + 1} · ${THEMES[theme].name} · ${this.difficulty.name.toUpperCase()}`);
         if (!this.encounter.active)
             this.boss.update(dt, this);
         this.encounter.update(dt, this);
@@ -308,7 +340,7 @@ export class Game {
             // Segmento spazzato, primo impatto: impedisce tunneling e colpi attraverso treni.
             let target = null, kind = '', nearest = -Infinity;
             for (const enemy of this.enemies.pool) {
-                if (enemy.active && !bullet.hits.includes(enemy) && bulletOverlap(bullet, enemy) && enemy.z > nearest) {
+                if (enemy.active && !enemy.hidden && !bullet.hits.includes(enemy) && bulletOverlap(bullet, enemy) && enemy.z > nearest) {
                     target = enemy;
                     kind = 'enemy';
                     nearest = enemy.z;
@@ -350,7 +382,7 @@ export class Game {
                 this.audio.play('explosion');
                 const r2 = bullet.splash ** 2;
                 for (const enemy of this.enemies.pool)
-                    if (enemy.active && enemy !== target && (enemy.x - bullet.x) ** 2 + (enemy.z - bullet.z) ** 2 < r2)
+                    if (enemy.active && !enemy.hidden && enemy !== target && (enemy.x - bullet.x) ** 2 + (enemy.z - bullet.z) ** 2 < r2)
                         this.hitEnemy(enemy, damage * .6);
                 for (const obstacle of this.obstacles.pool)
                     if (obstacle.active && obstacle !== target && obstacle.type === 'crate' && (obstacle.x - bullet.x) ** 2 + (obstacle.z - bullet.z) ** 2 < r2)
@@ -411,7 +443,11 @@ export class Game {
         this.reward += points;
         this.ui.scorePop(`+${points}`, enemy.x, enemy.type === 'drone' ? 2.6 : enemy.type === 'tank' ? 2.9 : 2.4, enemy.z, this.camera, this.combo > 1);
         this.effects.emit(enemy.x, 1, enemy.z, 0xffa46e, CONFIG.juice.killParticles);
-        this.effects.burst(enemy.x, enemy.type === 'drone' ? 1.5 : 1, enemy.z, enemy.type === 'tank' ? 3.2 : 2.3);
+        const beast = creature(enemy.type);
+        this.effects.burst(enemy.x, enemy.type === 'drone' ? 1.5 : 1, enemy.z, enemy.type === 'tank' ? 3.2 : 2.3, beast?.blast);
+        // Ogni creatura abbattuta lascia la sua arma: demone razzi, roccia sparpagliatore, ferro plasma, camaleonte laser.
+        if (beast)
+            this.weapons.equip(beast.weapon, this);
         this.shake = CONFIG.juice.shake;
         this.hitStop = CONFIG.juice.hitStop;
         this.audio.play('explosion');
@@ -482,6 +518,18 @@ export class Game {
         if (save)
             writeSave(this.storage, this.save);
     }
+    // Boss sconfitto: si passa al livello successivo (l'ultimo resta, con il suo boss che ritorna).
+    levelUp() {
+        if (this.level >= LEVELS.length - 1)
+            return;
+        this.level++;
+        const level = LEVELS[this.level];
+        this.world.setLevel(level.tint);
+        this.timeLeft = CONFIG.timer.max;
+        this.announce(level.name);
+    }
+    // Moneta raccolta: un po' di tempo in più, fino al massimo.
+    addTime(seconds) { this.timeLeft = Math.min(CONFIG.timer.max, this.timeLeft + seconds); }
     announce(text) { this.ui.announce(text); }
     refreshSave() {
         document.querySelector('#menu-best').textContent = Math.floor(this.save.best).toString().padStart(6, '0');
@@ -498,6 +546,7 @@ export class Game {
         };
         toggle('#sound', this.save.audio, '🔊', '🔇', 'Effetti:');
         toggle('#music', this.save.music, '♫', '♪', 'Musica:');
+        toggle('#hints', this.save.hints, '?', '?', 'Suggerimenti:');
         for (const channel of ['music', 'sound']) {
             const volume = Math.round(this.save[`${channel}Volume`] * 100);
             const on = channel === 'music' ? this.save.music : this.save.audio;
@@ -518,7 +567,7 @@ export class Game {
         this.save.coins += this.coins;
         writeSave(this.storage, this.save);
         this.refreshSave();
-        document.querySelector('#result-label').textContent = best ? `NUOVO RECORD CON ${characterById(this.save.bestCharacter).name.toUpperCase()}!` : 'UNA CORSA. UN’ALTRA STORIA.';
+        document.querySelector('#result-label').textContent = best ? `NUOVO RECORD CON ${characterById(this.save.bestCharacter).name.toUpperCase()}!` : this.timeUp ? 'TEMPO SCADUTO! PRENDI PIÙ MONETE.' : 'UNA CORSA. UN’ALTRA STORIA.';
     }
     render(alpha, dt) {
         // In pausa conserva esattamente l'ultimo fotogramma, incluse camera e luci.
@@ -559,12 +608,13 @@ export class Game {
             this.camera.fov += (fov - this.camera.fov) * (1 - Math.exp(-dt * 3));
             this.camera.updateProjectionMatrix();
         }
-        const heat = this.world.inferno.strength;
+        const atmosphere = this.world.atmosphere, heat = atmosphere.strength, flash = atmosphere.flash * heat;
         if (this.sunlight)
-            this.sunlight.color.lerp(this.lightColor.set(THEMES[this.world.theme].sun).lerp(this.world.inferno.palette.sun, heat), 1 - Math.exp(-dt * 2));
+            this.sunlight.color.lerp(this.lightColor.set(THEMES[this.world.theme].sun).lerp(atmosphere.palette.sun, heat), 1 - Math.exp(-dt * 2));
         if (this.ambientLight) {
-            this.ambientLight.intensity = 2 - heat * .9;
-            this.ambientLight.color.set(0xffffff).lerp(this.world.inferno.palette.building, heat * .45);
+            // Il lampo del temporale illumina tutto per un istante.
+            this.ambientLight.intensity = 2 - heat * .9 + flash * 2.5;
+            this.ambientLight.color.set(0xffffff).lerp(atmosphere.palette.building, heat * .45 * (1 - flash));
         }
         this.ui.nodes['damage-flash'].style.opacity = this.state === STATES.PLAY ? this.damageFlash * 2 : 0;
         this.renderer.render(this.scene, this.camera);

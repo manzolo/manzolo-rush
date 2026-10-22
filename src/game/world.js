@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { CONFIG, THEMES } from './config.js';
 import { block } from './models.js';
 import { SPRITES } from './sprites.js';
-import { Inferno } from './inferno.js';
+import { Atmosphere } from './atmosphere.js';
 import { residentialFacade, officeFacade } from './facades.js';
 // Texture ripetibili per tema (sheet_textures) e oggetti di contorno (sheet_props).
 const THEME_TEXTURES = [
@@ -16,6 +16,7 @@ const THEME_PROPS = [
     ['prop_neon_antenna', 'prop_neon_holo', 'prop_neon_pylon', 'prop_neon_canisters'],
 ];
 // Coronamento dei tetti per tema: cornicione e torretta chiari in città, terracotta nel deserto, acciaio nella base.
+const WHITE = new THREE.Color(0xffffff);
 const ROOF_COLORS = [[0xf3dcc0, 0xd8c3a6], [0xc9774a, 0xa85f3a], [0x34466a, 0x23314d]];
 const SHARED_PROPS = ['prop_cone', 'prop_block', 'prop_bush', 'prop_rocks'];
 // Altezza in metri di ogni oggetto; la larghezza segue le proporzioni dello sprite.
@@ -186,7 +187,11 @@ export class World {
             this.batches.push(batch);
         }
         this.color = new THREE.Color();
-        this.inferno = new Inferno(scene);
+        this.atmosphere = new Atmosphere(scene);
+        // Colori del livello (LEVELS[i].tint) mescolati al tema: `levelBlend` sale piano a ogni cambio.
+        this.levelTint = null;
+        this.levelBlend = 0;
+        this.tintColor = new THREE.Color();
         this.setTheme(0, true);
         this.update(0, 0);
     }
@@ -210,7 +215,7 @@ export class World {
             p.mesh.scale.set(h * SPRITES.aspect(name), h, 1);
         }
         if (immediate) {
-            this.inferno.reset();
+            this.atmosphere.reset();
             this.scene.background = new THREE.Color(this.target.sky);
             this.scene.fog = new THREE.Fog(this.target.fog, 35, 160);
             if (!this.textured) {
@@ -228,8 +233,16 @@ export class World {
             this.sun.material.color.set(this.target.sun);
         }
     }
-    update(dt, speed, battle = false) {
-        this.inferno.update(dt, battle);
+    // tint: palette del livello (null = nessuna); immediate = senza dissolvenza (nuova corsa).
+    setLevel(tint, immediate = false) {
+        this.levelTint = tint;
+        if (immediate)
+            this.levelBlend = 0;
+    }
+    // season: stagione dello scontro in corso ('storm', 'inferno', 'winter') o false.
+    update(dt, speed, season = false) {
+        this.atmosphere.update(dt, season);
+        this.levelBlend += ((this.levelTint ? this.levelTint.amount : 0) - this.levelBlend) * (1 - Math.exp(-dt * .6));
         this.phase += dt;
         for (const chunk of this.chunks) {
             chunk.position.z += speed * dt;
@@ -280,19 +293,27 @@ export class World {
         }
         for (const mesh of this.propBatches.values())
             mesh.instanceMatrix.needsUpdate = true;
-        const blend = 1 - Math.exp(-dt * 1.8), t = this.target, heat = this.inferno.strength, hell = this.inferno.palette;
-        this.scene.background.lerp(this.color.set(t.sky).lerp(hell.sky, heat), blend);
-        this.scene.fog.color.lerp(this.color.set(t.fog).lerp(hell.fog, heat), blend);
-        this.scene.fog.near = 35 - heat * 7;
-        this.scene.fog.far = 160 - heat * 65;
-        this.roadMaterial.color.lerp(this.color.set(this.textured ? 0xffffff : t.road).lerp(hell.road, heat), blend);
-        this.groundMaterial.color.lerp(this.color.set(this.textured ? 0xffffff : t.ground).lerp(hell.ground, heat), blend);
-        this.buildingMaterials[0].color.lerp(this.color.set(this.textured ? 0xffffff : t.primary).lerp(hell.building, heat), blend);
-        this.buildingMaterials[1].color.lerp(this.color.set(this.textured ? 0xffffff : t.secondary).lerp(hell.building, heat), blend);
-        this.accentMaterial.color.lerp(this.color.set(t.accent).lerp(hell.accent, heat), blend);
+        const blend = 1 - Math.exp(-dt * 1.8), t = this.target, heat = this.atmosphere.strength, hell = this.atmosphere.palette;
+        const tint = this.levelTint, amount = tint ? this.levelBlend : 0, flash = this.atmosphere.flash * heat;
+        // Tema → colori del livello → stagione dello scontro; il lampo schiarisce cielo e nebbia.
+        const mix = (base, key) => {
+            this.color.set(base);
+            if (tint && amount > 0)
+                this.color.lerp(this.tintColor.set(tint[key]), amount);
+            return this.color.lerp(hell[key], heat);
+        };
+        this.scene.background.lerp(mix(t.sky, 'sky'), blend).lerp(WHITE, flash * .55);
+        this.scene.fog.color.lerp(mix(t.fog, 'fog'), blend).lerp(WHITE, flash * .35);
+        this.scene.fog.near = 35 - heat * (35 - this.atmosphere.fogNear) * .25;
+        this.scene.fog.far = 160 - heat * (160 - this.atmosphere.fogFar);
+        this.roadMaterial.color.lerp(mix(this.textured ? 0xffffff : t.road, 'road'), blend);
+        this.groundMaterial.color.lerp(mix(this.textured ? 0xffffff : t.ground, 'ground'), blend);
+        this.buildingMaterials[0].color.lerp(mix(this.textured ? 0xffffff : t.primary, 'building'), blend);
+        this.buildingMaterials[1].color.lerp(mix(this.textured ? 0xffffff : t.secondary, 'building'), blend);
+        this.accentMaterial.color.lerp(mix(t.accent, 'accent'), blend);
         for (let k = 0; k < 2; k++)
-            this.roofMaterials[k].color.lerp(this.color.set(ROOF_COLORS[this.theme][k]).lerp(hell.roof, heat), blend);
-        this.sun.material.color.lerp(this.color.set(t.sun).lerp(hell.sun, heat), blend);
+            this.roofMaterials[k].color.lerp(mix(ROOF_COLORS[this.theme][k], 'roof'), blend);
+        this.sun.material.color.lerp(mix(t.sun, 'sun'), blend);
     }
     render(alpha, speed) {
         const offset = (alpha - 1) * speed * CONFIG.step;

@@ -78,3 +78,18 @@ test('ogni arma ha un suono di sparo distinto e limitato a ~30 al secondo', () =
     }
     assert.ok(signatures.size >= 4);
 });
+
+test('tempo agli sgoccioli: tic, doppio bip urgente e sirena finale', () => {
+    const audio = new Audio();
+    audio.unlock();
+    const count = () => audio.context.oscillators + audio.context.sources;
+    audio.context.oscillators = audio.context.sources = 0;
+    audio.play('tick', false);
+    const normal = count();
+    audio.context.oscillators = audio.context.sources = 0;
+    audio.play('tick', true);
+    assert.ok(count() > normal);
+    audio.context.oscillators = audio.context.sources = 0;
+    audio.play('timeup');
+    assert.ok(count() >= 2);
+});
