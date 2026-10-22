@@ -17,7 +17,7 @@ GRID_ROWS   ?= 5
 NAMES       ?= main
 PREFIX      ?=
 
-.PHONY: help serve open check test verify site sprites sprites-preview \
+.PHONY: help serve open check test verify site sprites sprites-preview scenery-sprites \
         build up down restart logs shell run stop ps image-size clean distclean \
         deploy deploy-logs
 
@@ -63,6 +63,10 @@ sprites: ## Ritaglia uno sheet (SHEET=..., GRID_COLS/ROWS, NAMES=preset, PREFIX=
 
 sprites-preview: sprites ## Rigenera gli sprite e apre l'anteprima
 	@xdg-open assets/sprites/preview.png >/dev/null 2>&1 || open assets/sprites/preview.png
+
+scenery-sprites: ## Ritaglia i due sheet naturali (foresta, vulcano, neve), preservando l'alpha
+	$(PYTHON) tools/slice_sprites.py --sheet assets/raw/sheet_nature_textures.png --names nature_textures --cols 4 --rows 3 --fixed-grid --no-key --inset 2
+	$(PYTHON) tools/slice_sprites.py --sheet assets/raw/sheet_nature_props_v2.png --names nature_props --cols 4 --rows 3 --fixed-grid --alpha
 
 ## ------------------------------------------------------------ docker
 

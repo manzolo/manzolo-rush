@@ -4892,5 +4892,341 @@
       1254,
       1254
     ]
+  },
+  "forest_facade_a": {
+    "file": "forest_facade_a.webp",
+    "png": "forest_facade_a.png",
+    "small": "128/forest_facade_a.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      0,
+      0,
+      362,
+      362
+    ]
+  },
+  "forest_facade_b": {
+    "file": "forest_facade_b.webp",
+    "png": "forest_facade_b.png",
+    "small": "128/forest_facade_b.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      362,
+      0,
+      724,
+      362
+    ]
+  },
+  "forest_road": {
+    "file": "forest_road.webp",
+    "png": "forest_road.png",
+    "small": "128/forest_road.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      724,
+      0,
+      1086,
+      362
+    ]
+  },
+  "forest_ground": {
+    "file": "forest_ground.webp",
+    "png": "forest_ground.png",
+    "small": "128/forest_ground.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      1086,
+      0,
+      1448,
+      362
+    ]
+  },
+  "volcano_facade_a": {
+    "file": "volcano_facade_a.webp",
+    "png": "volcano_facade_a.png",
+    "small": "128/volcano_facade_a.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      0,
+      362,
+      362,
+      724
+    ]
+  },
+  "volcano_facade_b": {
+    "file": "volcano_facade_b.webp",
+    "png": "volcano_facade_b.png",
+    "small": "128/volcano_facade_b.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      362,
+      362,
+      724,
+      724
+    ]
+  },
+  "volcano_road": {
+    "file": "volcano_road.webp",
+    "png": "volcano_road.png",
+    "small": "128/volcano_road.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      724,
+      362,
+      1086,
+      724
+    ]
+  },
+  "volcano_ground": {
+    "file": "volcano_ground.webp",
+    "png": "volcano_ground.png",
+    "small": "128/volcano_ground.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      1086,
+      362,
+      1448,
+      724
+    ]
+  },
+  "snow_facade_a": {
+    "file": "snow_facade_a.webp",
+    "png": "snow_facade_a.png",
+    "small": "128/snow_facade_a.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      0,
+      724,
+      362,
+      1086
+    ]
+  },
+  "snow_facade_b": {
+    "file": "snow_facade_b.webp",
+    "png": "snow_facade_b.png",
+    "small": "128/snow_facade_b.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      362,
+      724,
+      724,
+      1086
+    ]
+  },
+  "snow_road": {
+    "file": "snow_road.webp",
+    "png": "snow_road.png",
+    "small": "128/snow_road.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      724,
+      724,
+      1086,
+      1086
+    ]
+  },
+  "snow_ground": {
+    "file": "snow_ground.webp",
+    "png": "snow_ground.png",
+    "small": "128/snow_ground.webp",
+    "width": 358,
+    "height": 358,
+    "anchor": "center",
+    "cell": [
+      1086,
+      724,
+      1448,
+      1086
+    ]
+  },
+  "prop_forest_tree": {
+    "file": "prop_forest_tree.webp",
+    "png": "prop_forest_tree.png",
+    "small": "128/prop_forest_tree.webp",
+    "width": 281,
+    "height": 289,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      0,
+      362,
+      362
+    ]
+  },
+  "prop_forest_arch": {
+    "file": "prop_forest_arch.webp",
+    "png": "prop_forest_arch.png",
+    "small": "128/prop_forest_arch.webp",
+    "width": 297,
+    "height": 280,
+    "anchor": "bottom-center",
+    "cell": [
+      362,
+      0,
+      724,
+      362
+    ]
+  },
+  "prop_forest_pillar": {
+    "file": "prop_forest_pillar.webp",
+    "png": "prop_forest_pillar.png",
+    "small": "128/prop_forest_pillar.webp",
+    "width": 202,
+    "height": 292,
+    "anchor": "bottom-center",
+    "cell": [
+      724,
+      0,
+      1086,
+      362
+    ]
+  },
+  "prop_forest_ferns": {
+    "file": "prop_forest_ferns.webp",
+    "png": "prop_forest_ferns.png",
+    "small": "128/prop_forest_ferns.webp",
+    "width": 287,
+    "height": 193,
+    "anchor": "bottom-center",
+    "cell": [
+      1086,
+      0,
+      1448,
+      362
+    ]
+  },
+  "prop_volcano_basalt": {
+    "file": "prop_volcano_basalt.webp",
+    "png": "prop_volcano_basalt.png",
+    "small": "128/prop_volcano_basalt.webp",
+    "width": 265,
+    "height": 272,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      362,
+      362,
+      724
+    ]
+  },
+  "prop_volcano_vent": {
+    "file": "prop_volcano_vent.webp",
+    "png": "prop_volcano_vent.png",
+    "small": "128/prop_volcano_vent.webp",
+    "width": 292,
+    "height": 269,
+    "anchor": "bottom-center",
+    "cell": [
+      362,
+      362,
+      724,
+      724
+    ]
+  },
+  "prop_volcano_tree": {
+    "file": "prop_volcano_tree.webp",
+    "png": "prop_volcano_tree.png",
+    "small": "128/prop_volcano_tree.webp",
+    "width": 254,
+    "height": 300,
+    "anchor": "bottom-center",
+    "cell": [
+      724,
+      362,
+      1086,
+      724
+    ]
+  },
+  "prop_volcano_crystals": {
+    "file": "prop_volcano_crystals.webp",
+    "png": "prop_volcano_crystals.png",
+    "small": "128/prop_volcano_crystals.webp",
+    "width": 288,
+    "height": 212,
+    "anchor": "bottom-center",
+    "cell": [
+      1086,
+      362,
+      1448,
+      724
+    ]
+  },
+  "prop_snow_fir": {
+    "file": "prop_snow_fir.webp",
+    "png": "prop_snow_fir.png",
+    "small": "128/prop_snow_fir.webp",
+    "width": 248,
+    "height": 284,
+    "anchor": "bottom-center",
+    "cell": [
+      0,
+      724,
+      362,
+      1086
+    ]
+  },
+  "prop_snow_crystals": {
+    "file": "prop_snow_crystals.webp",
+    "png": "prop_snow_crystals.png",
+    "small": "128/prop_snow_crystals.webp",
+    "width": 257,
+    "height": 249,
+    "anchor": "bottom-center",
+    "cell": [
+      362,
+      724,
+      724,
+      1086
+    ]
+  },
+  "prop_snow_sign": {
+    "file": "prop_snow_sign.webp",
+    "png": "prop_snow_sign.png",
+    "small": "128/prop_snow_sign.webp",
+    "width": 196,
+    "height": 271,
+    "anchor": "bottom-center",
+    "cell": [
+      724,
+      724,
+      1086,
+      1086
+    ]
+  },
+  "prop_snow_rocks": {
+    "file": "prop_snow_rocks.webp",
+    "png": "prop_snow_rocks.png",
+    "small": "128/prop_snow_rocks.webp",
+    "width": 290,
+    "height": 210,
+    "anchor": "bottom-center",
+    "cell": [
+      1086,
+      724,
+      1448,
+      1086
+    ]
   }
 }

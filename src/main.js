@@ -61,7 +61,7 @@ if (new URLSearchParams(location.search).has('debug'))
     window.__game = game;
 await prepareGraphics(renderer, scene, camera, [
     ...SPRITES.textures.values(),
-    ...(game.world.tiles || []).flatMap(theme => Object.values(theme)),
+    ...(game.world.tiles || []).filter(Boolean).flatMap(theme => Object.values(theme)),
 ]);
 game.render(1, 0);
 playButton.disabled = false;

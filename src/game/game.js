@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CONFIG, THEMES } from './config.js';
+import { sceneryAt } from './scenery.js';
 import { STATES } from './states.js';
 import { Player } from './player.js';
 import { Input } from './input.js';
@@ -20,7 +21,7 @@ import { playerOverlap, bulletOverlap, obstaclePassBonus } from './collisions.js
 import { difficultyById } from './difficulty.js';
 import { Encounter } from './encounter.js';
 import { creature } from './creatures.js';
-import { BOSSES, LEVELS } from './bosses.js';
+import { BOSSES, levelAt } from './bosses.js';
 export class Game {
     constructor(renderer, scene, camera) {
         this.renderer = renderer;
@@ -291,12 +292,12 @@ export class Game {
         this.player.update(dt);
         // Durante boss e duelli lo scenario passa alla stagione del boss del livello.
         const battle = this.encounter.active || this.boss.active;
-        this.world.update(dt, this.speed, battle && BOSSES[LEVELS[this.level].boss].season);
-        const theme = Math.floor(this.time / CONFIG.world.themeSeconds) % THEMES.length;
+        const theme = sceneryAt(Math.floor(this.time / CONFIG.world.themeSeconds));
         if (this.world.theme !== theme) {
             this.world.setTheme(theme);
             this.announce(THEMES[theme].name);
         }
+        this.world.update(dt, this.speed, battle && BOSSES[levelAt(this.level).boss].season);
         this.ui.text('zone', `LV ${this.level + 1} · ${THEMES[theme].name} · ${this.difficulty.name.toUpperCase()}`);
         if (!this.encounter.active)
             this.boss.update(dt, this);
@@ -518,15 +519,13 @@ export class Game {
         if (save)
             writeSave(this.storage, this.save);
     }
-    // Boss sconfitto: si passa al livello successivo (l'ultimo resta, con il suo boss che ritorna).
+    // Ogni vittoria avanza il livello; boss e colori ricominciano il giro dopo il ghiaccio.
     levelUp() {
-        if (this.level >= LEVELS.length - 1)
-            return;
         this.level++;
-        const level = LEVELS[this.level];
+        const level = levelAt(this.level);
         this.world.setLevel(level.tint);
         this.timeLeft = CONFIG.timer.max;
-        this.announce(level.name);
+        this.announce(`LIVELLO ${this.level + 1} · ${level.name}`);
     }
     // Moneta raccolta: un po' di tempo in più, fino al massimo.
     addTime(seconds) { this.timeLeft = Math.min(CONFIG.timer.max, this.timeLeft + seconds); }

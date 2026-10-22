@@ -38,7 +38,8 @@ export const CONFIG = {
     // Nella terza arriva una barra bassa (alta lowHeight, da saltare) o una sbarra sospesa (da
     // highBottom a highTop, da passare in scivolata). Sotto il 40% di vita l'intervallo si riduce di enragedRate.
     // Il duello dura finché il boss non viene abbattuto.
-    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, wallHeight: 3.4, wallDepth: .5, enragedRate: .7, lowHeight: .9, highBottom: .95, highTop: 2.4, restAfter: 45, approachZ: -30, attackInterval: 1.85, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1 },
+    boss: { interval: 90, hp: 130, hpGrowth: 25, score: 2500, height: 8.2, wallHeight: 3.4, wallDepth: .5, enragedRate: .7, lowHeight: .9, highBottom: .95, highTop: 2.4, restAfter: 45, approachZ: -30, attackInterval: 1.85, warning: 1.1, duration: 34, projectileSpeed: 28, firstAttackDelay: 3, approachSmoothing: 1.1, resumeSpawnDelay: 1,
+        progression: { attackRateStep: .035, minAttackRate: .8, speedStep: .04, maxSpeed: 1.25, minRecovery: .15 } },
     // Tempo: si parte con `start` secondi, ogni moneta ne ridà `coin` (fino a `max`); a zero si perde.
     // Si ferma durante boss e duelli; sotto `warn` secondi la barra lampeggia.
     timer: { start: 25, max: 30, coin: .5, warn: 6 },
@@ -53,8 +54,4 @@ export const CONFIG = {
     sprites: { enabled: true, path: 'assets/sprites/', hero: true, enemies: true, pickups: true, explosions: true, textures: true, props: true,
         vectorCity: true, heroHeight: 1.95, slideHeight: 1.15, heroAngle: 0, enemyAngle: 0, runFps: 11, leanThreshold: .9, loadTimeout: 8 },
 };
-export const THEMES = [
-    { name: 'SUNSET CITY', sky: 0xd39c98, fog: 0xd3a6a0, road: 0x344654, ground: 0x846e73, primary: 0x628e9a, secondary: 0xd58375, accent: 0x8bffd1, sun: 0xffd7a2 },
-    { name: 'DUST VALLEY', sky: 0xe9b783, fog: 0xe6b580, road: 0x776758, ground: 0xbb895d, primary: 0xb57953, secondary: 0xdfa66d, accent: 0xffdc82, sun: 0xffedb7 },
-    { name: 'NEON OUTPOST', sky: 0x172e49, fog: 0x263e5b, road: 0x293849, ground: 0x22384d, primary: 0x365777, secondary: 0x526087, accent: 0x79f3e5, sun: 0x9fcfe7 },
-];
+export { THEMES } from './scenery.js';

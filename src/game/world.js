@@ -4,24 +4,9 @@ import { block } from './models.js';
 import { SPRITES } from './sprites.js';
 import { Atmosphere } from './atmosphere.js';
 import { residentialFacade, officeFacade } from './facades.js';
-// Texture ripetibili per tema (sheet_textures) e oggetti di contorno (sheet_props).
-const THEME_TEXTURES = [
-    { facadeA: 'city_facade_a', facadeB: 'city_facade_b', road: 'city_road', ground: 'city_sidewalk' },
-    { facadeA: 'desert_facade_a', facadeB: 'desert_facade_b', road: 'desert_road', ground: 'desert_ground' },
-    { facadeA: 'neon_facade_a', facadeB: 'neon_facade_b', road: 'neon_road', ground: 'neon_plates' },
-];
-const THEME_PROPS = [
-    ['prop_city_lamp', 'prop_city_tree', 'prop_city_busstop', 'prop_city_sign'],
-    ['prop_desert_cactus', 'prop_desert_tree', 'prop_desert_barrels', 'prop_desert_sign'],
-    ['prop_neon_antenna', 'prop_neon_holo', 'prop_neon_pylon', 'prop_neon_canisters'],
-];
-// Coronamento dei tetti per tema: cornicione e torretta chiari in città, terracotta nel deserto, acciaio nella base.
+import { SHARED_PROPS } from './scenery.js';
+import { Landscape } from './landscape.js';
 const WHITE = new THREE.Color(0xffffff);
-const ROOF_COLORS = [[0xf3dcc0, 0xd8c3a6], [0xc9774a, 0xa85f3a], [0x34466a, 0x23314d]];
-const SHARED_PROPS = ['prop_cone', 'prop_block', 'prop_bush', 'prop_rocks'];
-// Altezza in metri di ogni oggetto; la larghezza segue le proporzioni dello sprite.
-const PROP_HEIGHT = { prop_city_lamp: 4.6, prop_city_tree: 4.2, prop_city_busstop: 2.8, prop_city_sign: 4, prop_desert_cactus: 3.4, prop_desert_tree: 3.6, prop_desert_barrels: 1.7, prop_desert_sign: 2.6,
-    prop_neon_antenna: 4.8, prop_neon_holo: 3.4, prop_neon_pylon: 4.6, prop_neon_canisters: 3.6, prop_cone: .85, prop_block: 1, prop_bush: 1.2, prop_rocks: 1.4 };
 function tile(name, rx, ry) {
     const texture = SPRITES.texture(name).clone();
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -40,13 +25,16 @@ export class World {
         this.roadMaterial = new THREE.MeshLambertMaterial({ color: THEMES[0].road });
         this.buildingMaterials = [new THREE.MeshLambertMaterial(), new THREE.MeshLambertMaterial()];
         this.groundMaterial = new THREE.MeshLambertMaterial();
-        this.roofMaterials = [new THREE.MeshLambertMaterial({ color: ROOF_COLORS[0][0] }), new THREE.MeshLambertMaterial({ color: ROOF_COLORS[0][1] })];
+        this.roofMaterials = THEMES[0].roofs.map(color => new THREE.MeshLambertMaterial({ color }));
         this.accentMaterial = new THREE.MeshBasicMaterial();
         const s = CONFIG.sprites;
-        this.textured = s.enabled && s.textures && THEME_TEXTURES.every(t => Object.values(t).every(n => SPRITES.has(n)));
-        if (this.textured) {
-            // Ripetizioni tarate sulle geometrie: strada 10×24 m (una tile per corsia), terreno 700 m, palazzi 4–21 m.
-            this.tiles = THEME_TEXTURES.map(t => ({ facadeA: tile(t.facadeA, 1, 2.5), facadeB: tile(t.facadeB, 1, 2.5), road: tile(t.road, 3, 7), ground: tile(t.ground, 90, 90) }));
+        // Ripiego per singolo ambiente: un asset mancante non spegne gli altri cinque.
+        this.tiles = THEMES.map(t => {
+            if (!s.enabled || !s.textures || !t.textures.every(n => SPRITES.has(n))) return null;
+            const [a, b, road, ground] = t.textures;
+            return { facadeA: tile(a, 1, 2.5), facadeB: tile(b, 1, 2.5), road: tile(road, 3, 7), ground: tile(ground, 90, 90) };
+        });
+        if (this.tiles[0]) {
             // Città: facciate vettoriali disegnate su canvas, più leggere e intonate al tramonto.
             if (s.vectorCity) {
                 const a = residentialFacade(1, 2.5), b = officeFacade(1, 2.5);
@@ -59,9 +47,10 @@ export class World {
         }
         this.props = [];
         this.propBatches = new Map();
-        this.propsEnabled = s.enabled && s.props && THEME_PROPS.flat().concat(SHARED_PROPS).every(n => SPRITES.has(n));
+        this.propsEnabled = s.enabled && s.props;
         if (this.propsEnabled)
-            for (const name of THEME_PROPS.flat().concat(SHARED_PROPS)) {
+            for (const [name] of THEMES.flatMap(t => t.props).concat(SHARED_PROPS)) {
+                if (!SPRITES.has(name) || this.propBatches.has(name)) continue;
                 const mesh = new THREE.InstancedMesh(SPRITES.geometry(true), SPRITES.material(name), CONFIG.world.chunks * 4);
                 mesh.count = 0;
                 mesh.frustumCulled = false;
@@ -132,8 +121,10 @@ export class World {
                     window.userData.faceShift = side * (4 + c % 3) * .15;
                     group.add(window);
                 }
-                block(group, 0x253e4d, side * 5.8, 2.4, -4, .1, 4.8, .12);
+                const pole = block(group, 0x253e4d, side * 5.8, 2.4, -4, .1, 4.8, .12);
+                pole.userData.role = 'streetlight';
                 const lamp = block(group, 0xffe3bb, side * 5.5, 4.8, -4, .8, .12, .35, true);
+                lamp.userData.role = 'streetlight';
                 lamp.material.map = this.stripeTexture;
             }
             for (const side of [-1, 1]) {
@@ -154,7 +145,7 @@ export class World {
                     for (let k = 0; k < 2; k++) {
                         const mesh = new THREE.Object3D();
                         mesh.position.x = side * (6.1 + ((c + k) % 2) * .5);
-                        this.props.push({ mesh, chunk: group, localZ: -11 + k * 12 + ((c * 5 + k * 3) % 5) - 2, index: c * 4 + k * 2 + (side > 0 ? 1 : 0) });
+                        this.props.push({ mesh, side, chunk: group, localZ: -11 + k * 12 + ((c * 5 + k * 3) % 5) - 2, index: c * 4 + k * 2 + (side > 0 ? 1 : 0) });
                     }
             }
         }
@@ -187,6 +178,7 @@ export class World {
             this.batches.push(batch);
         }
         this.color = new THREE.Color();
+        this.landscape = new Landscape(scene, this.chunks, this.tiles);
         this.atmosphere = new Atmosphere(scene);
         // Colori del livello (LEVELS[i].tint) mescolati al tema: `levelBlend` sale piano a ogni cambio.
         this.levelTint = null;
@@ -198,21 +190,27 @@ export class World {
     setTheme(index, immediate = false) {
         this.theme = index % THEMES.length;
         this.target = THEMES[this.theme];
-        if (this.textured) {
-            const t = this.tiles[this.theme];
-            const swap = (m, map) => { if (m.map !== map) { m.map = map; m.needsUpdate = true; } };
-            swap(this.roadMaterial, t.road);
-            swap(this.groundMaterial, t.ground);
-            swap(this.buildingMaterials[0], t.facadeA);
-            swap(this.buildingMaterials[1], t.facadeB);
-        }
+        const t = this.tiles[this.theme];
+        this.landscape.setTheme(this.target.id);
+        this.textured = Boolean(t);
+        const swap = (m, map) => { if (m.map !== map) { m.map = map; m.needsUpdate = true; } };
+        swap(this.roadMaterial, t?.road ?? null);
+        swap(this.groundMaterial, t?.ground ?? null);
+        swap(this.buildingMaterials[0], t?.facadeA ?? null);
+        swap(this.buildingMaterials[1], t?.facadeB ?? null);
+        const available = this.target.props.filter(([name]) => this.propBatches.has(name));
+        const shared = SHARED_PROPS.filter(([name]) => this.propBatches.has(name));
+        this.hasThemeProps = available.length > 0;
         for (const p of this.props) {
-            // Un oggetto su tre è condiviso fra i temi, gli altri appartengono al tema attivo.
-            const list = THEME_PROPS[this.theme];
-            const name = p.index % 3 === 2 ? SHARED_PROPS[Math.floor(p.index / 3) % SHARED_PROPS.length] : list[(p.index * 7) % list.length];
-            const h = PROP_HEIGHT[name] || 2;
+            // Negli ambienti naturali solo oggetti del luogo, senza coni o blocchi urbani.
+            const list = !this.target.natural && shared.length && (p.index % 3 === 2 || !available.length) ? shared : available;
+            if (!list.length) { p.spriteName = null; continue; }
+            const [name, h] = list[(p.index * 7) % list.length];
             p.spriteName = name;
-            p.mesh.scale.set(h * SPRITES.aspect(name), h, 1);
+            const width = h * SPRITES.aspect(name);
+            p.mesh.scale.set(width, h, 1);
+            // Alberi e archi larghi restano interamente fuori dal bordo della strada.
+            p.mesh.position.x = p.side * Math.max(6.1 + (p.index % 2) * .5, 5.5 + width / 2);
         }
         if (immediate) {
             this.atmosphere.reset();
@@ -229,7 +227,7 @@ export class World {
                     material.color.set(0xffffff);
             this.accentMaterial.color.set(this.target.accent);
             for (let k = 0; k < 2; k++)
-                this.roofMaterials[k].color.set(ROOF_COLORS[this.theme][k]);
+                this.roofMaterials[k].color.set(this.target.roofs[k]);
             this.sun.material.color.set(this.target.sun);
         }
     }
@@ -249,32 +247,40 @@ export class World {
             if (chunk.position.z > 36)
                 chunk.position.z -= CONFIG.world.chunks * CONFIG.world.chunkLength;
         }
+        const profile = this.target;
         for (const batch of this.batches) {
             let i = 0;
             for (const item of batch.items) {
                 const m = item.matrix.elements;
                 m[14] = item.local.z + item.chunk.position.z;
-                // Città: torri; deserto: mesas basse; base: torri strette e alte.
+                // Sagome definite dal tema: torri, mesas, rovine o solo paesaggio naturale.
                 if (item.building) {
-                    const height = this.theme === 1 ? .35 : this.theme === 2 ? 1.15 : 1;
-                    const width = this.theme === 2 ? .7 : 1;
-                    m[0] = item.scale.x * width;
-                    m[5] = item.scale.y * height;
-                    m[13] = item.local.y * height;
+                    m[0] = item.scale.x * profile.width;
+                    m[5] = item.scale.y * profile.height;
+                    m[13] = item.local.y * profile.height;
                 }
                 if (item.role === 'roof') {
-                    const height = this.theme === 1 ? .35 : this.theme === 2 ? 1.15 : 1;
-                    m[0] = item.scale.x * (this.theme === 2 ? .7 : 1);
-                    m[13] = item.base * height + item.dy;
+                    m[0] = profile.natural ? 0 : item.scale.x * profile.width;
+                    m[5] = profile.natural ? 0 : item.scale.y;
+                    m[10] = profile.natural ? 0 : item.scale.z;
+                    m[13] = item.base * profile.height + item.dy;
                 }
                 if (item.role === 'window') {
-                    m[13] = item.local.y * (this.theme === 1 ? .35 : this.theme === 2 ? 1.15 : 1);
-                    m[12] = item.local.x + (this.theme === 2 ? item.faceShift : 0);
+                    m[13] = item.local.y * profile.height;
+                    m[12] = item.local.x + item.faceShift * ((1 - profile.width) / .3);
                     // con le facciate a texture le finestre ci sono già
-                    m[5] = this.theme === 1 || this.textured ? 0 : item.scale.y;
+                    const visible = profile.windows && !this.textured;
+                    m[0] = visible ? item.scale.x : 0;
+                    m[5] = visible ? item.scale.y : 0;
+                    m[10] = visible ? item.scale.z : 0;
+                }
+                if (item.role === 'streetlight') {
+                    m[0] = profile.streetlights ? item.scale.x : 0;
+                    m[5] = profile.streetlights ? item.scale.y : 0;
+                    m[10] = profile.streetlights ? item.scale.z : 0;
                 }
                 if (item.role === 'cactus') {
-                    const visible = this.theme === 1 && !this.props.length ? 1 : 0;
+                    const visible = profile.id === 'desert' && !this.hasThemeProps ? 1 : 0;
                     m[0] = item.scale.x * visible;
                     m[5] = item.scale.y * visible;
                     m[10] = item.scale.z * visible;
@@ -283,9 +289,11 @@ export class World {
             }
             batch.mesh.instanceMatrix.needsUpdate = true;
         }
+        this.landscape.update();
         for (const mesh of this.propBatches.values())
             mesh.count = 0;
         for (const p of this.props) {
+            if (!p.spriteName) continue;
             p.mesh.position.z = p.chunk.position.z + p.localZ;
             p.mesh.updateMatrix();
             const mesh = this.propBatches.get(p.spriteName);
@@ -312,10 +320,13 @@ export class World {
         this.buildingMaterials[1].color.lerp(mix(this.textured ? 0xffffff : t.secondary, 'building'), blend);
         this.accentMaterial.color.lerp(mix(t.accent, 'accent'), blend);
         for (let k = 0; k < 2; k++)
-            this.roofMaterials[k].color.lerp(mix(ROOF_COLORS[this.theme][k], 'roof'), blend);
+            this.roofMaterials[k].color.lerp(mix(t.roofs[k], 'roof'), blend);
+        for (const layer of this.landscape.layers)
+            if (layer.mesh.visible) layer.mesh.material.color.lerp(mix(layer.mesh.material.map ? 0xffffff : layer.color, layer.key), blend);
         this.sun.material.color.lerp(mix(t.sun, 'sun'), blend);
     }
     render(alpha, speed) {
+        this.landscape.render(alpha, speed);
         const offset = (alpha - 1) * speed * CONFIG.step;
         for (const batch of this.batches)
             batch.mesh.position.z = offset;

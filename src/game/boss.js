@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { block } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
-import { BOSSES, LEVELS, bossReady } from './bosses.js';
+import { BOSSES, levelAt, bossReady } from './bosses.js';
 import { SIGNS } from './signs.js';
 export class Boss {
     constructor(scene) {
@@ -91,7 +91,7 @@ export class Boss {
     }
     // Sceglie l'aspetto del boss del livello in corso, o la Sentinella se mancano gli sprite.
     dress(level) {
-        const id = LEVELS[Math.min(level, LEVELS.length - 1)].boss;
+        const id = levelAt(level).boss;
         this.beast = CONFIG.sprites.enabled && bossReady(id) ? BOSSES[id] : null;
         for (const child of this.sentinel)
             child.visible = !this.beast;
@@ -100,7 +100,7 @@ export class Boss {
         for (const m of this.muzzles)
             m.visible = false;
         this.name = this.beast ? this.beast.name : 'SENTINELLA';
-        this.label = `☠ ${this.name}`;
+        this.label = `☠ ${this.name} · LV ${level + 1}`;
         this.icon = this.beast ? this.beast.idle[0] : 'boss_sentinel_v2';
         this.top = this.beast ? this.beast.height : this.sprite ? CONFIG.boss.height : 4.2;
         this.frame = '';
@@ -123,6 +123,10 @@ export class Boss {
         this.number++;
         this.hp = CONFIG.boss.hp + (this.number - 1) * CONFIG.boss.hpGrowth;
         this.maxHp = this.hp;
+        // La vita continua a crescere; ritmo e velocità hanno un tetto per restare schivabili.
+        const growth = this.number - 1, progression = CONFIG.boss.progression;
+        this.attackRate = Math.max(progression.minAttackRate, 1 - growth * progression.attackRateStep);
+        this.shotSpeed = CONFIG.boss.projectileSpeed * Math.min(progression.maxSpeed, 1 + growth * progression.speedStep);
         this.age = 0;
         this.z = -125;
         this.previousZ = this.z;
@@ -178,7 +182,7 @@ export class Boss {
                 let variant = 0;
                 for (let lane = -1; lane <= 1; lane++) {
                     const kind = lane === this.safeLane ? this.safeMove : 'full';
-                    const shot = game.enemies.shoot(lane, this.z + 3, CONFIG.boss.projectileSpeed * (game.difficulty?.projectileSpeed ?? 1), 0, kind);
+                    const shot = game.enemies.shoot(lane, this.z + 3, this.shotSpeed * (game.difficulty?.projectileSpeed ?? 1), 0, kind);
                     // Aspetto del colpo: fulmine, colata, spuntone… (le varianti del muro si alternano).
                     if (shot && this.beast) {
                         const look = this.beast.walls[kind];
@@ -192,7 +196,8 @@ export class Boss {
             }
         }
         else if (this.attackTimer <= 0) {
-            this.attackTimer = CONFIG.boss.attackInterval * (this.enraged ? CONFIG.boss.enragedRate : 1) * (game.difficulty?.attackInterval ?? 1);
+            this.attackTimer = Math.max(CONFIG.boss.warning + CONFIG.boss.progression.minRecovery,
+                CONFIG.boss.attackInterval * this.attackRate * (this.enraged ? CONFIG.boss.enragedRate : 1) * (game.difficulty?.attackInterval ?? 1));
             this.warning = CONFIG.boss.warning;
             this.safeLane = Math.max(-1, Math.min(1, this.safeLane + (Math.random() < .5 ? -1 : 1)));
             this.safeMove = Math.random() < .5 ? 'low' : 'high';

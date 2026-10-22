@@ -50,6 +50,16 @@ SHEETS = {
         "prop_neon_antenna", "prop_neon_holo", "prop_neon_pylon", "prop_neon_canisters",
         "prop_cone", "prop_block", "prop_bush", "prop_rocks",
     ],
+    "nature_textures": [
+        "forest_facade_a", "forest_facade_b", "forest_road", "forest_ground",
+        "volcano_facade_a", "volcano_facade_b", "volcano_road", "volcano_ground",
+        "snow_facade_a", "snow_facade_b", "snow_road", "snow_ground",
+    ],
+    "nature_props": [
+        "prop_forest_tree", "prop_forest_arch", "prop_forest_pillar", "prop_forest_ferns",
+        "prop_volcano_basalt", "prop_volcano_vent", "prop_volcano_tree", "prop_volcano_crystals",
+        "prop_snow_fir", "prop_snow_crystals", "prop_snow_sign", "prop_snow_rocks",
+    ],
     # Personaggio giocabile (sezione 7 di PROMPT_SPRITES.md), da usare con --prefix <id>_
     "character": [
         "back_run_1", "back_run_2", "back_run_3", "back_run_4",
@@ -372,8 +382,10 @@ def drop_border_slivers(img: Image.Image, max_frac: float = 0.015) -> Image.Imag
     return out
 
 
-def trim(img: Image.Image, pad: int) -> Image.Image:
-    bbox = img.getchannel("A").getbbox()
+def trim(img: Image.Image, pad: int, min_alpha: int = 1) -> Image.Image:
+    # Ignora l'alone quasi invisibile nel calcolo dei margini, preservando l'alpha
+    # originale dentro il ritaglio (nessun chroma key sugli sprite già trasparenti).
+    bbox = img.getchannel("A").point(lambda a: 255 if a >= min_alpha else 0).getbbox()
     if not bbox:
         return img
     l, t, r, b = bbox
@@ -398,6 +410,8 @@ def main():
     ap.add_argument("--out", default="assets/sprites")
     ap.add_argument("--cols", type=int, default=0, help="forza il numero di colonne")
     ap.add_argument("--rows", type=int, default=0, help="forza il numero di righe")
+    ap.add_argument("--fixed-grid", action="store_true", help="celle esattamente uguali, senza cercare separatori verdi")
+    ap.add_argument("--alpha", action="store_true", help="preserva l'alpha originale e rifila i margini trasparenti, senza chroma key")
     ap.add_argument("--row-cols", default="",
                     help="celle per riga quando le righe hanno larghezze diverse (es. 8,8,6,6)")
     ap.add_argument("--thresh", type=int, default=200,
@@ -416,15 +430,25 @@ def main():
                     help="niente chroma key: ritaglia le celle piene (texture) con un bordo interno di --inset px")
     ap.add_argument("--inset", type=int, default=6, help="pixel scartati sul bordo di ogni cella con --no-key")
     args = ap.parse_args()
+    if args.fixed_grid and (not args.cols or not args.rows or args.row_cols):
+        ap.error("--fixed-grid richiede --cols e --rows, senza --row-cols")
+    if args.alpha and args.no_key:
+        ap.error("usa --alpha per sprite trasparenti oppure --no-key per texture piene")
     names = SHEETS[args.names] if args.names in SHEETS else [n.strip() for n in args.names.split(",") if n.strip()]
     names = [args.prefix + n for n in names]
     preset = args.names if args.names in SHEETS else "custom"
 
     sheet = Image.open(args.sheet).convert("RGBA")
-    bg = sample_background(sheet)
+    bg = (0, 255, 0) if args.fixed_grid and (args.alpha or args.no_key) else sample_background(sheet)
     print(f"sheet {sheet.size[0]}x{sheet.size[1]}, sfondo campionato {bg}")
 
-    if args.row_cols:
+    if args.fixed_grid:
+        cols = [(round(i * sheet.width / args.cols), round((i + 1) * sheet.width / args.cols)) for i in range(args.cols)]
+        rows = [(round(i * sheet.height / args.rows), round((i + 1) * sheet.height / args.rows)) for i in range(args.rows)]
+        cells = [(x0, y0, x1, y1) for y0, y1 in rows for x0, x1 in cols]
+        ncols = args.cols
+        print(f"griglia esatta: {args.cols}x{args.rows}")
+    elif args.row_cols:
         # Righe con celle di larghezza diversa: prima le linee orizzontali, poi le
         # verticali di ogni riga, entrambe agganciate alle fasce più verdi.
         counts = [int(c) for c in args.row_cols.split(",")]
@@ -459,7 +483,12 @@ def main():
     for name, (x0, y0, x1, y1) in zip(names, cells):
         if True:
             cell = sheet.crop((x0, y0, x1, y1))
-            if args.no_key:
+            if args.alpha:
+                sprite = trim(cell, args.pad, min_alpha=32)
+            elif args.no_key and args.fixed_grid:
+                k = args.inset
+                sprite = cell.crop((k, k, cell.width - k, cell.height - k))
+            elif args.no_key:
                 # Texture piena: rifilo righe/colonne di bordo con più del 2% di verde
                 # da schermo, poi scarto `inset` px di sicurezza.
                 mask = screen_mask(cell)

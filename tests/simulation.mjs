@@ -41,6 +41,10 @@ globalThis.innerWidth = 1440;
 globalThis.innerHeight = 900;
 const { Game } = await import('../src/game/game.js');
 const { CONFIG } = await import('../src/game/config.js');
+const { THEMES, SCENERY_ROUTE } = await import('../src/game/scenery.js');
+const { World } = await import('../src/game/world.js');
+const { BOSSES, bossFrames } = await import('../src/game/bosses.js');
+const { SPRITES } = await import('../src/game/sprites.js');
 const { playerOverlap } = await import('../src/game/collisions.js');
 const renderer = { domElement: new Node(), render(scene) { scene.updateMatrixWorld(); } };
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(58, 1.6, .1, 250), g = new Game(renderer, scene, camera);
@@ -53,6 +57,64 @@ function ticks(n) {
     }
 }
 check('creazione scena e menu', () => { assert.equal(g.state, 'menu'); assert.ok(g.world.batches.length < 15); g.render(1, 1 / 60); });
+check('sei scenari: rotazione ripetibile, sagome naturali, ritorno alla città e pool stabili', () => {
+    g.start();
+    g.boss.nextTime = Infinity;
+    g.spawner.timer = Infinity;
+    g.obstacles.reset();
+    const objectCount = scene.children.length;
+    for (let step = 0; step < 12; step++) {
+        g.time = step * CONFIG.world.themeSeconds;
+        g.timeLeft = CONFIG.timer.max;
+        g.update(CONFIG.step);
+        const theme = THEMES[SCENERY_ROUTE[step % 6]];
+        assert.equal(g.world.target, theme);
+        assert.equal(scene.children.length, objectCount);
+        const visible = g.world.landscape.layers.filter(l => l.mesh.visible);
+        assert.equal(visible.length, theme.natural ? 2 : 0);
+        assert.ok(visible.every(l => l.theme === theme.id));
+        for (const batch of g.world.batches)
+            for (const item of batch.items) {
+                assert.ok(item.matrix.elements.every(Number.isFinite));
+                if (item.role === 'streetlight') assert.equal(item.matrix.elements[5] > 0, theme.streetlights);
+                if (item.building) assert.equal(item.matrix.elements[5] > 0, theme.buildings);
+            }
+        g.world.render(.5, g.speed);
+        assert.equal(g.world.landscape.layers[0].mesh.position.z, g.world.batches[0].mesh.position.z);
+    }
+    g.start();
+    g.update(CONFIG.step);
+    assert.equal(g.world.target.id, 'city');
+    assert.ok(g.world.landscape.layers.every(l => !l.mesh.visible));
+    g.menu();
+});
+check('scenari: texture mancanti isolate al tema, props naturali fuori strada e nessuna crescita', () => {
+    const original = SPRITES.textures;
+    const names = THEMES.filter(t => t.natural).flatMap(t => [...t.textures, ...t.props.map(([name]) => name)]);
+    SPRITES.textures = new Map(names.filter(name => name !== 'volcano_ground').map(name => [name, new THREE.Texture()]));
+    try {
+        const localScene = new THREE.Scene(), world = new World(localScene);
+        const objects = localScene.children.length;
+        for (let cycle = 0; cycle < 3; cycle++)
+            for (const index of [3, 4, 5, 0]) {
+                world.setTheme(index, true);
+                world.update(CONFIG.step, 15);
+                assert.equal(world.textured, index === 3 || index === 5);
+                assert.equal(Boolean(world.roadMaterial.map), world.textured);
+                assert.equal(localScene.children.length, objects);
+                const active = world.props.filter(p => p.spriteName);
+                assert.equal(active.length, index === 0 ? 0 : CONFIG.world.chunks * 4);
+                for (const p of active) {
+                    assert.ok(world.target.props.some(([name]) => name === p.spriteName));
+                    assert.ok(Math.abs(p.mesh.position.x) - p.mesh.scale.x / 2 >= 5.5);
+                }
+                assert.equal([...world.propBatches.values()].reduce((n, m) => n + m.count, 0), active.length);
+            }
+    } finally {
+        for (const texture of SPRITES.textures.values()) texture.dispose();
+        SPRITES.textures = original;
+    }
+});
 g.start();
 check('cambio corsia entro 150 ms', () => { g.player.command('right'); ticks(9); assert.ok(Math.abs(g.player.x - 3) < .2); });
 check('salto e input buffer all’atterraggio', () => { g.player.command('jump'); ticks(44); assert.ok(g.player.y > 0); g.player.command('jump'); ticks(5); assert.ok(g.player.vy > 0); assert.ok(g.player.y > 0); });
@@ -482,6 +544,71 @@ check('stagioni: tempesta nel livello 1, ritorno al tema, poi livello 2 e stagio
         assert.equal(g.level, 0);
     }
 });
+check('boss: più giri completi, livelli e potenza crescenti, stagioni e reset', () => {
+    // Texture vuote: esercita anche la scelta degli sprite, oltre al ripiego procedurale.
+    const textures = SPRITES.textures;
+    SPRITES.textures = new Map(Object.values(BOSSES).flatMap(bossFrames).map(name => [name, new THREE.Texture()]));
+    try {
+        g.start();
+        let previousHp = 0, previousSpeed = 0, previousInterval = Infinity;
+        const seasons = ['storm', 'inferno', 'winter'];
+        for (let level = 0; level < 10; level++) {
+            g.boss.start(g);
+            assert.equal(g.boss.beast, BOSSES[['storm', 'magma', 'ice'][level % 3]]);
+            assert.ok(g.boss.label.endsWith(`LV ${level + 1}`));
+            assert.ok(g.boss.hp > previousHp);
+            previousHp = g.boss.hp;
+            g.boss.attackTimer = 0;
+            g.update(CONFIG.step);
+            assert.equal(g.world.atmosphere.season, seasons[level % 3]);
+            assert.ok(g.boss.shotSpeed >= previousSpeed);
+            assert.ok(g.boss.shotSpeed <= CONFIG.boss.projectileSpeed * CONFIG.boss.progression.maxSpeed);
+            assert.ok(g.boss.attackTimer <= previousInterval);
+            assert.equal(g.boss.warning, CONFIG.boss.warning);
+            previousSpeed = g.boss.shotSpeed;
+            previousInterval = g.boss.attackTimer;
+            g.boss.update(CONFIG.boss.warning, g);
+            const shots = g.enemies.shots.filter(shot => shot.active);
+            assert.equal(shots.length, 3);
+            for (const shot of shots) {
+                assert.equal(shot.speed, g.boss.shotSpeed * g.difficulty.projectileSpeed);
+                assert.ok(bossFrames(g.boss.beast).includes(shot.skin));
+            }
+            g.timeLeft = 1;
+            g.boss.damage(g.boss.hp, g);
+            assert.equal(g.level, level + 1);
+            assert.equal(g.timeLeft, CONFIG.timer.max);
+            if (g.level % 3 === 0) assert.equal(g.world.levelTint, null);
+            // Tra due boss la stagione sfuma durante la corsa (almeno 45 s nel gioco).
+            g.world.update(5, 0, false);
+        }
+        assert.ok(previousSpeed > CONFIG.boss.projectileSpeed);
+        assert.ok(previousInterval < CONFIG.boss.attackInterval * g.difficulty.attackInterval);
+        g.start();
+        g.boss.start(g);
+        assert.equal(g.level, 0);
+        assert.equal(g.boss.hp, CONFIG.boss.hp);
+        assert.equal(g.boss.shotSpeed, CONFIG.boss.projectileSpeed);
+        assert.equal(g.boss.attackRate, 1);
+        g.menu();
+    } finally {
+        for (const texture of SPRITES.textures.values()) texture.dispose();
+        SPRITES.textures = textures;
+    }
+});
+check('boss: preavviso e recupero garantiti anche in furia ai livelli avanzati', () => {
+    g.start();
+    g.level = 99;
+    g.boss.number = 99;
+    g.boss.start(g);
+    g.boss.hp = g.boss.maxHp * .3;
+    g.boss.attackTimer = 0;
+    g.boss.update(CONFIG.step, { ...g, difficulty: { attackInterval: .8 }, announce() {} });
+    assert.ok(g.boss.enraged);
+    assert.ok(g.boss.attackTimer >= CONFIG.boss.warning + CONFIG.boss.progression.minRecovery);
+    assert.equal(g.boss.warning, CONFIG.boss.warning);
+    g.menu();
+});
 check('effetti: elettricità dello scudo, vampa per arma e scia dei razzi', () => {
     g.start();
     g.powerups.shield = 5;
@@ -604,7 +731,7 @@ check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () =>
         assert.ok(g.speed <= CONFIG.speed.max * g.difficulty.speed);
     }
     assert.equal(g.state, 'play');
-    assert.equal(themes.size, 3);
+    assert.equal(themes.size, 5);
     assert.equal(bosses, 2);
     assert.equal(scene.children.length, objectCount);
     assert.deepEqual([g.obstacles.pool.length, g.enemies.pool.length, g.pickups.coins.length, g.effects.pool.length], pools);
