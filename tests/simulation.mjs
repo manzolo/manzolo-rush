@@ -559,7 +559,7 @@ check('pulsante suggerimenti: spegne la barra degli aiuti (anche nei duelli) e r
     assert.notEqual(node('#tutorial').textContent, '');
     g.menu();
 });
-check('boss: cartello e colore dicono se saltare o scivolare, e la freccia viaggia col colpo', () => {
+check('boss: corsia di riparo verde (salta) o azzurra (scivola), colpo basso a terra e alto sospeso', () => {
     for (const move of ['low', 'high']) {
         g.start();
         g.boss.start(g);
@@ -567,18 +567,18 @@ check('boss: cartello e colore dicono se saltare o scivolare, e la freccia viagg
         g.boss.update(CONFIG.step, g);
         g.boss.safeMove = move;
         g.boss.update(CONFIG.step, g);
-        const sign = g.boss.sign.sprite, lane = g.boss.safeLane;
-        assert.ok(sign.visible);
-        assert.equal(sign.position.x, lane * CONFIG.player.laneWidth);
+        const lane = g.boss.safeLane;
         assert.equal(g.boss.warnings[lane + 1].material.color.getHex(), move === 'low' ? 0x5dff8a : 0x5ac8ff);
         assert.equal(g.boss.warnings[(lane + 2) % 3].material.color.getHex(), 0xff695c);
         g.boss.update(CONFIG.boss.warning, g);
-        assert.ok(!sign.visible);
-        g.enemies.render(1);
-        assert.equal(g.enemies.shotSigns[move].count, 1);
-        assert.equal(g.enemies.shotSigns[move === 'low' ? 'high' : 'low'].count, 0);
+        const shot = g.enemies.shots.find(s => s.active && s.wallKind === move);
+        assert.ok(shot);
+        // Basso: da terra a meno di un metro; alto: spazio libero sotto per la scivolata.
+        if (move === 'low')
+            assert.ok(shot.bottom === 0 && shot.top < 1);
+        else
+            assert.ok(shot.bottom > CONFIG.player.slideHeight && shot.top > CONFIG.player.height);
         g.menu();
-        assert.ok(!sign.visible);
     }
 });
 check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () => {
@@ -617,7 +617,9 @@ check('sinistra/destra tenuti: continua a cambiare corsia finché non si rilasci
     ticks(20);
     assert.equal(g.player.lane, 1);
     key('keydown', 'ArrowLeft');
-    ticks(30); // mezzo secondo tenuto: due corsie, fino al bordo
+    ticks(20); // un terzo di secondo tenuto: una sola corsia, la ripetizione aspetta 0,45 s
+    assert.equal(g.player.lane, 0);
+    ticks(15); // passata l'attesa: la seconda corsia, fino al bordo
     assert.equal(g.player.lane, -1);
     key('keyup', 'ArrowLeft');
     // Tocco breve: una sola corsia.
@@ -630,7 +632,7 @@ check('sinistra/destra tenuti: continua a cambiare corsia finché non si rilasci
     const canvas = renderer.domElement, finger = { pointerId: 7, pointerType: 'touch', clientX: 200, clientY: 300, preventDefault() { } };
     canvas.listeners.pointerdown(finger);
     canvas.listeners.pointermove({ ...finger, clientX: 140 });
-    ticks(12);
+    ticks(70);
     assert.equal(g.player.lane, -1);
     window.listeners.pointerup(finger);
     g.menu();

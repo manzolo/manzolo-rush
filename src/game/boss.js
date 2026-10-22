@@ -3,7 +3,7 @@ import { CONFIG } from './config.js';
 import { block } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
 import { BOSSES, LEVELS, bossReady } from './bosses.js';
-import { SIGNS, laneSign } from './signs.js';
+import { SIGNS } from './signs.js';
 export class Boss {
     constructor(scene) {
         this.mesh = new THREE.Group();
@@ -49,7 +49,6 @@ export class Boss {
             scene.add(mesh);
             this.warnings.push(mesh);
         }
-        this.sign = laneSign(scene);
         this.parts = [];
         this.mesh.traverse(child => {
             if (child.isMesh && child !== this.sprite && child !== this.core && child !== this.groundRing && !this.muzzles.includes(child))
@@ -89,7 +88,6 @@ export class Boss {
         this.enraged = false;
         for (const m of this.warnings)
             m.visible = false;
-        this.sign?.hide();
     }
     // Sceglie l'aspetto del boss del livello in corso, o la Sentinella se mancano gli sprite.
     dress(level) {
@@ -174,9 +172,7 @@ export class Boss {
                 // La corsia di riparo pulsa più forte: è lì che bisogna andare.
                 this.warnings[i].material.opacity = (i - 1 === this.safeLane ? .25 : .12) + Math.abs(Math.sin(this.warning * 12)) * .18;
             }
-            this.sign.show(this.safeMove, this.safeLane * CONFIG.player.laneWidth, -7, this.age);
             if (this.warning <= 0) {
-                this.sign.hide();
                 for (const m of this.warnings)
                     m.visible = false;
                 let variant = 0;
@@ -187,6 +183,8 @@ export class Boss {
                     if (shot && this.beast) {
                         const look = this.beast.walls[kind];
                         shot.skin = Array.isArray(look) ? look[(this.number + variant++) % look.length] : look;
+                        shot.tint = this.beast.color;
+                        shot.tilt = this.beast.highTilt;
                     }
                 }
                 game.audio?.play('bossShot');
@@ -239,7 +237,6 @@ export class Boss {
     end(game, killed) {
         this.active = false;
         this.mesh.visible = false;
-        this.sign.hide();
         for (const m of this.warnings)
             m.visible = false;
         for (const s of game.enemies.shots)

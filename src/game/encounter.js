@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { creature } from './creatures.js';
-import { SIGNS, laneSign } from './signs.js';
+import { SIGNS } from './signs.js';
 
 const RIVALS = {
     soldier: { name: 'SOLDATO', hp: 18, color: 0xffa85b },
@@ -24,7 +24,6 @@ export class Encounter {
             return mesh;
         });
         // hw: solo la corsia del rivale è colpibile, bisogna allinearsi per sparargli.
-        this.sign = laneSign(scene);
         Object.assign(this, { x: 0, z: -23, hw: 1.3, hd: 1, bottom: 0, top: 6 });
         this.reset();
     }
@@ -43,7 +42,6 @@ export class Encounter {
         this.wall = 'full';
         for (const mesh of this.warnings)
             mesh.visible = false;
-        this.sign?.hide();
     }
     start(enemy, game) {
         if (this.active || game.boss.active || !RIVALS[enemy.type])
@@ -84,11 +82,7 @@ export class Encounter {
             this.warning = Math.max(0, this.warning - dt);
             for (const mesh of this.warnings)
                 mesh.material.opacity = .15 + .15 * Math.abs(Math.sin(this.age * 12));
-            // Raffica su tutte le corsie: il cartello sopra la corsia del giocatore dice come passarla.
-            if (this.wall !== 'full')
-                this.sign.show(this.wall, game.player.lane * CONFIG.player.laneWidth, -7, this.age);
             if (this.warning === 0) {
-                this.sign.hide();
                 for (const mesh of this.warnings)
                     mesh.visible = false;
                 for (const lane of this.lanes) {

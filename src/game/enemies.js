@@ -4,7 +4,6 @@ import { actor, block, material } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
 import { CREATURES, creatureReady } from './creatures.js';
 import { BOSSES } from './bosses.js';
-import { signTexture } from './signs.js';
 const types = ['soldier', 'runner', 'drone', 'tank', 'stalker'];
 // Preferisce le viste frontali (sheet_hero_rear), altrimenti quelle di profilo dello sheet principale.
 const FRONT_NAMES = { soldier: 'enemy_front_grunt', runner: 'enemy_front_dodger', drone: 'enemy_front_drone', tank: 'enemy_front_tank', stalker: 'enemy_front_grunt' };
@@ -106,23 +105,13 @@ export class Enemies {
                 scene.add(mesh);
                 this.shotSprites.set(c.shot, mesh);
             }
-        // Freccia che accompagna i colpi bassi (sopra: si salta) e alti (sotto: si scivola).
-        this.shotSigns = {};
-        for (const kind of ['low', 'high']) {
-            const mesh = new THREE.InstancedMesh(SPRITES.geometry(false), new THREE.MeshBasicMaterial({ map: signTexture(kind), transparent: true, depthWrite: false, toneMapped: false }), this.shots.length);
-            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-            mesh.frustumCulled = false;
-            mesh.count = 0;
-            mesh.renderOrder = 4;
-            scene.add(mesh);
-            this.shotSigns[kind] = mesh;
-        }
         // Muri e barre dei boss dei livelli (fulmine, colata, spuntoni di ghiaccio…), appoggiati a terra.
         this.wallSprites = new Map();
         for (const b of Object.values(BOSSES))
             for (const name of [b.walls.full, b.walls.low, b.walls.high].flat())
                 if (SPRITES.has(name) && !this.wallSprites.has(name)) {
-                    const mesh = new THREE.InstancedMesh(SPRITES.geometry(true), SPRITES.material(name, { depthWrite: false }), this.shots.length);
+                    // Il colpo alto ruota attorno al suo centro, gli altri poggiano a terra.
+                    const mesh = new THREE.InstancedMesh(SPRITES.geometry(name !== b.walls.high), SPRITES.material(name, { depthWrite: false }), this.shots.length);
                     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
                     mesh.frustumCulled = false;
                     mesh.count = 0;
@@ -181,6 +170,15 @@ export class Enemies {
         });
         this.curtains = inst(new THREE.PlaneGeometry(1, 1).translate(0, .5, 0), this.curtainMaterial, this.shots.length);
         const beam = new THREE.CylinderGeometry(.5, .5, 1, 12).rotateZ(Math.PI / 2);
+        // Colpi dei boss resi leggibili dalla forma: l'alto è un raggio sospeso nel colore del boss,
+        // il basso striscia a terra su una scia luminosa sfumata.
+        const glowing = () => new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+        this.skinBeamCore = inst(beam, new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), this.shots.length);
+        this.skinBeamGlow = inst(beam, glowing(), this.shots.length);
+        this.skinTrail = inst(new THREE.PlaneGeometry(1, 1), glowing(), this.shots.length);
+        this.skinTrail.material.map = radialTexture('rgba(255,255,255,.9)', 'rgba(255,255,255,0)');
+        for (const mesh of [this.skinBeamGlow, this.skinTrail])
+            mesh.setColorAt(0, new THREE.Color());
         this.beamCore = inst(beam, new THREE.MeshBasicMaterial({ color: 0xfff4dc, toneMapped: false }), this.shots.length * 2);
         this.beamGlow = inst(beam, new THREE.MeshBasicMaterial({ color: 0xff9a2a, opacity: .7, ...additive }), this.shots.length * 2);
         this.beamHalo = inst(beam, new THREE.MeshBasicMaterial({ color: 0xff6a1a, opacity: .25, ...additive }), this.shots.length * 2);
@@ -253,6 +251,8 @@ export class Enemies {
         b.delay = delay;
         b.shell = false;
         b.skin = '';
+        b.tint = 0;
+        b.tilt = 0;
         return b;
     }
     // Proiettile pesante del tank: rotola raso terra, si evita saltando o cambiando corsia.
@@ -532,26 +532,47 @@ export class Enemies {
         const shotSprites = new Map();
         const time = performance.now() / 1000;
         this.curtainMaterial.uniforms.uTime.value = time;
-        const wallSprites = new Map(), signs = { low: 0, high: 0 };
-        for (const s of this.shots)
-            if (s.active && (s.wallKind === 'low' || s.wallKind === 'high')) {
-                // Basso: freccia in su sopra il colpo; alto: freccia in giù nello spazio libero sotto.
-                const low = s.wallKind === 'low', size = low ? 1.15 : .85;
-                d.position.set(s.x, low ? s.top + .85 : s.bottom * .5, s.previousZ + (s.z - s.previousZ) * alpha + .3);
-                d.rotation.set(0, 0, 0);
-                d.scale.setScalar(size * (1 + Math.sin(time * 10) * .06));
-                d.updateMatrix();
-                this.shotSigns[s.wallKind].setMatrixAt(signs[s.wallKind]++, d.matrix);
-            }
+        const wallSprites = new Map(), skin = { beams: 0, trails: 0 };
+        const add = (mesh, key) => {
+            d.updateMatrix();
+            mesh.setMatrixAt(skin[key], d.matrix);
+            mesh.setColorAt(skin[key]++, this.postColor);
+        };
         for (const s of this.shots)
             if (s.active && s.wall && this.wallSprites.has(s.skin)) {
-                // Larghezza fissata alla corsia: si capisce subito quale corsia è chiusa.
                 const mesh = this.wallSprites.get(s.skin), z = s.previousZ + (s.z - s.previousZ) * alpha;
-                const kind = s.wallKind, h = kind === 'full' ? 4.4 : kind === 'low' ? 1.5 : 1.6;
-                const pulse = 1 + Math.sin(time * 14 + z) * .04;
-                d.position.set(s.x, kind === 'high' ? (s.bottom + s.top) / 2 - h / 2 : 0, z);
-                d.rotation.set(0, 0, 0);
-                d.scale.set(s.hw * 2.25 * pulse, h * pulse, 1);
+                const kind = s.wallKind, w = s.hw * 2, pulse = 1 + Math.sin(time * 14 + z) * .04;
+                this.postColor.set(s.tint || 0xffffff);
+                if (kind === 'high') {
+                    // Sospeso: sprite in orizzontale all'altezza della testa, attraversato da un raggio.
+                    const y = (s.bottom + s.top) / 2 + .15, aspect = SPRITES.aspect(s.skin);
+                    d.position.set(s.x, y, z + .15);
+                    d.rotation.set(0, 0, 0);
+                    d.scale.set(w * 1.05, .09, .09);
+                    d.updateMatrix();
+                    this.skinBeamCore.setMatrixAt(skin.beams, d.matrix);
+                    d.scale.set(w * 1.1, .42 * pulse, .42 * pulse);
+                    add(this.skinBeamGlow, 'beams');
+                    d.position.set(s.x, y, z);
+                    d.rotation.set(0, 0, s.tilt || 0);
+                    d.scale.set(w * 1.15 * pulse, w * 1.15 / aspect * pulse, 1);
+                }
+                else if (kind === 'low') {
+                    // Raso terra: alto quanto l'ostacolo vero, su una scia luminosa.
+                    d.position.set(s.x, .04, z + .3);
+                    d.rotation.set(-Math.PI / 2, 0, 0);
+                    d.scale.set(w * 1.3, 1.6, 1);
+                    add(this.skinTrail, 'trails');
+                    d.position.set(s.x, 0, z);
+                    d.rotation.set(0, 0, 0);
+                    d.scale.set(w * 1.12 * pulse, (s.top + .15) * pulse, 1);
+                }
+                else {
+                    // Muro pieno: larghezza fissata alla corsia, si vede subito quale corsia è chiusa.
+                    d.position.set(s.x, 0, z);
+                    d.rotation.set(0, 0, 0);
+                    d.scale.set(w * 1.12 * pulse, 4.4 * pulse, 1);
+                }
                 d.updateMatrix();
                 const k = wallSprites.get(mesh) ?? 0;
                 mesh.setMatrixAt(k, d.matrix);
@@ -626,9 +647,12 @@ export class Enemies {
             mesh.count = shotSprites.get(mesh) ?? 0;
             mesh.instanceMatrix.needsUpdate = true;
         }
-        for (const kind in this.shotSigns) {
-            this.shotSigns[kind].count = signs[kind];
-            this.shotSigns[kind].instanceMatrix.needsUpdate = true;
+        this.skinBeamCore.count = this.skinBeamGlow.count = skin.beams;
+        this.skinTrail.count = skin.trails;
+        for (const mesh of [this.skinBeamCore, this.skinBeamGlow, this.skinTrail]) {
+            mesh.instanceMatrix.needsUpdate = true;
+            if (mesh.instanceColor)
+                mesh.instanceColor.needsUpdate = true;
         }
         for (const mesh of this.wallSprites.values()) {
             mesh.count = wallSprites.get(mesh) ?? 0;

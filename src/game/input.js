@@ -3,9 +3,9 @@
 const FIRE_KEYS = ['KeyJ', 'ControlLeft', 'ControlRight'];
 const BURST_KEYS = ['KeyK', 'ShiftLeft', 'ShiftRight'];
 const HOLD_FIRE = .18;
-// Sinistra/destra tenuti premuti: un cambio di corsia ogni STEER_REPEAT secondi finché non si
-// rilascia (un cambio dura ~0,15 s), così da un lato all'altro basta una sola pressione.
-const STEER_REPEAT = .16;
+// Sinistra/destra tenuti premuti: il primo cambio di corsia è immediato, poi ne segue uno ogni
+// STEER_REPEAT secondi finché non si rilascia (abbastanza lento da non scavalcare una corsia per sbaglio).
+const STEER_REPEAT = .45;
 const LEFT_KEYS = ['ArrowLeft', 'KeyA'], RIGHT_KEYS = ['ArrowRight', 'KeyD'];
 export class Input {
     constructor(canvas, fire, onPause) {
