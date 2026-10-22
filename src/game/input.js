@@ -1,5 +1,6 @@
 // Fuoco: J o Ctrl; raffica: K o Shift (la raffica spara anche da sola).
-// Touch: un dito tenuto fermo sullo schermo spara, come il click tenuto col mouse.
+// Touch (senza pulsanti): un dito tenuto fermo sullo schermo spara, come il click tenuto col
+// mouse; due dita tenute fanno la raffica; uno swipe rapido sposta senza sparare.
 const FIRE_KEYS = ['KeyJ', 'ControlLeft', 'ControlRight'];
 const BURST_KEYS = ['KeyK', 'ShiftLeft', 'ShiftRight'];
 const HOLD_FIRE = .18;
@@ -8,13 +9,11 @@ const HOLD_FIRE = .18;
 const STEER_REPEAT = .45;
 const LEFT_KEYS = ['ArrowLeft', 'KeyA'], RIGHT_KEYS = ['ArrowRight', 'KeyD'];
 export class Input {
-    constructor(canvas, fire, onPause) {
+    constructor(canvas, onPause) {
         this.queue = [];
         this.keys = new Set();
         this.mouse = false;
-        this.auto = false;
-        this.touchHeld = false;
-        this.holdTime = 0;
+        this.auto = false; // fuoco continuo impostato dal codice (test, simulazioni)
         this.screenHolds = new Map();
         this.padFire = false;
         this.padBurst = false;
@@ -59,6 +58,9 @@ export class Input {
                 const command = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'jump' : 'slide');
                 this.queue.push(command);
                 this.gesture = null;
+                // Swipe rapido: quel dito sposta e basta. Se stava già sparando, continua a sparare.
+                if ((this.screenHolds.get(e.pointerId) ?? 0) < HOLD_FIRE)
+                    this.screenHolds.delete(e.pointerId);
                 // Swipe laterale con il dito ancora giù: continua a spostarsi come un tasto tenuto.
                 if (command === 'left' || command === 'right') {
                     this.swipeHold = { id: e.pointerId, command };
@@ -76,19 +78,9 @@ export class Input {
             this.screenHolds.delete(e.pointerId);
         });
         canvas.addEventListener('pointercancel', e => { this.mouse = false; this.gesture = null; this.swipeHold = null; this.screenHolds.delete(e.pointerId); });
-        fire.addEventListener('pointerdown', e => { e.preventDefault(); fire.setPointerCapture(e.pointerId); this.touchHeld = true; this.holdTime = 0; });
-        fire.addEventListener('pointerup', e => {
-            e.preventDefault();
-            if (this.holdTime < .28)
-                this.auto = !this.auto;
-            this.touchHeld = false;
-        });
-        fire.addEventListener('pointercancel', () => { this.touchHeld = false; });
     }
-    clear() { this.keys.clear(); this.queue.length = 0; this.mouse = false; this.auto = false; this.touchHeld = false; this.padFire = false; this.padBurst = false; this.gesture = null; this.swipeHold = null; this.screenHolds.clear(); }
+    clear() { this.keys.clear(); this.queue.length = 0; this.mouse = false; this.auto = false; this.padFire = false; this.padBurst = false; this.gesture = null; this.swipeHold = null; this.screenHolds.clear(); }
     update(dt) {
-        if (this.touchHeld)
-            this.holdTime += dt;
         for (const [id, time] of this.screenHolds)
             this.screenHolds.set(id, time + dt);
         const pad = navigator.getGamepads?.()[0];
@@ -121,8 +113,10 @@ export class Input {
         const right = RIGHT_KEYS.some(k => this.keys.has(k)) || this.padLatch.right || this.swipeHold?.command === 'right';
         return left === right ? '' : left ? 'left' : 'right';
     }
-    get firing() { return this.mouse || FIRE_KEYS.some(k => this.keys.has(k)) || this.burstKey || this.auto || this.touchHeld || this.screenHeld || this.padFire || this.padBurst; }
-    get screenHeld() { for (const time of this.screenHolds.values()) if (time >= HOLD_FIRE) return true; return false; }
-    get burst() { return this.burstKey || (this.touchHeld && this.holdTime > .28) || this.padBurst; }
+    get firing() { return this.mouse || FIRE_KEYS.some(k => this.keys.has(k)) || this.burstKey || this.auto || this.screenHeld || this.padFire || this.padBurst; }
+    get screenHeld() { return this.heldFingers >= 1; }
+    // Dita tenute ferme sullo schermo da almeno HOLD_FIRE secondi.
+    get heldFingers() { let n = 0; for (const time of this.screenHolds.values()) if (time >= HOLD_FIRE) n++; return n; }
+    get burst() { return this.burstKey || this.heldFingers >= 2 || this.padBurst; }
     get burstKey() { return BURST_KEYS.some(k => this.keys.has(k)); }
 }

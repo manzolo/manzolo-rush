@@ -1,6 +1,7 @@
 // Test d’integrazione senza GPU: usa Three reale, un DOM minimo e renderer fittizio.
 // THREE_MODULE=/percorso/three.module.js node tests/simulation.mjs
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { register } from 'node:module';
 if (!process.env.THREE_MODULE)
     throw new Error('Imposta THREE_MODULE sul modulo locale di Three.js 0.169.0.');
@@ -846,29 +847,36 @@ check('sinistra/destra tenuti: continua a cambiare corsia finché non si rilasci
     window.listeners.pointerup(finger);
     g.menu();
 });
-check('touch simulato: swipe, toggle fuoco e pressione prolungata', () => {
+check('touch simulato: niente pulsante FUOCO, swipe rapido senza sparo, due dita tenute fanno la raffica', () => {
     g.start();
-    const canvas = renderer.domElement, fire = node('#fire');
-    const event = { pointerId: 1, pointerType: 'touch', clientX: 200, clientY: 300, preventDefault() { } };
-    canvas.listeners.pointerdown(event);
-    canvas.listeners.pointermove({ ...event, clientX: 130 });
+    assert.ok(!readFileSync(new URL('../index.html', import.meta.url), 'utf8').includes('id="fire"'));
+    const canvas = renderer.domElement;
+    const finger = id => ({ pointerId: id, pointerType: 'touch', clientX: 200, clientY: 300, preventDefault() { } });
+    // Swipe rapido: cambia corsia, e anche tenendo giù il dito non parte il fuoco.
+    canvas.listeners.pointerdown(finger(1));
+    canvas.listeners.pointermove({ ...finger(1), clientX: 130 });
     g.update(CONFIG.step);
     assert.equal(g.player.lane, -1);
-    canvas.listeners.pointerdown(event);
-    canvas.listeners.pointermove({ ...event, clientY: 230 });
+    g.input.update(.4);
+    assert.ok(!g.input.firing);
+    window.listeners.pointerup(finger(1));
+    canvas.listeners.pointerdown(finger(1));
+    canvas.listeners.pointermove({ ...finger(1), clientY: 230 });
     g.update(CONFIG.step);
     assert.ok(g.player.y > 0);
-    fire.listeners.pointerdown(event);
-    fire.listeners.pointerup(event);
-    assert.ok(g.input.auto);
-    fire.listeners.pointerdown(event);
-    fire.listeners.pointerup(event);
-    assert.ok(!g.input.auto);
-    fire.listeners.pointerdown(event);
-    g.input.update(.3);
-    assert.ok(g.input.burst);
-    fire.listeners.pointerup(event);
-    assert.ok(!g.input.burst && !g.input.auto);
+    window.listeners.pointerup(finger(1));
+    // Un dito tenuto: fuoco; due dita tenute: raffica; staccandone una torna il fuoco normale.
+    canvas.listeners.pointerdown(finger(3));
+    g.input.update(.2);
+    assert.ok(g.input.firing && !g.input.burst);
+    canvas.listeners.pointerdown(finger(4));
+    g.input.update(.2);
+    assert.ok(g.input.firing && g.input.burst);
+    window.listeners.pointerup(finger(4));
+    assert.ok(g.input.firing && !g.input.burst);
+    window.listeners.pointerup(finger(3));
+    assert.ok(!g.input.firing && !g.input.burst);
+    g.menu();
 });
 check('touch simulato: dito tenuto sullo schermo spara, swipe e tocco breve no', () => {
     g.start();

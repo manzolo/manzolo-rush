@@ -50,7 +50,7 @@ export class Game {
         this.save = readSave(this.storage);
         this.difficulty = difficultyById(this.save.difficulty);
         this.audio = new Audio(this.save.audio, this.save.music, this.save.soundVolume, this.save.musicVolume);
-        this.input = new Input(renderer.domElement, document.querySelector('#fire'), () => this.pause());
+        this.input = new Input(renderer.domElement, () => this.pause());
         this.state = STATES.MENU;
         this.audio.music('menu');
         this.time = this.distance = this.score = this.reward = this.coins = this.kills = 0;

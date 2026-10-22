@@ -62,11 +62,11 @@ Da smartphone, sulla stessa rete del computer, apri `http://IP-DEL-PC:8000` e co
 | Corsia (tenuto: continua a spostarsi) | ← / → oppure A / D | Swipe sinistra / destra (dito giù: continua) | Stick sinistro / D-pad |
 | Salto | ↑ / W / Spazio | Swipe in alto | A |
 | Scivolata | ↓ / S | Swipe in basso | B |
-| Colpo / fuoco continuo | Ctrl, J o click sul mondo; tieni per continuare | Tocca FUOCO per attivare/disattivare | RT |
-| Raffica | Tieni Shift o K | Tieni FUOCO oltre 280 ms | RB |
+| Colpo / fuoco continuo | Ctrl, J o click sul mondo; tieni per continuare | Tieni il dito fermo sullo schermo | RT |
+| Raffica | Tieni Shift o K | Tieni due dita sullo schermo | RB |
 | Pausa / ripresa | P / Esc, oppure pulsante Ⅱ | Pulsante Ⅱ / CONTINUA | Usa UI |
 
-La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli input. Il fuoco automatico touch va riattivato alla ripresa. Swipe e pulsante possono essere usati con due dita contemporaneamente.
+La perdita di focus o visibilità mette automaticamente in pausa e rilascia gli input. Su touch non ci sono pulsanti di fuoco: il dito tenuto fermo spara (dopo 0,18 s), due dita tenute fanno la raffica. Uno swipe rapido sposta senza sparare; se il dito stava già sparando, lo swipe per schivare non interrompe il fuoco.
 
 ## Regole e progressione
 
