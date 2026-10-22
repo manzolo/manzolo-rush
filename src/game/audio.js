@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { volumeLevel } from './storage.js';
+import { versioned } from './version.js';
 export class Audio {
     // enabled = effetti sonori (spari, esplosioni…); musicOn = brani o musica procedurale.
     constructor(enabled = true, musicOn = true, soundVolume = 1, musicVolume = 1) {
@@ -13,7 +14,7 @@ export class Audio {
         this.wanted = null;
         if (typeof window.Audio === 'function')
             for (const [name, src] of Object.entries(CONFIG.audio.tracks || {})) {
-                const el = new window.Audio(src);
+                const el = new window.Audio(versioned(src));
                 el.loop = true;
                 el.preload = name === 'menu' ? 'auto' : 'metadata';
                 el.volume = 0;

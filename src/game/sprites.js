@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
+import { versioned } from './version.js';
 // Sprite 2D ritagliati da assets/raw/spritesheet.png (vedi tools/slice_sprites.py).
 // Il registro parte vuoto: finché loadSprites() non ha caricato una texture, has() è false
 // e ogni modulo usa il proprio modello procedurale. Un file mancante non è mai un errore.
@@ -12,7 +13,7 @@ export const SPRITES = {
     has(name) { return this.textures.has(name); },
     texture(name) { return this.textures.get(name) || null; },
     aspect(name) { const a = this.atlas[name]; return a ? a.width / a.height : 1; },
-    url(name, small = false) { const a = this.atlas[name]; return a ? CONFIG.sprites.path + (small ? a.small : a.file) : ''; },
+    url(name, small = false) { const a = this.atlas[name]; return a ? versioned(CONFIG.sprites.path + (small ? a.small : a.file)) : ''; },
     geometry(anchorBottom = true) { return anchorBottom ? PLANE_BOTTOM : PLANE_CENTER; },
     // Materiale non illuminato e non tone-mapped: i colori restano quelli dell'immagine.
     material(name, options = {}) {
@@ -28,14 +29,14 @@ export function billboard(name, height, anchorBottom = true) {
 export function loadSprites(timeoutMs = 8000) {
     const base = CONFIG.sprites.path;
     const loader = new THREE.TextureLoader();
-    const load = fetch(base + 'atlas.json').then(r => {
+    const load = fetch(versioned(base + 'atlas.json')).then(r => {
         if (!r.ok)
             throw new Error(`atlas ${r.status}`);
         return r.json();
     }).then(atlas => {
         SPRITES.atlas = atlas;
         return Promise.allSettled(Object.keys(atlas).map(name => new Promise((resolve, reject) => {
-            loader.load(base + atlas[name].file, texture => {
+            loader.load(versioned(base + atlas[name].file), texture => {
                 texture.colorSpace = THREE.SRGBColorSpace;
                 texture.minFilter = THREE.LinearMipmapLinearFilter;
                 texture.anisotropy = /road|ground|sidewalk|plates/.test(name) ? 4 : 1;

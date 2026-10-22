@@ -40,10 +40,8 @@ jobs:
           ./scripts/check-public.sh --self-test
           ./scripts/check-public.sh
       - name: Solo i file del gioco
-        run: |
-          mkdir -p _site/assets
-          cp -r index.html style.css src .nojekyll _site/
-          cp -r assets/sprites assets/audio _site/assets/
+        # Codice e stile in una cartella con la versione, così la cache del browser non serve file vecchi.
+        run: ./scripts/build-site.sh _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

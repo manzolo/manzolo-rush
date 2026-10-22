@@ -24,6 +24,12 @@ Si gioca da **https://manzolo.github.io/manzolo-rush/**. La pubblica l'action `.
 quando arriva un tag** `v<versione>`: verifica che il tag coincida con `src/game/version.js`, lancia sintassi, test e
 `check-public`, e carica solo i file del gioco. Un push su `main` senza tag non pubblica niente.
 
+Il sito lo prepara `scripts/build-site.sh` (in locale: `make site`, risultato in `_site/`). Codice e stile finiscono in
+una cartella con la versione (`0.2.1/src/…`, `0.2.1/style.css`) e le immagini prendono `?v=<versione>`, come sprite e
+musica caricati dal codice (`versioned()` in `src/game/version.js`): a ogni versione cambiano gli URL e il browser non
+riusa file vecchi dalla cache (Pages la tiene 10 minuti). Per chi ha ancora in cache la pagina precedente viene
+pubblicata anche la versione prima, ricavata dal tag che precede quello corrente.
+
 Nuova versione: `make bump` (oppure `make bump PARTE=minor` / `PARTE=major`). Alza la versione in `src/game/version.js`
 e `package.json`, verifica, fa il commit «Versione x.y.z», crea il tag e lo spinge: l'action riparte da sola. La versione
 si vede nel menu, sotto la scelta del personaggio.

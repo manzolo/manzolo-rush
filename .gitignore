@@ -5,3 +5,4 @@ PROMPT_SPRITES.md
 prompts/
 assets/raw/
 deploy.local.mk
+_site/

@@ -17,7 +17,7 @@ GRID_ROWS   ?= 5
 NAMES       ?= main
 PREFIX      ?=
 
-.PHONY: help serve open check test verify sprites sprites-preview \
+.PHONY: help serve open check test verify site sprites sprites-preview \
         build up down restart logs shell run stop ps image-size clean distclean \
         deploy deploy-logs
 
@@ -48,6 +48,9 @@ verify: check test ## check + test
 
 bump: ## Nuova versione, commit, tag e push: parte la pubblicazione su Pages (PARTE=patch|minor|major)
 	@./scripts/bump.sh $(or $(PARTE),patch)
+
+site: ## Prepara in _site/ il sito come lo pubblica Pages (codice in una cartella per versione)
+	@./scripts/build-site.sh _site
 
 check-public: ## Prima di pubblicare: niente prompt, fogli grezzi, segreti o host privati in tutta la storia
 	@./scripts/check-public.sh --self-test
