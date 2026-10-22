@@ -20,6 +20,7 @@ export class World {
         this.chunks = [];
         this.theme = -1;
         this.phase = 0;
+        this.scroll = 0;
         // Lambert invece di Standard: palazzi, strada e terreno coprono gran parte dello schermo
         // (soprattutto i palazzi alti della città) e l'illuminazione PBR per pixel costava troppo.
         this.roadMaterial = new THREE.MeshLambertMaterial({ color: THEMES[0].road });
@@ -212,6 +213,7 @@ export class World {
             // Alberi e archi larghi restano interamente fuori dal bordo della strada.
             p.mesh.position.x = p.side * Math.max(6.1 + (p.index % 2) * .5, 5.5 + width / 2);
         }
+        this.prepareInstances();
         if (immediate) {
             this.atmosphere.reset();
             this.scene.background = new THREE.Color(this.target.sky);
@@ -231,28 +233,12 @@ export class World {
             this.sun.material.color.set(this.target.sun);
         }
     }
-    // tint: palette del livello (null = nessuna); immediate = senza dissolvenza (nuova corsa).
-    setLevel(tint, immediate = false) {
-        this.levelTint = tint;
-        if (immediate)
-            this.levelBlend = 0;
-    }
-    // season: stagione dello scontro in corso ('storm', 'inferno', 'winter') o false.
-    update(dt, speed, season = false) {
-        this.atmosphere.update(dt, season);
-        this.levelBlend += ((this.levelTint ? this.levelTint.amount : 0) - this.levelBlend) * (1 - Math.exp(-dt * .6));
-        this.phase += dt;
-        for (const chunk of this.chunks) {
-            chunk.position.z += speed * dt;
-            if (chunk.position.z > 36)
-                chunk.position.z -= CONFIG.world.chunks * CONFIG.world.chunkLength;
-        }
+    // Dimensioni e rotazioni cambiano solo quando si cambia ambiente.
+    prepareInstances() {
         const profile = this.target;
         for (const batch of this.batches) {
-            let i = 0;
             for (const item of batch.items) {
                 const m = item.matrix.elements;
-                m[14] = item.local.z + item.chunk.position.z;
                 // Sagome definite dal tema: torri, mesas, rovine o solo paesaggio naturale.
                 if (item.building) {
                     m[0] = item.scale.x * profile.width;
@@ -285,6 +271,20 @@ export class World {
                     m[5] = item.scale.y * visible;
                     m[10] = item.scale.z * visible;
                 }
+            }
+        }
+        for (const p of this.props)
+            if (p.spriteName) p.mesh.updateMatrix();
+        this.rebuildInstances();
+    }
+    // Aggiorna le posizioni solo al cambio tema o quando un chunk torna in fondo.
+    // Tra due ricicli basta traslare i batch interi: nessun upload delle matrici.
+    rebuildInstances() {
+        this.scroll = 0;
+        for (const batch of this.batches) {
+            let i = 0;
+            for (const item of batch.items) {
+                item.matrix.elements[14] = item.local.z + item.chunk.position.z;
                 batch.mesh.setMatrixAt(i++, item.matrix);
             }
             batch.mesh.instanceMatrix.needsUpdate = true;
@@ -295,12 +295,35 @@ export class World {
         for (const p of this.props) {
             if (!p.spriteName) continue;
             p.mesh.position.z = p.chunk.position.z + p.localZ;
-            p.mesh.updateMatrix();
+            p.mesh.matrix.elements[14] = p.mesh.position.z;
             const mesh = this.propBatches.get(p.spriteName);
             mesh.setMatrixAt(mesh.count++, p.mesh.matrix);
         }
         for (const mesh of this.propBatches.values())
-            mesh.instanceMatrix.needsUpdate = true;
+            if (mesh.count) mesh.instanceMatrix.needsUpdate = true;
+    }
+    // tint: palette del livello (null = nessuna); immediate = senza dissolvenza (nuova corsa).
+    setLevel(tint, immediate = false) {
+        this.levelTint = tint;
+        if (immediate)
+            this.levelBlend = 0;
+    }
+    // season: stagione dello scontro in corso ('storm', 'inferno', 'winter') o false.
+    update(dt, speed, season = false) {
+        this.atmosphere.update(dt, season);
+        this.levelBlend += ((this.levelTint ? this.levelTint.amount : 0) - this.levelBlend) * (1 - Math.exp(-dt * .6));
+        this.phase += dt;
+        const distance = speed * dt;
+        this.scroll += distance;
+        let recycled = false;
+        for (const chunk of this.chunks) {
+            chunk.position.z += distance;
+            while (chunk.position.z > 36) {
+                chunk.position.z -= CONFIG.world.chunks * CONFIG.world.chunkLength;
+                recycled = true;
+            }
+        }
+        if (recycled) this.rebuildInstances();
         const blend = 1 - Math.exp(-dt * 1.8), t = this.target, heat = this.atmosphere.strength, hell = this.atmosphere.palette;
         const tint = this.levelTint, amount = tint ? this.levelBlend : 0, flash = this.atmosphere.flash * heat;
         // Tema → colori del livello → stagione dello scontro; il lampo schiarisce cielo e nebbia.
@@ -326,8 +349,8 @@ export class World {
         this.sun.material.color.lerp(mix(t.sun, 'sun'), blend);
     }
     render(alpha, speed) {
-        this.landscape.render(alpha, speed);
-        const offset = (alpha - 1) * speed * CONFIG.step;
+        const offset = this.scroll + (alpha - 1) * speed * CONFIG.step;
+        this.landscape.render(offset);
         for (const batch of this.batches)
             batch.mesh.position.z = offset;
         // Stessa interpolazione della strada: i props non avanzano più a scatti a 60 Hz.

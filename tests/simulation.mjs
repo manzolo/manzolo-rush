@@ -46,7 +46,7 @@ const { World } = await import('../src/game/world.js');
 const { BOSSES, bossFrames } = await import('../src/game/bosses.js');
 const { SPRITES } = await import('../src/game/sprites.js');
 const { playerOverlap } = await import('../src/game/collisions.js');
-const renderer = { domElement: new Node(), render(scene) { scene.updateMatrixWorld(); } };
+const renderer = { domElement: new Node(), calls: 0, render(scene) { this.calls++; scene.updateMatrixWorld(); } };
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(58, 1.6, .1, 250), g = new Game(renderer, scene, camera);
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('OK', name); }
@@ -115,6 +115,55 @@ check('scenari: texture mancanti isolate al tema, props naturali fuori strada e 
         SPRITES.textures = original;
     }
 });
+check('scenario: matrici aggiornate solo al riciclo, scorrimento e interpolazione allineati in tutti i temi', () => {
+    const original = SPRITES.textures;
+    const names = THEMES.flatMap(t => t.props.map(([name]) => name));
+    SPRITES.textures = new Map(names.map(name => [name, new THREE.Texture()]));
+    try {
+        const world = new World(new THREE.Scene()), matrix = new THREE.Matrix4();
+        for (let theme = 0; theme < THEMES.length; theme++) {
+            world.setTheme(theme, true);
+            const batch = world.batches[0], version = batch.mesh.instanceMatrix.version;
+            for (let step = 0; step < 300; step++) {
+                const speed = step < 120 ? 45 : step < 180 ? 0 : 18;
+                const before = batch.mesh.instanceMatrix.version;
+                world.update(CONFIG.step, speed);
+                if (speed === 0) assert.equal(batch.mesh.instanceMatrix.version, before);
+                for (const alpha of [0, .5, 1]) {
+                    world.render(alpha, speed);
+                    const offset = (alpha - 1) * speed * CONFIG.step;
+                    const near = (a, b) => assert.ok(Math.abs(a - b) < .0001, `${a} != ${b}`);
+                    for (const b of world.batches)
+                        b.items.forEach((item, i) => {
+                            b.mesh.getMatrixAt(i, matrix);
+                            near(matrix.elements[14] + b.mesh.position.z, item.local.z + item.chunk.position.z + offset);
+                        });
+                    const indices = new Map();
+                    for (const p of world.props) {
+                        if (!p.spriteName) continue;
+                        const mesh = world.propBatches.get(p.spriteName), i = indices.get(mesh) || 0;
+                        mesh.getMatrixAt(i, matrix);
+                        indices.set(mesh, i + 1);
+                        near(matrix.elements[14] + mesh.position.z, p.localZ + p.chunk.position.z + offset);
+                        near(matrix.elements[12], p.mesh.position.x);
+                    }
+                    for (const layer of world.landscape.layers) {
+                        if (!layer.mesh.visible) continue;
+                        layer.items.forEach((item, i) => {
+                            layer.mesh.getMatrixAt(i, matrix);
+                            near(matrix.elements[14] + layer.mesh.position.z, item.localZ + item.chunk.position.z + offset);
+                        });
+                    }
+                }
+            }
+            const uploads = batch.mesh.instanceMatrix.version - version;
+            assert.ok(uploads > 0 && uploads < 10, `${uploads} upload in 300 passi`);
+        }
+    } finally {
+        for (const texture of SPRITES.textures.values()) texture.dispose();
+        SPRITES.textures = original;
+    }
+});
 g.start();
 check('cambio corsia entro 150 ms', () => { g.player.command('right'); ticks(9); assert.ok(Math.abs(g.player.x - 3) < .2); });
 check('salto e input buffer all’atterraggio', () => { g.player.command('jump'); ticks(44); assert.ok(g.player.y > 0); g.player.command('jump'); ticks(5); assert.ok(g.player.vy > 0); assert.ok(g.player.y > 0); });
@@ -168,6 +217,7 @@ check('pausa: camera, scena, tempo e pannello restano fermi fino alla ripresa', 
     ticks(2);
     g.pause();
     const before = { camera: camera.position.toArray(), fov: camera.fov, player: g.player.root.position.toArray(), time: g.time };
+    const calls = renderer.calls;
     for (let i = 0; i < 90; i++) {
         g.update(CONFIG.step);
         g.render((i % 7) / 7, CONFIG.step);
@@ -176,9 +226,19 @@ check('pausa: camera, scena, tempo e pannello restano fermi fino alla ripresa', 
         assert.ok(!node('#pause').classes.has('hidden'));
     }
     assert.deepEqual({ camera: camera.position.toArray(), fov: camera.fov, player: g.player.root.position.toArray(), time: g.time }, before);
+    assert.equal(renderer.calls, calls, 'nessun rendering WebGL durante i frame in pausa');
+    camera.aspect = .5;
+    camera.updateProjectionMatrix();
+    g.render(1, 0, true); // ridimensionamento del canvas: un solo ridisegno esplicito.
+    assert.equal(renderer.calls, calls + 1);
+    assert.deepEqual(camera.position.toArray(), before.camera);
+    assert.deepEqual(g.player.root.position.toArray(), before.player);
+    camera.aspect = 1.6;
+    camera.updateProjectionMatrix();
     g.resume();
     ticks(1);
     assert.ok(g.time > before.time);
+    assert.equal(renderer.calls, calls + 2);
 });
 check('boss: preavviso (2 muri + corsia da saltare/scivolare), danno e premio', () => { g.start(); g.time = 90; g.update(CONFIG.step); assert.ok(g.boss.active); assert.equal(g.obstacles.pool.filter(o => o.active).length, 0); ticks(195); assert.ok(g.boss.warning > 0); assert.equal(g.boss.warnings.filter(m => m.visible).length, 3); assert.equal(g.boss.warnings.filter(m => m.material.color.getHex() === 0xff695c).length, 2); assert.ok(['low', 'high'].includes(g.boss.safeMove)); g.boss.damage(g.boss.hp, g); assert.equal(g.boss.active, false); assert.ok(g.reward >= CONFIG.boss.score); });
 check('punti salto/scivolata solo dopo il passaggio, una volta, mai con urto o corsia diversa', () => {

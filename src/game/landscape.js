@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js';
 import { THEMES } from './scenery.js';
 
 // Sagome fuori strada, riciclate con i chunk. Due draw call per ambiente naturale,
@@ -18,7 +17,19 @@ export class Landscape {
             mesh.frustumCulled = false;
             mesh.visible = false;
             scene.add(mesh);
-            this.layers.push({ theme, mesh, color, key, place, surface });
+            // Le sagome sono fisse per ogni chunk: prepara scala e rotazione una volta.
+            const items = [];
+            for (let c = 0; c < chunks.length; c++)
+                for (const side of [-1, 1])
+                    for (let k = 0; k < 2; k++) {
+                        const o = this.dummy;
+                        o.position.set(side * (14 + k * 6), 0, -9 + k * 12);
+                        o.rotation.set(0, (c + k) * .7, 0);
+                        place(o, (c * 3 + k * 2) % 5);
+                        o.updateMatrix();
+                        items.push({ chunk: chunks[c], localZ: o.position.z, matrix: o.matrix.clone() });
+                    }
+            this.layers.push({ theme, mesh, color, key, items });
         };
         add('forest', new THREE.CylinderGeometry(.65, 1, 1, 5), 0x63513c, 'building', (o, v) => {
             o.position.y = 3;
@@ -62,21 +73,15 @@ export class Landscape {
         for (const layer of this.layers) {
             if (!layer.mesh.visible) continue;
             let index = 0;
-            for (let c = 0; c < this.chunks.length; c++)
-                for (const side of [-1, 1])
-                    for (let k = 0; k < 2; k++) {
-                        const v = (c * 3 + k * 2) % 5, o = this.dummy;
-                        o.position.set(side * (14 + k * 6), 0, this.chunks[c].position.z - 9 + k * 12);
-                        o.rotation.set(0, (c + k) * .7, 0);
-                        layer.place(o, v);
-                        o.updateMatrix();
-                        layer.mesh.setMatrixAt(index++, o.matrix);
-                    }
+            for (const item of layer.items) {
+                item.matrix.elements[14] = item.localZ + item.chunk.position.z;
+                layer.mesh.setMatrixAt(index++, item.matrix);
+            }
             layer.mesh.instanceMatrix.needsUpdate = true;
         }
     }
-    render(alpha, speed) {
+    render(offset) {
         for (const { mesh } of this.layers)
-            mesh.position.z = (alpha - 1) * speed * CONFIG.step;
+            mesh.position.z = offset;
     }
 }

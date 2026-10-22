@@ -45,7 +45,7 @@ function resize() {
     camera.updateProjectionMatrix();
     // setSize/setPixelRatio svuotano il canvas: ridisegna nello stesso frame,
     // anche in pausa, evitando un lampo dello sfondo al cambio di risoluzione.
-    game.render(1, 0);
+    game.render(1, 0, true);
 }
 addEventListener('resize', resize);
 resize();

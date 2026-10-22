@@ -140,6 +140,8 @@ export class Game {
     setState(state) {
         this.state = state;
         this.input.clear();
+        if (state === STATES.PAUSE)
+            this.ui.nodes['damage-flash'].style.opacity = 0;
         if (state === STATES.PLAY)
             document.activeElement?.blur?.();
         this.audio.music({ menu: 'menu', over: 'menu', play: this.tune(), pause: 'pause' }[state]);
@@ -574,15 +576,14 @@ export class Game {
         this.refreshSave();
         document.querySelector('#result-label').textContent = best ? `NUOVO RECORD CON ${characterById(this.save.bestCharacter).name.toUpperCase()}!` : this.timeUp ? 'TEMPO SCADUTO! PRENDI PIÙ MONETE.' : 'UNA CORSA. UN’ALTRA STORIA.';
     }
-    render(alpha, dt) {
+    render(alpha, dt, force = false) {
         // In pausa conserva esattamente l'ultimo fotogramma, incluse camera e luci.
-        // Ridisegna solo per mantenere valido il canvas anche dopo un resize.
+        // In pausa il canvas conserva l'immagine: solo resize/invalidation ridisegnano.
         if (this.state === STATES.PAUSE) {
-            this.ui.nodes['damage-flash'].style.opacity = 0;
-            this.renderer.render(this.scene, this.camera);
+            if (force) this.renderer.render(this.scene, this.camera);
             return;
         }
-        if (this.state === STATES.PAUSE || this.state === STATES.OVER || this.hitStop > 0)
+        if (this.state === STATES.OVER || this.hitStop > 0)
             alpha = 1;
         this.player.render(alpha);
         // Nel menu il protagonista è già in primo piano nell'interfaccia: niente doppione sulla strada.
