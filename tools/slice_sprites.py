@@ -426,6 +426,8 @@ def main():
     ap.add_argument("--names", default="main",
                     help="preset (" + ", ".join(SHEETS) + ") oppure elenco di nomi separati da virgola")
     ap.add_argument("--prefix", default="", help="prefisso dei nomi (es. erika_ per un personaggio)")
+    ap.add_argument("--same-box", action="store_true",
+                    help="stesso ritaglio per tutte le celle (cicli di animazione: il corpo non salta di lato)")
     ap.add_argument("--no-key", action="store_true",
                     help="niente chroma key: ritaglia le celle piene (texture) con un bordo interno di --inset px")
     ap.add_argument("--inset", type=int, default=6, help="pixel scartati sul bordo di ogni cella con --no-key")
@@ -480,6 +482,15 @@ def main():
     atlas_path = out_dir / "atlas.json"
     atlas = json.loads(atlas_path.read_text()) if atlas_path.exists() else {}
     sprites = []
+    # --same-box: un unico riquadro (unione dei contenuti di tutte le celle, in coordinate di cella)
+    # per ogni frame, così personaggio e linea dei piedi restano nello stesso punto.
+    keyed, box = {}, None
+    if args.same_box:
+        for name, (x0, y0, x1, y1) in zip(names, cells):
+            keyed[name] = drop_border_slivers(key_out_background(sheet.crop((x0, y0, x1, y1)), bg, args.thresh, args.band, args.min_hole, args.despill))
+            b = keyed[name].getchannel("A").point(lambda a: 255 if a >= 1 else 0).getbbox()
+            if b:
+                box = b if box is None else (min(box[0], b[0]), min(box[1], b[1]), max(box[2], b[2]), max(box[3], b[3]))
     for name, (x0, y0, x1, y1) in zip(names, cells):
         if True:
             cell = sheet.crop((x0, y0, x1, y1))
@@ -503,6 +514,9 @@ def main():
                     while b > cell.height - my and green((l, b - 1, r, b), r - l, f): b -= 1
                 k = args.inset
                 sprite = cell.crop((l + k, t + k, r - k, b - k))
+            elif args.same_box and box:
+                k = keyed[name]
+                sprite = k.crop((max(0, box[0] - args.pad), max(0, box[1] - args.pad), min(k.width, box[2] + args.pad), min(k.height, box[3] + args.pad)))
             else:
                 sprite = key_out_background(cell, bg, args.thresh, args.band, args.min_hole, args.despill)
                 sprite = trim(drop_border_slivers(sprite), args.pad)

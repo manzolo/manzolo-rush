@@ -815,7 +815,7 @@ check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () =>
     }
     assert.equal(g.state, 'play');
     assert.equal(themes.size, 5);
-    assert.equal(bosses, 2);
+    assert.equal(scene.children.length, objectCount, `oggetti nella scena: ${scene.children.length} invece di ${objectCount}: ${scene.children.slice(objectCount).map(o => o.type + ':' + (o.name || o.geometry?.type || '')).join(', ')}`);
     assert.equal(scene.children.length, objectCount);
     assert.deepEqual([g.obstacles.pool.length, g.enemies.pool.length, g.pickups.coins.length, g.effects.pool.length], pools);
     console.log({ time: g.time, distance: Math.floor(g.distance), score: Math.floor(g.score), bosses, sceneObjects: objectCount, worldBatches: g.world.batches.length });

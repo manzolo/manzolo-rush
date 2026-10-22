@@ -118,18 +118,15 @@ test('ogni difficoltà mantiene fattibili i cambi tra corsie di fuga', () => {
                     assert.ok(safeTransition(from, to, CONFIG.spawn.intervalMin * level.spawnInterval, speed * level.speed), level.name);
 });
 
-test('corsa: il corpo tocca terra sugli appoggi (frame 1 e 3), due rimbalzi e ondeggiamento alternato per ciclo', () => {
-    const fps = 11, frames = 4, perFrame = 13 / fps; // fase che dura un frame
-    for (const k of [0, 2, 4, 6]) {
-        // Inizio di un frame d'appoggio: a terra e schiacciato.
+test('corsa: un appoggio per frame, a terra all\'inizio di ogni frame, in alto a metà, inclinazione alternata', () => {
+    const fps = 7, frames = 4, perFrame = 13 / fps; // fase che dura un frame
+    for (let k = 0; k < 8; k++) {
         const contact = runPose(k * perFrame + 1e-9, fps, frames);
         assert.equal(contact.frame, k % frames);
-        assert.ok(contact.bounce < .001 && contact.squash < 1);
-        // Inizio del frame di passaggio successivo: in alto, niente schiacciamento.
-        const air = runPose((k + 1) * perFrame, fps, frames);
-        assert.ok(air.bounce > .06 && air.squash > .999);
+        assert.ok(contact.bounce < .001 && contact.squash < 1, `appoggio al frame ${k}`);
+        const mid = runPose((k + .5) * perFrame, fps, frames);
+        assert.ok(mid.bounce > .069 && mid.squash > .999, `metà passo ${k}`);
+        // Passi consecutivi si inclinano da lati opposti.
+        assert.ok(Math.sign(mid.sway) === (k % 2 ? -1 : 1));
     }
-    // L'inclinazione cambia lato da un passo all'altro.
-    assert.ok(runPose(1 * perFrame, fps, frames).sway > 0);
-    assert.ok(runPose(3 * perFrame, fps, frames).sway < 0);
 });

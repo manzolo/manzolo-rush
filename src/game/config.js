@@ -55,6 +55,6 @@ export const CONFIG = {
     // hero usa i frame visti di spalle (hero_back_*); textures e props vestono scenario e ostacoli per tema.
     // vectorCity: nella città le facciate sono disegnate su canvas (facades.js) invece delle immagini.
     sprites: { enabled: true, path: 'assets/sprites/', hero: true, enemies: true, pickups: true, explosions: true, textures: true, props: true,
-        vectorCity: true, heroHeight: 1.95, slideHeight: 1.15, heroAngle: 0, enemyAngle: 0, runFps: 11, runBounce: .07, runSway: .035, leanThreshold: .9, loadTimeout: 8 },
+        vectorCity: true, heroHeight: 1.95, slideHeight: 1.15, heroAngle: 0, enemyAngle: 0, runFps: 7, runBounce: .07, runSway: .035, leanThreshold: .9, loadTimeout: 8 },
 };
 export { THEMES } from './scenery.js';
