@@ -3,6 +3,7 @@ import { CONFIG } from './config.js';
 import { block } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
 import { BOSSES, LEVELS, bossReady } from './bosses.js';
+import { SIGNS, laneSign } from './signs.js';
 export class Boss {
     constructor(scene) {
         this.mesh = new THREE.Group();
@@ -48,6 +49,7 @@ export class Boss {
             scene.add(mesh);
             this.warnings.push(mesh);
         }
+        this.sign = laneSign(scene);
         this.parts = [];
         this.mesh.traverse(child => {
             if (child.isMesh && child !== this.sprite && child !== this.core && child !== this.groundRing && !this.muzzles.includes(child))
@@ -87,6 +89,7 @@ export class Boss {
         this.enraged = false;
         for (const m of this.warnings)
             m.visible = false;
+        this.sign?.hide();
     }
     // Sceglie l'aspetto del boss del livello in corso, o la Sentinella se mancano gli sprite.
     dress(level) {
@@ -165,12 +168,15 @@ export class Boss {
         if (this.warning > 0) {
             this.warning -= dt;
             for (let i = 0; i < 3; i++) {
-                // Rosso: muro pieno; arancione: corsia di riparo, dove si salta o si scivola.
+                // Rosso: muro pieno; verde: corsia da saltare; azzurro: corsia da passare in scivolata.
                 this.warnings[i].visible = true;
-                this.warnings[i].material.color.set(i - 1 === this.safeLane ? 0xffa21f : 0xff695c);
-                this.warnings[i].material.opacity = .12 + Math.abs(Math.sin(this.warning * 12)) * .15;
+                this.warnings[i].material.color.set(i - 1 === this.safeLane ? SIGNS[this.safeMove].color : 0xff695c);
+                // La corsia di riparo pulsa più forte: è lì che bisogna andare.
+                this.warnings[i].material.opacity = (i - 1 === this.safeLane ? .25 : .12) + Math.abs(Math.sin(this.warning * 12)) * .18;
             }
+            this.sign.show(this.safeMove, this.safeLane * CONFIG.player.laneWidth, -7, this.age);
             if (this.warning <= 0) {
+                this.sign.hide();
                 for (const m of this.warnings)
                     m.visible = false;
                 let variant = 0;
@@ -233,6 +239,7 @@ export class Boss {
     end(game, killed) {
         this.active = false;
         this.mesh.visible = false;
+        this.sign.hide();
         for (const m of this.warnings)
             m.visible = false;
         for (const s of game.enemies.shots)

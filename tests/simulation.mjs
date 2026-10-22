@@ -25,7 +25,7 @@ class Node {
     appendChild(child) { this.children.push(child); }
     addEventListener(type, fn) { this.listeners[type] = fn; }
     setPointerCapture() { }
-    getContext() { return { fillRect() { }, beginPath() { }, moveTo() { }, lineTo() { }, fill() { }, createRadialGradient() { return { addColorStop() { } }; }, createLinearGradient() { return { addColorStop() { } }; } }; }
+    getContext() { return { fillRect() { }, beginPath() { }, closePath() { }, arc() { }, stroke() { }, fillText() { }, moveTo() { }, lineTo() { }, fill() { }, createRadialGradient() { return { addColorStop() { } }; }, createLinearGradient() { return { addColorStop() { } }; } }; }
 }
 const node = id => {
     if (!nodes.has(id))
@@ -558,6 +558,28 @@ check('pulsante suggerimenti: spegne la barra degli aiuti (anche nei duelli) e r
     ticks(30);
     assert.notEqual(node('#tutorial').textContent, '');
     g.menu();
+});
+check('boss: cartello e colore dicono se saltare o scivolare, e la freccia viaggia col colpo', () => {
+    for (const move of ['low', 'high']) {
+        g.start();
+        g.boss.start(g);
+        g.boss.attackTimer = 0;
+        g.boss.update(CONFIG.step, g);
+        g.boss.safeMove = move;
+        g.boss.update(CONFIG.step, g);
+        const sign = g.boss.sign.sprite, lane = g.boss.safeLane;
+        assert.ok(sign.visible);
+        assert.equal(sign.position.x, lane * CONFIG.player.laneWidth);
+        assert.equal(g.boss.warnings[lane + 1].material.color.getHex(), move === 'low' ? 0x5dff8a : 0x5ac8ff);
+        assert.equal(g.boss.warnings[(lane + 2) % 3].material.color.getHex(), 0xff695c);
+        g.boss.update(CONFIG.boss.warning, g);
+        assert.ok(!sign.visible);
+        g.enemies.render(1);
+        assert.equal(g.enemies.shotSigns[move].count, 1);
+        assert.equal(g.enemies.shotSigns[move === 'low' ? 'high' : 'low'].count, 0);
+        g.menu();
+        assert.ok(!sign.visible);
+    }
 });
 check('simulazione 3 minuti: pool stabili, temi, due boss, valori finiti', () => {
     g.start();

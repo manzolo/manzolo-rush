@@ -4,6 +4,7 @@ import { actor, block, material } from './models.js';
 import { SPRITES, billboard } from './sprites.js';
 import { CREATURES, creatureReady } from './creatures.js';
 import { BOSSES } from './bosses.js';
+import { signTexture } from './signs.js';
 const types = ['soldier', 'runner', 'drone', 'tank', 'stalker'];
 // Preferisce le viste frontali (sheet_hero_rear), altrimenti quelle di profilo dello sheet principale.
 const FRONT_NAMES = { soldier: 'enemy_front_grunt', runner: 'enemy_front_dodger', drone: 'enemy_front_drone', tank: 'enemy_front_tank', stalker: 'enemy_front_grunt' };
@@ -105,6 +106,17 @@ export class Enemies {
                 scene.add(mesh);
                 this.shotSprites.set(c.shot, mesh);
             }
+        // Freccia che accompagna i colpi bassi (sopra: si salta) e alti (sotto: si scivola).
+        this.shotSigns = {};
+        for (const kind of ['low', 'high']) {
+            const mesh = new THREE.InstancedMesh(SPRITES.geometry(false), new THREE.MeshBasicMaterial({ map: signTexture(kind), transparent: true, depthWrite: false, toneMapped: false }), this.shots.length);
+            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            mesh.frustumCulled = false;
+            mesh.count = 0;
+            mesh.renderOrder = 4;
+            scene.add(mesh);
+            this.shotSigns[kind] = mesh;
+        }
         // Muri e barre dei boss dei livelli (fulmine, colata, spuntoni di ghiaccio…), appoggiati a terra.
         this.wallSprites = new Map();
         for (const b of Object.values(BOSSES))
@@ -520,7 +532,17 @@ export class Enemies {
         const shotSprites = new Map();
         const time = performance.now() / 1000;
         this.curtainMaterial.uniforms.uTime.value = time;
-        const wallSprites = new Map();
+        const wallSprites = new Map(), signs = { low: 0, high: 0 };
+        for (const s of this.shots)
+            if (s.active && (s.wallKind === 'low' || s.wallKind === 'high')) {
+                // Basso: freccia in su sopra il colpo; alto: freccia in giù nello spazio libero sotto.
+                const low = s.wallKind === 'low', size = low ? 1.15 : .85;
+                d.position.set(s.x, low ? s.top + .85 : s.bottom * .5, s.previousZ + (s.z - s.previousZ) * alpha + .3);
+                d.rotation.set(0, 0, 0);
+                d.scale.setScalar(size * (1 + Math.sin(time * 10) * .06));
+                d.updateMatrix();
+                this.shotSigns[s.wallKind].setMatrixAt(signs[s.wallKind]++, d.matrix);
+            }
         for (const s of this.shots)
             if (s.active && s.wall && this.wallSprites.has(s.skin)) {
                 // Larghezza fissata alla corsia: si capisce subito quale corsia è chiusa.
@@ -603,6 +625,10 @@ export class Enemies {
         for (const mesh of this.shotSprites.values()) {
             mesh.count = shotSprites.get(mesh) ?? 0;
             mesh.instanceMatrix.needsUpdate = true;
+        }
+        for (const kind in this.shotSigns) {
+            this.shotSigns[kind].count = signs[kind];
+            this.shotSigns[kind].instanceMatrix.needsUpdate = true;
         }
         for (const mesh of this.wallSprites.values()) {
             mesh.count = wallSprites.get(mesh) ?? 0;
